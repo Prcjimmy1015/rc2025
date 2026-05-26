@@ -48,11 +48,25 @@ static constexpr float kRangeEmaAlpha = 0.35f;
 
 // --- case0 → case1：窄过道入门（约 0.6 m 宽 → 居中时左右约 0.3 m）---
 /** 进入 case0 后沿局部前向 lx 前进该距离 (m) 再执行 FrontJump */
-static constexpr double kCase0PreJumpForward_m = 0.2;
+static constexpr double kCase0PreJumpForward_m = 0.1;
 /** 起跳后沿局部前向 lx 至少前进该距离后才允许雷达触发进入 case1，防止落点误触发 */
 static constexpr double kCase0PostJumpMinForward_m = 0.45;
-/** 起跳后等待落地再巡线的帧数（非阻塞；约 30fps 下 0.4s） */
+/** 站直后额外稳定等待帧数（约 30fps 下 0.4s） */
 static constexpr int kCase0PostJumpSettleFrames = 12;
+/** case0 巡线前进速度 */
+static constexpr float kCase0LineFollowVx = 0.18f;
+/** 判定落地站直：roll/pitch 上限 (rad) */
+static constexpr double kCase0UprightMaxRollPitchRad = 0.18;
+/** 判定落地站直：水平/竖直/偏航速度上限 */
+static constexpr float kCase0UprightMaxHorizVel = 0.25f;
+static constexpr float kCase0UprightMaxVertVel = 0.20f;
+static constexpr float kCase0UprightMaxYawRate = 0.45f;
+/** 判定落地站直：四足触地力下限（SportModeState foot_force） */
+static constexpr int16_t kCase0UprightMinFootForce = 80;
+/** 站直条件连续满足的帧数，满足后才开始 settle 计时 */
+static constexpr int kCase0UprightStableFrames = 4;
+/** 站直检测超时帧数，超时后仍开始 settle 计时 */
+static constexpr int kCase0UprightTimeoutFrames = 150;
 /** 单侧距离落在该区间 (m) 视为贴近过道一侧墙（居中） */
 static constexpr float kEnterMazeSideLo_m = 0.18f;
 static constexpr float kEnterMazeSideHi_m = 0.48f;
@@ -287,6 +301,33 @@ static inline double wrapAngle(double a)
     while (a <= -M_PI)
         a += 2 * M_PI;
     return a;
+}
+
+/** 起跳后是否已落地站直：姿态水平、速度小、四足触地 */
+static inline bool isGo2UprightAfterJump(const unitree_go::msg::dds_::SportModeState_ &st)
+{
+    const auto &rpy = st.imu_state().rpy();
+    if (std::fabs(rpy[0]) > kCase0UprightMaxRollPitchRad)
+        return false;
+    if (std::fabs(rpy[1]) > kCase0UprightMaxRollPitchRad)
+        return false;
+
+    const auto &vel = st.velocity();
+    const float vxy = std::sqrt(vel[0] * vel[0] + vel[1] * vel[1]);
+    if (vxy > kCase0UprightMaxHorizVel)
+        return false;
+    if (std::fabs(vel[2]) > kCase0UprightMaxVertVel)
+        return false;
+    if (std::fabs(st.yaw_speed()) > kCase0UprightMaxYawRate)
+        return false;
+
+    const auto &ff = st.foot_force();
+    for (int i = 0; i < 4; ++i)
+    {
+        if (ff[static_cast<size_t>(i)] < kCase0UprightMinFootForce)
+            return false;
+    }
+    return true;
 }
 
 /** Sport Move 第三参数：目标 yaw 误差(rad) -> 建议角速度，需配合 StaticWalk 使用 */
@@ -829,14 +870,17 @@ static int runMainLoop(AppRuntime &rt)
         (void)dyaw;
         switch (Flag_Task)
         {
-        // ----- case0：前进 0.2m → 起跳 → 巡线 → 雷达判定进入窄过道（case1）-----
+        // ----- case0：前进 0.1m → 起跳 → 站直后稳定等待 → 巡线 → case1 -----
         case 0:
         {
-            /** 0 前进至 kCase0PreJumpForward_m；1 起跳后落地等待；2 巡线 */
+            /** 0 前进；1 落地站直 + 稳定等待；2 巡线 */
             static int case0_phase = 0;
             static double lx_anchor_case0 = 0;
             static bool lx_anchor_case0_set = false;
             static int case0_jump_settle_frm = 0;
+            static bool case0_settle_armed = false;
+            static int case0_upright_stable = 0;
+            static int case0_upright_wait_frm = 0;
             static double lx_anchor_post_jump = 0;
             static bool lx_anchor_post_jump_set = false;
 
@@ -855,7 +899,9 @@ static int runMainLoop(AppRuntime &rt)
                     sc.StopMove();
                     sc.FrontJump();
                     case0_phase = 1;
-                    case0_jump_settle_frm = kCase0PostJumpSettleFrames;
+                    case0_settle_armed = false;
+                    case0_upright_stable = 0;
+                    case0_upright_wait_frm = 0;
                     start_jump_times = 1;
                     cout << "[case0] 已前进 " << forward_in_case0 << " m → 起跳" << endl;
                 }
@@ -872,12 +918,36 @@ static int runMainLoop(AppRuntime &rt)
             {
                 sc.StaticWalk();
                 sc.Move(0.f, 0.f, 0.f);
-                if (--case0_jump_settle_frm <= 0)
+                ++case0_upright_wait_frm;
+
+                if (!case0_settle_armed)
+                {
+                    if (isGo2UprightAfterJump(rt.stateCB.state))
+                        ++case0_upright_stable;
+                    else
+                        case0_upright_stable = 0;
+
+                    if (case0_upright_stable >= kCase0UprightStableFrames)
+                    {
+                        case0_settle_armed = true;
+                        case0_jump_settle_frm = kCase0PostJumpSettleFrames;
+                        cout << "[case0] 已落地站直，开始稳定等待 " << kCase0PostJumpSettleFrames
+                             << " 帧" << endl;
+                    }
+                    else if (case0_upright_wait_frm >= kCase0UprightTimeoutFrames)
+                    {
+                        case0_settle_armed = true;
+                        case0_jump_settle_frm = kCase0PostJumpSettleFrames;
+                        cout << "[case0] 站直检测超时，仍开始稳定等待 " << kCase0PostJumpSettleFrames
+                             << " 帧" << endl;
+                    }
+                }
+                else if (--case0_jump_settle_frm <= 0)
                 {
                     case0_phase = 2;
                     lx_anchor_post_jump = lx;
                     lx_anchor_post_jump_set = true;
-                    cout << "[case0] 跳跃完成，开始巡线" << endl;
+                    cout << "[case0] 稳定等待完成，开始巡线" << endl;
                 }
                 break;
             }
@@ -915,7 +985,7 @@ static int runMainLoop(AppRuntime &rt)
             sc.Euler(0, 0.25, 0);
 
             {
-                float vx = 0.25f, vy = 0.f;
+                float vx = kCase0LineFollowVx, vy = 0.f;
                 applyRangeClearance(ob_x, ob_y, ob_z, vx, vy);
                 sc.Move(vx, vy, steer);
             }
