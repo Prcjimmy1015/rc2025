@@ -8,6 +8,7 @@ double px0 = 0, py0 = 0, yaw0 = 0;
 
 // 任务状态机
 int Flag_Task = 0;
+int g_force_task = -1;  // -1=自动模式
 int start_jump_times = 0;
 int end_jump_times = 0;
 bool found_turn = false;

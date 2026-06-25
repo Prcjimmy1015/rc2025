@@ -84,6 +84,8 @@ static int runMainLoop(AppRuntime &rt)
         static Mat display_img = undist.clone();
 
         // ===================== 主状态机 FSM =====================
+        if (g_force_task >= 0)
+            Flag_Task = g_force_task;
         switch (Flag_Task)
         {
         // ---- case 0: 巡线 ----
@@ -214,11 +216,17 @@ int main(int argc, char **argv)
     const char *eth_if = argv[1];
     for (int i = 2; i < argc; ++i)
     {
-        if (string(argv[i]) == "--gui")
+        string arg = argv[i];
+        if (arg == "--gui")
             g_enable_gui = true;
+        else if (arg == "--task" && i + 1 < argc)
+        {
+            g_force_task = atoi(argv[++i]);
+            cout << "[Config] Force task mode: Flag_Task locked to " << g_force_task << endl;
+        }
         else
         {
-            cerr << "Unknown option: " << argv[i] << "\n";
+            cerr << "Unknown option: " << arg << "\n";
             return -1;
         }
     }
