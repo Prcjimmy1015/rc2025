@@ -89,12 +89,19 @@ static int runMainLoop(AppRuntime &rt)
         // ---- case 0: 巡线 ----
         case 0:
         {
-            bool to_case1 = case0_tick(sc, undist, rt.stateCB.state, fcount);
+            int case0_ret = case0_tick(sc, undist, rt.stateCB.state, fcount);
             display_img = undist.clone();
-            if (to_case1)
+            if (case0_ret == 1)
             {
                 Flag_Task = 1;
-                case1_reset_statics();  // reset phase etc
+                g_case0_second_pass = false;  // 第一段巡线结束
+                case1_reset_statics();
+            }
+            else if (case0_ret == 2)
+            {
+                Flag_Task = 2;
+                g_case0_second_pass = false;  // 重置标记
+                case2_reset();
             }
             break;
         }
@@ -107,6 +114,7 @@ static int runMainLoop(AppRuntime &rt)
             if (back_to_0)
             {
                 Flag_Task = 0;
+                g_case0_second_pass = true;  // 第二段巡线：case1 完成后返回
                 case0_reset_statics();
             }
             break;

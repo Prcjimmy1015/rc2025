@@ -134,11 +134,12 @@ static bool detectLine(const Mat &undist, double &err, int &cnt, Mat &debug_img)
 
 // =============================================================================
 // case0 主入口
+// 返回: 0=继续, 1=去case1(避障), 2=去case2(ArUco)
 // =============================================================================
-bool case0_tick(go2::SportClient &sc,
-                const Mat &undist,
-                const unitree_go::msg::dds_::SportModeState_ &state,
-                int fcount)
+int case0_tick(go2::SportClient &sc,
+               const Mat &undist,
+               const unitree_go::msg::dds_::SportModeState_ &state,
+               int fcount)
 {
     (void)state; // 当前未使用，保留接口兼容
 
@@ -158,7 +159,7 @@ bool case0_tick(go2::SportClient &sc,
             init_stage = 1;
             cout << "[Start] ✅ Pre-move 0.2m done (lx=" << lx << ")" << endl;
         }
-        return false;
+        return 0;
     }
 
     if (init_stage == 1) {
@@ -170,7 +171,7 @@ bool case0_tick(go2::SportClient &sc,
         py0 = py;
         yaw0 = yaw;
         cout << "[Start] Jump done, reset origin. Now stabilizing..." << endl;
-        return false;
+        return 0;
     }
 
     if (init_stage == 2) {
@@ -178,10 +179,19 @@ bool case0_tick(go2::SportClient &sc,
         this_thread::sleep_for(chrono::milliseconds(500));
         init_stage = 3;
         cout << "[Start] ✅ Stabilized after jump. Starting line follow." << endl;
-        return false;
+        return 0;
     }
 
     // ---- init_stage == 3: 正常巡线 ----
+
+    // ★ 第二段巡线：检测到 ArUco → 直接进入 case2
+    if (g_case0_second_pass && g_last_aruco_id > 0)
+    {
+        cout << "\033[32m[Transition] ArUco marker " << g_last_aruco_id.load()
+             << " detected! Switching to case2.\033[0m" << endl;
+        sc.StopMove();
+        return 2;  // → Flag_Task = 2
+    }
 
     // Line detection
     double line_err = 0;
@@ -197,14 +207,23 @@ bool case0_tick(go2::SportClient &sc,
         if (jump > 130.0) {
             cout << "[Line] ⚠️ JUMP detected: prev_err=" << prev_line_err
                  << " now=" << line_err << " jump=" << jump
-                 << " → END OF LINE, entering obstacle avoidance" << endl;
+                 << " → END OF LINE" << endl;
             line_found = false;
             sc.StopMove();
+
+            // 第二段巡线：跳变后如有 ArUco → case2，否则兜底进 case1
+            if (g_case0_second_pass && g_last_aruco_id > 0)
+            {
+                cout << "\033[32m[Transition] JUMP + ArUco detected → case2\033[0m" << endl;
+                prev_line_err = 0;
+                had_line_before = false;
+                return 2;
+            }
+
             cout << "\033[32m[Transition] Line ended (JUMP), entering obstacle avoidance\033[0m" << endl;
-            // 重置跳变检测
             prev_line_err = 0;
             had_line_before = false;
-            return true;  // → Flag_Task = 1
+            return 1;  // → Flag_Task = 1
         }
     }
     if (line_found) {
@@ -215,17 +234,18 @@ bool case0_tick(go2::SportClient &sc,
     // 每 10 帧输出 lx 值
     if (fcount % 10 == 0)
     {
-        cout << "[Line] lx=" << lx << " ly=" << ly << " (trigger at 0.75m)" << endl;
+        cout << "[Line] lx=" << lx << " ly=" << ly << " (pass=" << (g_case0_second_pass ? "2nd" : "1st")
+             << " trigger at " << kLineObstacleTrigger_m << "m)" << endl;
     }
 
     // ly 漂移主动回正
     double ly_correction = 0;
-    if (ly > 0.35) {
-        ly_correction = -0.3;
-        cout << "[LY] ly=" << ly << " > 0.35 → LEFT correction" << endl;
-    } else if (ly < -0.35) {
-        ly_correction = 0.3;
-        cout << "[LY] ly=" << ly << " < -0.35 → RIGHT correction" << endl;
+    if (ly > kLineLyCorrThreshold) {
+        ly_correction = -kLineLyCorrSteer;
+        cout << "[LY] ly=" << ly << " > " << kLineLyCorrThreshold << " → LEFT correction" << endl;
+    } else if (ly < -kLineLyCorrThreshold) {
+        ly_correction = kLineLyCorrSteer;
+        cout << "[LY] ly=" << ly << " < -" << kLineLyCorrThreshold << " → RIGHT correction" << endl;
     }
 
     // 有效的线条 → PID 巡线
@@ -236,51 +256,44 @@ bool case0_tick(go2::SportClient &sc,
             cout << "[Line] lx=" << lx << " ly=" << ly << " err=" << line_err
                  << " cnt=" << line_cnt << " (OK)" << endl;
 
-            // PID 控制: Kp=0.12, Ki=0.002, Kd=0.01
             static double integral = 0, last_err = 0;
-            double Kp = 0.12;
-            double Ki = 0.002;
-            double Kd = 0.01;
 
             integral += line_err;
-            integral = max(-50.0, min(50.0, integral));
+            integral = max(-kLinePID_IntegralMax, min(kLinePID_IntegralMax, integral));
 
             double derivative = line_err - last_err;
             last_err = line_err;
 
-            double steer = -(Kp * line_err + Ki * integral + Kd * derivative);
-            steer = max(-0.5, min(0.5, steer));
+            double steer = -(kLinePID_Kp * line_err + kLinePID_Ki * integral + kLinePID_Kd * derivative);
+            steer = max(-kLineSteerMax, min(kLineSteerMax, steer));
 
-            // ly 纠偏覆盖
             if (abs(ly_correction) > 0.01) {
                 steer = ly_correction;
                 cout << "[Line] ly OVERRIDE steer=" << steer << endl;
             }
 
-            // 航向保持
-            steer += -dyaw * 1.5;
-            steer = max(-0.5, min(0.5, steer));
+            steer += -dyaw * kLineYawKeepGain;
+            steer = max(-kLineSteerMax, min(kLineSteerMax, steer));
 
             cout << "[Line] steer=" << steer << " (yaw_keep: dyaw=" << dyaw*180/M_PI << "deg)" << endl;
 
             sc.StaticWalk();
-            sc.Euler(0, 0.4, 0);  // 低头姿态
+            sc.Euler(0, 0.4, 0);
             sc.Move(0.25, 0, steer);
         }
         else
         {
-            // 误差超范围 → 直行 + 软纠偏
             double soft_steer = 0;
             if (abs(line_err) < 640) {
                 soft_steer = -line_err * 0.003;
-                soft_steer = max(-0.3, min(0.3, soft_steer));
+                soft_steer = max(-kLineSoftSteerMax, min(kLineSoftSteerMax, soft_steer));
             }
             if (abs(ly_correction) > 0.01) {
                 soft_steer = ly_correction;
                 cout << "[Line] INVALID ly OVERRIDE steer=" << soft_steer << endl;
             }
-            soft_steer += -dyaw * 1.5;
-            soft_steer = max(-0.5, min(0.5, soft_steer));
+            soft_steer += -dyaw * kLineYawKeepGain;
+            soft_steer = max(-kLineSteerMax, min(kLineSteerMax, soft_steer));
 
             cout << "[Line] INVALID: err=" << line_err << " cnt=" << line_cnt
                  << " -> going straight with soft steer=" << soft_steer
@@ -293,9 +306,8 @@ bool case0_tick(go2::SportClient &sc,
     }
     else
     {
-        // 无线条 → 直行 + ly纠偏 + 航向保持
-        double noline_steer = ly_correction + (-dyaw * 1.5);
-        noline_steer = max(-0.3, min(0.3, noline_steer));
+        double noline_steer = ly_correction + (-dyaw * kLineYawKeepGain);
+        noline_steer = max(-kLineNoLineSteerMax, min(kLineNoLineSteerMax, noline_steer));
 
         cout << "[Line] NO LINE - going straight (yaw_keep: dyaw=" << dyaw*180/M_PI << "deg steer=" << noline_steer << ")" << endl;
 
@@ -304,16 +316,16 @@ bool case0_tick(go2::SportClient &sc,
         sc.Move(0.15, 0, noline_steer);
     }
 
-    // 雷达触发进入避障: lx > 0.75m 且前方障碍 < 1.5m
-    if (lx > 0.75 && ob_x_f < 1.5)
+    // 雷达触发进入避障: lx > 0.75m 且前方障碍 < 1.5m (仅第一段巡线)
+    if (!g_case0_second_pass && lx > kLineObstacleTrigger_m && ob_x_f < kLineObstacleFront_m)
     {
         cout << "\033[32m[Transition] Obstacle detected by lidar (dist=" << ob_x_f << "m), entering obstacle avoidance\033[0m" << endl;
         sc.StopMove();
-        return true;  // → Flag_Task = 1
+        return 1;  // → Flag_Task = 1
     }
 
-    return false;
+    return 0;
 }
 
-// 外部 reset 接口（占位，case0 内部 static 变量由函数自身管理）
+// 外部 reset 接口
 void case0_reset_statics() {}
