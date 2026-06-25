@@ -21,17 +21,17 @@ static const cv::Mat D = (cv::Mat_<double>(1, 4) << -0.4157, 0.1327, 0, 0);
 static constexpr float kRangeEmaAlpha = 0.35f;
 
 // --- case0 → case1：窄过道入门（约 0.6 m 宽 → 居中时左右约 0.3 m）---
-static constexpr double kCase0PreJumpForward_m = 0.1;
+static constexpr double kCase0PreJumpForward_m = 0.15;
 static constexpr double kCase0PostJumpMinForward_m = 0.45;
-static constexpr int kCase0PostJumpSettleFrames = 12;
+static constexpr int kCase0PostJumpSettleFrames = 0;
 static constexpr float kCase0LineFollowVx = 0.18f;
 static constexpr double kCase0UprightMaxRollPitchRad = 0.18;
 static constexpr float kCase0UprightMaxHorizVel = 0.25f;
 static constexpr float kCase0UprightMaxVertVel = 0.20f;
 static constexpr float kCase0UprightMaxYawRate = 0.45f;
-static constexpr int16_t kCase0UprightMinFootForce = 80;
+static constexpr int16_t kCase0UprightMinFootForce = 30;
 static constexpr int kCase0UprightStableFrames = 4;
-static constexpr int kCase0UprightTimeoutFrames = 150;
+static constexpr int kCase0UprightTimeoutFrames = 60;
 static constexpr float kEnterMazeSideLo_m = 0.18f;
 static constexpr float kEnterMazeSideHi_m = 0.48f;
 static constexpr float kEnterMazeSideSumLo_m = 0.45f;
