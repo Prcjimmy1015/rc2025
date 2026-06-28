@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/d1_safe_fold.dir/src/d1_safe_fold.cpp.o CMakeFiles/d1_safe_fold.dir/src/msg/ArmString_.cpp.o -o d1_safe_fold  -lunitree_sdk2 -lddsc -lddscxx -lrt -lpthread 

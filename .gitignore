@@ -3,5 +3,8 @@
 .vscode/
 rc2025 copy.cpp
 
-# CMake / 本地构建产物（建议）
+# 忽略所有 build 文件夹
 build/
+
+# 但不忽略 d1_arm/build 这个特定的 build 文件夹
+!d1_arm/build/

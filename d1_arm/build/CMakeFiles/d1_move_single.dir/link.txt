@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/d1_move_single.dir/src/d1_move_single.cpp.o CMakeFiles/d1_move_single.dir/src/msg/ArmString_.cpp.o -o d1_move_single  -lunitree_sdk2 -lddsc -lddscxx -lrt -lpthread 

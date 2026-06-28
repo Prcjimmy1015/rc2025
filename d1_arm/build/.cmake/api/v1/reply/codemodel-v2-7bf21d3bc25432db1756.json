@@ -1,0 +1,114 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				}
+			],
+			"name" : "",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "marm_code",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "d1_disable::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-d1_disable-c509f438a66aa08d8a4e.json",
+					"name" : "d1_disable",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "d1_enable::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-d1_enable-3fbf6c4dbe6424f62f0c.json",
+					"name" : "d1_enable",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "d1_get_arm_joint_angle::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-d1_get_arm_joint_angle-818c8daff743ec41db1c.json",
+					"name" : "d1_get_arm_joint_angle",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "d1_home::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-d1_home-72480e670ae380513f38.json",
+					"name" : "d1_home",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "d1_move_multiple::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-d1_move_multiple-10295eb41fd43a6f5b3d.json",
+					"name" : "d1_move_multiple",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "d1_move_single::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-d1_move_single-6649de13144ebeeb0d0d.json",
+					"name" : "d1_move_single",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "d1_safe_fold::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-d1_safe_fold-8a8e8a2c7762d87c8b79.json",
+					"name" : "d1_safe_fold",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/cloud/d1_arm/build",
+		"source" : "/home/cloud/d1_arm"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}

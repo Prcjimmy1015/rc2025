@@ -10,9 +10,9 @@
 
 - [项目结构](#项目结构)
 - [模块一：Go2 机器狗运动控制（go2_runner）](#模块一go2-机器狗运动控制go2_runner)
-- [模块二：D1 机械臂视觉抓取（d1_arm）](#模块二d1-机械臂视觉抓取d1_arm)
-- [模块三：机械臂任务编排（task_planner）](#模块三机械臂任务编排task_planner)
-- [模块四：ArUco 感知模块（perception）](#模块四aruco-感知模块perception)
+- [模块二：D1 机械臂控制（d1_arm）](#模块二d1-机械臂控制d1_arm)
+- [模块三：ArUco 感知模块（perception）](#模块三aruco-感知模块perception)
+- [模块四：YOLO 几何参考（yolo_Geometry）](#模块四yolo-几何参考yolo_geometry)
 - [环境依赖](#环境依赖)
 - [构建与运行](#构建与运行)
 - [文档资料（docs）](#文档资料docs)
@@ -23,7 +23,7 @@
 
 ```
 rc2025/
-├── .gitignore                     # Git 忽略规则（构建产物、IDE 配置等）
+├── .gitignore                     # Git 忽略规则（忽略所有 build/，但不忽略 d1_arm/build）
 ├── README.md                      # 本文件
 │
 ├── docs/                          # 竞赛文档与技术资料
@@ -40,6 +40,7 @@ rc2025/
 │   ├── app_runtime.h / .cpp       # 运行时对象定义与初始化（DDS 订阅/Sport/相机）
 │   ├── callbacks.h / callbacks.cpp# DDS 回调：雷达测距 rangeCB、运动状态 StateCB
 │   ├── utils.h / utils.cpp        # 工具函数：坐标变换、PID、安全距离、站直检测、路口判定
+│   ├── line_follow.h / .cpp       # 巡线控制逻辑
 │   ├── visualizer.h / .cpp        # 实时雷达距离曲线可视化（OpenCV）
 │   ├── aruco_server.h / .cpp      # ArUco TCP 服务端（接收感知模块传来的标记 ID）
 │   └── cases/                     # 任务状态机各阶段实现
@@ -49,30 +50,43 @@ rc2025/
 │       ├── case3.h / case3.cpp    # 阶段3：跳跃进入终点区域
 │       └── case4.h / case4.cpp    # 阶段4：任务完成，停止并输出完成信息
 │
-├── d1_arm/                        # 【模块二】D1 机械臂控制与视觉抓取 (Python)
-│   ├── description/               # D1 机械臂模型描述
-│   │   ├── d1_description.urdf    # URDF 机器人描述文件（7 轴运动链）
-│   │   └── d1_description.csv     # 坐标系/关节辅助数据
-│   ├── models/
-│   │   └── best.onnx              # YOLOv8 ONNX 权重（water / assam / orange 等）
-│   └── scripts/                   # 控制与感知脚本
-│       ├── d1_arm.py              # D1 5舵机串口直控类 D1Arm + 7关节封装 D1RobotArmController
-│       ├── d1_pick.py             # 夹爪开合测试脚本（基于 D1Arm）
-│       ├── arm_actions.py         # ★ 机械臂底层动作模块（姿态/检测/抓取/卸载/标定）
-│       ├── task_planner.py        # ★ 任务编排顶层接口（4阶段：抓取→卸载→检测→放置）
+├── d1_arm/                        # 【模块二】D1 机械臂控制 (C++ 源码 + Python 脚本)
+│   ├── CMakeLists.txt             # CMake 构建配置（编译 src/ 下的 C++ 控制程序）
+│   ├── src/                       # C++ 控制程序源码
+│   │   ├── d1_disable.cpp         # 禁用机械臂
+│   │   ├── d1_enable.cpp          # 启用机械臂
+│   │   ├── d1_home.cpp            # 机械臂归位
+│   │   ├── d1_safe_fold.cpp       # 机械臂安全折叠
+│   │   ├── d1_move_single.cpp     # 单关节移动
+│   │   ├── d1_move_multiple.cpp   # 多关节批量移动
+│   │   ├── d1_get_arm_joint_angle.cpp  # 获取关节角度
+│   │   ├── multiple_joint_angle_control.cpp  # 多关节角度控制
+│   │   └── msg/                   # ROS 风格消息类型
+│   │       ├── ArmString_.hpp / .cpp
+│   │       ├── PubServoInfo_.hpp / .cpp
+│   │       ├── SetServoAngle_.hpp / .cpp
+│   │       └── SetServoDumping_.hpp / .cpp
+│   └── build/                     # 构建产物 + Python 脚本 + 模型资源（git 不忽略）
+│       ├── d1_disable / d1_enable / d1_home / d1_safe_fold  # 编译后的 C++ 可执行文件
+│       ├── d1_move_single / d1_move_multiple / d1_get_arm_joint_angle / get_arm_joint_angle
+│       ├── d1_arm.py              # D1 机械臂 Python 控制类（UnitreeD1Arm + D1RobotArmController）
+│       ├── d1_pick.py             # 视觉抓取流程（Robot_pick 类）
 │       ├── yolov8_onnx.py         # YOLOv8 ONNX 推理器（预处理/后处理/绘图）
 │       ├── camera_d435.py         # Intel RealSense D435 深度相机封装（对齐/取流/测距）
-│       └── check_urdf.py          # URDF 运动链解析与验证
+│       ├── check_urdf.py          # URDF 运动链解析验证脚本
+│       ├── best.onnx              # YOLOv8 ONNX 模型权重
+│       ├── d1_description.urdf    # D1 机械臂 URDF 机器人描述文件（7 轴运动链）
+│       └── d1_description.csv     # 坐标系/关节辅助数据
 │
-├── perception/                    # 【模块四】ArUco 标记检测 (Python)
+├── perception/                    # 【模块三】ArUco 标记检测 (Python)
 │   ├── aruco_detector.py          # 基于 Go2 前视压缩图的 ArUco 标记检测 + TCP 回传
 │   └── d435_camera/
-│       └── camera_d435.py         # D435 相机封装（与 d1_arm 中功能相同，独立副本）
+│       └── camera_d435.py         # D435 相机封装（独立副本）
 │
-└── yolo_Geometry/                 # YOLO 模型调试与参考实现
+└── yolo_Geometry/                 # 【模块四】YOLO 模型调试与参考实现
     ├── best.onnx                  # 另一版本的 ONNX 模型
     ├── main.py                    # Ultralytics YOLO 直接调用（调试用）
-    ├── yolov8_onnx.py             # ONNX 推理器（water/assam/orange 三类）
+    ├── yolov8_onnx.py             # ONNX 推理器参考实现
     ├── get_camera.py              # 相机封装（独立版本）
     └── readme.txt                 # 使用说明
 ```
@@ -95,6 +109,7 @@ rc2025/
 | `app_runtime.h` / `app_runtime.cpp` | `AppRuntime` 结构体：聚合 DDS 订阅器、Sport 客户端、相机等组件。 |
 | `callbacks.h` / `callbacks.cpp` | DDS 回调函数：`rangeCB()` 雷达测距 + EMA 滤波；`StateCB` 四足位姿状态。 |
 | `utils.h` / `utils.cpp` | **工具函数库**：坐标变换、PID 航向控制、安全距离修正、站直检测、路口判定等。 |
+| `line_follow.h` / `line_follow.cpp` | 巡线控制逻辑。 |
 | `visualizer.h` / `visualizer.cpp` | 实时雷达距离曲线可视化（OpenCV）。 |
 | `aruco_server.h` / `aruco_server.cpp` | TCP 服务端（监听 `127.0.0.1:5005`），接收 ArUco 检测结果。 |
 
@@ -110,115 +125,76 @@ rc2025/
 
 ---
 
-## 模块二：D1 机械臂控制与视觉抓取（d1_arm）
+## 模块二：D1 机械臂控制（d1_arm）
 
-基于 Python 的机械臂控制与 YOLOv8 视觉抓取系统，使用 Intel RealSense D435 深度相机和 ONNX 推理。
+### C++ 控制程序（src/）
 
-### 控制类
+| 源文件 | 编译产物 | 功能 |
+|--------|----------|------|
+| `d1_enable.cpp` | `d1_enable` | 启用机械臂 |
+| `d1_disable.cpp` | `d1_disable` | 禁用机械臂 |
+| `d1_home.cpp` | `d1_home` | 机械臂归位 |
+| `d1_safe_fold.cpp` | `d1_safe_fold` | 机械臂安全折叠 |
+| `d1_move_single.cpp` | `d1_move_single` | 单个关节移动 |
+| `d1_move_multiple.cpp` | `d1_move_multiple` | 多关节批量移动 |
+| `d1_get_arm_joint_angle.cpp` | `d1_get_arm_joint_angle` | 获取关节角度 |
+| `multiple_joint_angle_control.cpp` | — | 多关节角度控制（辅助） |
+
+### 消息类型（src/msg/）
+
+| 头文件 | 说明 |
+|--------|------|
+| `ArmString_.hpp` | 机械臂字符串指令消息 |
+| `PubServoInfo_.hpp` | 舵机信息发布消息 |
+| `SetServoAngle_.hpp` | 设置舵机角度消息 |
+| `SetServoDumping_.hpp` | 设置舵机阻尼消息 |
+
+### Python 控制与视觉脚本（build/）
 
 | 文件 | 类 | 说明 |
 |------|----|------|
-| `scripts/d1_arm.py` | `D1Arm` | **5舵机串口直控**（使用中）。`multi_write()` 同时控制5个舵机，`close_gripper()`/`open_gripper()` 夹爪控制 |
-| 同上 | `D1RobotArmController` | **7关节 C++ 封装**（备选）。`blinx_movej()`/`blinx_movel()` 关节/笛卡尔运动 |
-
-### 视觉检测
-
-| 文件 | 类 | 说明 |
-|------|----|------|
-| `scripts/yolov8_onnx.py` | `YOLOv8` | ONNX 推理器，输出 `out_list` 每项格式 `[类别名, center_x, center_y, 置信度]` |
-| `scripts/camera_d435.py` | `Camera` | D435 深度相机：`get_aligned_frames()` → 彩色+深度帧，`get_depth_at_pixel()` → 深度(mm) |
-
-### 底层动作模块（新增 ★）
-
-| 文件 | 类 | 说明 |
-|------|----|------|
-| `scripts/arm_actions.py` | `ArmActions` | **机械臂底层动作类**，封装所有原子操作 |
-| | `Poses` | **姿态常量类**：NAVIGATION / PHOTO / DROP / PRE_PICK / LIFT_AFTER_PICK / PLACE_1 / PLACE_2（待标定） |
-| | `Calibration` | **像素→世界坐标标定**：3点仿射变换，`pixel_to_world(px, py)` |
-
-`ArmActions` 提供的方法：
-
-| 方法 | 功能 |
-|------|------|
-| `go_home()` | 回到导航姿态 |
-| `go_photo_pose()` | 移动到拍照姿态 |
-| `go_pre_pick_pose()` | 移动到预抓取姿态 |
-| `go_drop_pose()` | 移动到卸载姿态 |
-| `go_place_pose(platform_id)` | 移动到一号或二号放置平台 |
-| `open_gripper()` / `close_gripper()` | 夹爪开/闭 |
-| `detect_with_retry(label)` | 带重试的 YOLO 检测（返回 center_x, center_y, depth_mm） |
-| `detect_among(labels)` | 在多标签中检测，返回第一个匹配的标签名 |
-| `camera_to_world(px, py)` | 像素坐标 → 世界坐标 (wz, wx) |
-| `arm_pick(label)` | **完整抓取流程**：导航→拍照→识别→前伸→夹取→抬升→导航 |
-| `arm_drop()` | **卸载流程**：移动到卸载姿态→张开夹爪 |
-| `arm_place(platform_id)` | **放置流程**：移动到对应平台→张开夹爪→回导航 |
+| `d1_arm.py` | `UnitreeD1Arm` | 5舵机 C++ 程序封装控制类（`enable`/`disable`/`home`/`safe_fold`/`move_single_joint`/`move_joints`） |
+| 同上 | `D1RobotArmController` | 7关节 C++ 封装（`blinx_movej`/`blinx_movel` 等，备选方案） |
+| `d1_pick.py` | `Robot_pick` | 完整视觉抓取流程：标定→检测→抓取→放置 |
+| `yolov8_onnx.py` | `YOLOv8` | ONNX 推理器，输出 `out_list` 每项格式 `[类别名, center_x, center_y, 置信度]` |
+| `camera_d435.py` | `Camera` | D435 深度相机：`get_aligned_frames()` → 彩色+深度帧，`get_depth_at_pixel()` → 深度(mm) |
+| `check_urdf.py` | — | URDF 运动链解析与验证 |
 
 ### D1 视觉抓取流程
 
 ```
-arm_pick(label):
-  导航姿态 → 拍照姿态 → detect_with_retry(label)
-    → 坐标转换 pixel_to_world(px, py)
+抓取流程 (d1_pick.py):
+  导航姿态 → 拍照姿态 → YOLO检测
+    → 像素→世界坐标标定（3点仿射变换）
       → 预抓取姿态 → 前伸 → 下降夹取
         → 闭合夹爪 → 抬升 → 导航姿态
+
+卸载流程:
+  导航姿态 → 卸载姿态 → 张开夹爪 → 导航姿态
 ```
+
+### 模型资源
+
+| 文件 | 说明 |
+|------|------|
+| `best.onnx` | YOLOv8 ONNX 模型权重（water / assam / orange 等类别） |
+| `d1_description.urdf` | D1 机械臂 URDF 机器人描述文件（7 轴运动链：base_link → Link7_2） |
+| `d1_description.csv` | 坐标系/关节辅助数据（质量、惯量、碰撞体积等） |
 
 ---
 
-## 模块三：机械臂任务编排（task_planner ★）
-
-`d1_arm/scripts/task_planner.py` — **顶层任务接口**，供行走模块在各平台到达时调用。
-
-### 调用方式
-
-```python
-from task_planner import TaskPlanner
-
-planner = TaskPlanner(port="/dev/ttyUSB0")
-
-# 阶段1: 到达抓取平台
-ok, target_platform = planner.task_pickup_platform("cuboid", ["mark_1", "mark_2"])
-# → (True, 1)  成功抓取起始物资，识别到1号标志，去一号放置平台
-
-# 阶段2: 到达中转平台
-ok = planner.task_transfer_platform("cuboid", "sphere")
-# → True  卸载起始物资 → 拍照抓取场地物资 → 归位
-
-# 阶段3: 到达检测点
-warn = planner.task_detect_warning(["warning_electric", "warning_oxide", "warning_radiation"])
-# → 0=伸懒腰, 1=打招呼, 2=闪烁前灯, -1=未识别
-
-# 阶段4: 到达放置平台
-ok = planner.task_place_platform(target_platform)
-
-planner.cleanup()
-```
-
-### 阶段接口说明
-
-| 接口 | 阶段 | 内部流程 |
-|------|------|---------|
-| `task_pickup_platform()` | 抓取平台 | 抓取起始物资 → 识别平台正面标志 → 返回目标放置平台号 |
-| `task_transfer_platform()` | 中转平台 | 卸载起始物资 → 不归位直接拍照 → 抓取场地物资 → 归位 |
-| `task_detect_warning()` | 检测点 | 拍照识别警示标志（仅识别不抓取）→ 返回警示类型 |
-| `task_place_platform()` | 放置平台 | 按阶段1的结果卸载场地物资到对应平台 |
-
-### YOLO 模型类别
-
-| ID | 类别 | 用途 |
-|----|------|------|
-| 0-3 | `sphere`, `cuboid`, `pyramid`, `cylinder` | 4种物资 |
-| 4-5 | `mark_1`, `mark_2` | 抓取平台识别标志 |
-| 6-8 | `warning_electric`, `warning_oxide`, `warning_radiation` | 警示标志 |
-
----
-
-## 模块四：ArUco 感知模块（perception）
+## 模块三：ArUco 感知模块（perception）
 
 | 文件 | 功能 |
 |------|------|
 | `aruco_detector.py` | 通过 Go2 前视摄像头检测 DICT_4X4_50 ArUco 标记（ID 0-5），通过 TCP Socket 发送到 `go2_runner`（端口 5005） |
 | `d435_camera/camera_d435.py` | D435 相机封装（独立副本） |
+
+---
+
+## 模块四：YOLO 几何参考（yolo_Geometry）
+
+调试用参考实现，包含独立的 YOLO 推理与相机封装代码，可用于模型验证和单独测试。
 
 ---
 
@@ -263,22 +239,28 @@ cd go2_runner
 ./run.sh eth0 --gui         # 带 GUI 可视化窗口
 ```
 
-### 机械臂任务模块（Python）
+### D1 机械臂 C++ 程序
 
 ```bash
-cd d1_arm/scripts
+cd d1_arm
+mkdir -p build && cd build
+cmake ..
+make -j$(nproc)
+```
+
+### D1 机械臂 Python 脚本
+
+```bash
+cd d1_arm/build
 
 # 安装依赖
 pip install pyrealsense2 onnxruntime opencv-python numpy pyserial
 
-# 运行完整任务流程（需连接机械臂和相机）
-python task_planner.py
-
-# 单独测试底层动作
-python arm_actions.py
-
-# 单独测试夹爪
+# 运行视觉抓取流程
 python d1_pick.py
+
+# 单独测试机械臂控制
+python d1_arm.py
 ```
 
 ### ArUco 感知模块（Python）
@@ -312,22 +294,9 @@ START
 [CASE 1]  迷宫导航：两次 180° 掉头 + 一次 90° 左转弧线
   │
   ▼
----
+[CASE 2]  巡线前进，准备过台阶
   │
   ▼
-[阶段1]  抓取平台：arm_pick(起始物资) → 识别平台标志 → 返回平台号
-  │
-  ▼
-[阶段2]  中转平台：arm_drop(卸载) → 拍照抓取场地物资 → go_home()
-  │
-  ▼
-[阶段3]  检测点：拍照识别警示标志 → 返回警示类型
-  │
-  ▼
-[阶段4]  放置平台：按阶段1结果 arm_place(platform_id)
-  │
-  ▼
----
 [CASE 3]  终点前跳
   │
   ▼
@@ -339,11 +308,29 @@ FINISH
 
 ---
 
+## Git 忽略规则说明
+
+`.gitignore` 配置：
+
+```
+# 忽略所有名为 build 的文件夹
+build/
+
+# 但不忽略 d1_arm/build（包含 Python 脚本、模型、URDF 等必要资源）
+!d1_arm/build/
+```
+
+效果：
+- 根目录 `build/` 和 `go2_runner/build/` 被忽略（纯 CMake 构建产物）
+- `d1_arm/build/` 不被忽略，所有资源文件（Python 脚本、ONNX 模型、URDF、编译后的可执行文件等）可被 Git 追踪
+
+---
+
 ## 注意事项
 
 1. **相机内参**（`params.h` 中的 `K`、`D` 矩阵）需按实机标定结果替换。
 2. **网卡接口**：`eth_if` 参数为 Go2 与主机通信的有线网卡名（如 `eth0`、`enp3s0`），需根据实际环境指定。
-3. **机械臂姿态标定**：`arm_actions.py` 中 `Poses` 类的所有角度值和 `Calibration` 类的标定点为占位值，必须按 `docs/calibration_guide.md` 中的步骤实测标定后替换。
-4. **YOLO 模型**：当前 `best.onnx` 可能使用旧类别集，需重新训练支持 9 类标签（4物资 + 2标志 + 3警示）的模型。
-5. **机械臂版本**：实际使用 `D1Arm`（5舵机串口直控），`D1RobotArmController`（7关节C++封装）为备选方案。
+3. **机械臂姿态标定**：`d1_arm/build/d1_pick.py` 中 `Robot_pick.blinx_calibration_matrix()` 的标定点为占位值，必须按 `docs/calibration_guide.md` 中的步骤实测标定后替换。
+4. **YOLO 模型**：当前 `best.onnx` 的类别集（water / assam / orange）需确认是否满足竞赛要求的全部类别。
+5. **机械臂版本**：实际使用 `UnitreeD1Arm`（通过 subprocess 调用 C++ 可执行文件），`D1RobotArmController`（7关节C++封装）为备选方案。
 6. **GUI 模式**：`--gui` 仅在有 X11 桌面环境的机器上可用，机载无头模式（headless）请省略该参数。
