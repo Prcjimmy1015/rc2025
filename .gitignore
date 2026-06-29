@@ -16,3 +16,4 @@ d1_arm/build/Makefile
 d1_arm/build/cmake_install.cmake
 d1_arm/build/.cmake/
 d1_arm/build/__pycache__/
+yolo_Geometry/__pycache__/

@@ -67,15 +67,10 @@ rc2025/
 │   │       ├── PubServoInfo_.hpp / .cpp
 │   │       ├── SetServoAngle_.hpp / .cpp
 │   │       └── SetServoDumping_.hpp / .cpp
-│   └── build/                     # 构建产物 + Python 脚本 + 模型资源（git 不忽略）
+│   └── build/                     # 构建产物 + Python 控制脚本 + 模型资源（git 不忽略）
 │       ├── d1_disable / d1_enable / d1_home / d1_safe_fold  # 编译后的 C++ 可执行文件
 │       ├── d1_move_single / d1_move_multiple / d1_get_arm_joint_angle / get_arm_joint_angle
 │       ├── d1_arm.py              # D1 机械臂 Python 控制类（UnitreeD1Arm + D1RobotArmController）
-│       ├── d1_pick.py             # 视觉抓取流程（Robot_pick 类）
-│       ├── yolov8_onnx.py         # YOLOv8 ONNX 推理器（预处理/后处理/绘图）
-│       ├── camera_d435.py         # Intel RealSense D435 深度相机封装（对齐/取流/测距）
-│       ├── check_urdf.py          # URDF 运动链解析验证脚本
-│       ├── best.onnx              # YOLOv8 ONNX 模型权重
 │       ├── d1_description.urdf    # D1 机械臂 URDF 机器人描述文件（7 轴运动链）
 │       └── d1_description.csv     # 坐标系/关节辅助数据
 │
@@ -150,35 +145,17 @@ rc2025/
 | `SetServoAngle_.hpp` | 设置舵机角度消息 |
 | `SetServoDumping_.hpp` | 设置舵机阻尼消息 |
 
-### Python 控制与视觉脚本（build/）
+### Python 控制脚本（build/）
 
 | 文件 | 类 | 说明 |
 |------|----|------|
 | `d1_arm.py` | `UnitreeD1Arm` | 5舵机 C++ 程序封装控制类（`enable`/`disable`/`home`/`safe_fold`/`move_single_joint`/`move_joints`） |
 | 同上 | `D1RobotArmController` | 7关节 C++ 封装（`blinx_movej`/`blinx_movel` 等，备选方案） |
-| `d1_pick.py` | `Robot_pick` | 完整视觉抓取流程：标定→检测→抓取→放置 |
-| `yolov8_onnx.py` | `YOLOv8` | ONNX 推理器，输出 `out_list` 每项格式 `[类别名, center_x, center_y, 置信度]` |
-| `camera_d435.py` | `Camera` | D435 深度相机：`get_aligned_frames()` → 彩色+深度帧，`get_depth_at_pixel()` → 深度(mm) |
-| `check_urdf.py` | — | URDF 运动链解析与验证 |
-
-### D1 视觉抓取流程
-
-```
-抓取流程 (d1_pick.py):
-  导航姿态 → 拍照姿态 → YOLO检测
-    → 像素→世界坐标标定（3点仿射变换）
-      → 预抓取姿态 → 前伸 → 下降夹取
-        → 闭合夹爪 → 抬升 → 导航姿态
-
-卸载流程:
-  导航姿态 → 卸载姿态 → 张开夹爪 → 导航姿态
-```
 
 ### 模型资源
 
 | 文件 | 说明 |
 |------|------|
-| `best.onnx` | YOLOv8 ONNX 模型权重（water / assam / orange 等类别） |
 | `d1_description.urdf` | D1 机械臂 URDF 机器人描述文件（7 轴运动链：base_link → Link7_2） |
 | `d1_description.csv` | 坐标系/关节辅助数据（质量、惯量、碰撞体积等） |
 
@@ -217,13 +194,13 @@ rc2025/
 | OpenCV 4.x | 图像处理 |
 | CMake ≥ 3.16, GCC ≥ 9 (C++17) | 编译构建 |
 
-### 软件（D1 Arm / Perception）
+### 软件（D1 Arm / Perception / yolo_Geometry）
 
 | 依赖 | 用途 |
 |------|------|
 | Python ≥ 3.8 | 运行环境 |
-| pyrealsense2 | Intel RealSense D435 驱动 |
-| onnxruntime (GPU/CPU) | YOLOv8 推理 |
+| pyrealsense2 | Intel RealSense D435 驱动（yolo_Geometry 视觉推理） |
+| onnxruntime (GPU/CPU) | YOLOv8 ONNX 推理（yolo_Geometry） |
 | opencv-python | ArUco 检测、图像处理 |
 | numpy | 数值计算 |
 | pyserial | D1 机械臂串口通信 |
@@ -255,12 +232,9 @@ make -j$(nproc)
 cd d1_arm/build
 
 # 安装依赖
-pip install pyrealsense2 onnxruntime opencv-python numpy pyserial
+pip install opencv-python numpy pyserial
 
-# 运行视觉抓取流程
-python d1_pick.py
-
-# 单独测试机械臂控制
+# 测试机械臂控制
 python d1_arm.py
 ```
 
@@ -341,9 +315,9 @@ d1_arm/build/__pycache__/
 
 1. **相机内参**（`params.h` 中的 `K`、`D` 矩阵）需按实机标定结果替换。
 2. **网卡接口**：`eth_if` 参数为 Go2 与主机通信的有线网卡名（如 `eth0`、`enp3s0`），需根据实际环境指定。
-3. **机械臂姿态标定**：`d1_arm/build/d1_pick.py` 中 `Robot_pick.blinx_calibration_matrix()` 的标定点为占位值，必须按 `docs/calibration_guide.md` 中的步骤实测标定后替换。
-4. **YOLO 模型**：当前 `best.onnx` 的类别集（water / assam / orange）需确认是否满足竞赛要求的全部类别。
-5. **机械臂版本**：实际使用 `UnitreeD1Arm`（通过 subprocess 调用 C++ 可执行文件），`D1RobotArmController`（7关节C++封装）为备选方案。
+3. **机械臂姿态标定**：视觉抓取流程的标定点需按 `docs/calibration_guide.md` 中的步骤实测标定后替换。
+4. **YOLO 模型**：`yolo_Geometry/best.onnx` 的类别集（water / assam / orange）需确认是否满足竞赛要求的全部类别。
+5. **机械臂版本**：实际使用 `UnitreeD1Arm`（通过 subprocess 调用 C++ 可执行文件），`D1RobotArmController`（7关节C++封装）为备选方案。视觉抓取参考实现位于 `yolo_Geometry/` 目录。
 6. **GUI 模式**：`--gui` 仅在有 X11 桌面环境的机器上可用，机载无头模式（headless）请省略该参数。
 7. **VMware 双网卡环境**：如果虚拟机使用双网卡（NAT 上网 + 桥接访问机械臂），所有 8 个 C++ 源文件已将 `ChannelFactory::Instance()->Init(0)` 改为 `Init(0, "ens37")`，确保 DDS 通信绑定到有线桥接网卡。重新编译后无需额外环境变量。详见 `docs/VMware-Ubuntu22.04-双网卡配置指南-2.0.md`。
 8. **ens37 组播路由**：netplan 已配置 `224.0.0.0/4` 组播路由指向 ens37，`/etc/sysctl.conf` 已设置 `net.ipv4.conf.ens37.rp_filter=0` 防止组播包被内核丢弃。

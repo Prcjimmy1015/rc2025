@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import cv2
 
 
-model = YOLO('best.onnx')
+model = YOLO('/home/linux/rc2025/yolo_Geometry/best.onnx')
 
 results = model(
     source=0,

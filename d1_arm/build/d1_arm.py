@@ -332,6 +332,7 @@ if __name__ == "__main__":
         arm.blinx_photograph_attitude()
         time.sleep(10)
         arm.blinx_get_arm_software_info()
+        arm.blinx_navigation_attitude()
         
         
     except Exception as e:

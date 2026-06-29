@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 
 # 1. 加载本地的 .onnx 模型
-model = YOLO('./best.onnx')  #填入模型地址
+model = YOLO('/home/linux/rc2025/yolo_Geometry/best.onnx')  #填入模型地址
 
 # 2. 对图片进行推理
 # 这里的 'path/to/your/image.jpg' 可以是图片路径、文件夹，或者是视频，
