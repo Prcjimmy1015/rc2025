@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     double angle = atof(argv[2]);
     int delay = atoi(argv[3]);
     printf("收到参数：id = %d, angle = %.2f, delay = %d\n", id, angle, delay);
-    ChannelFactory::Instance()->Init(0);
+    ChannelFactory::Instance()->Init(0, "ens37");
     ChannelPublisher<unitree_arm::msg::dds_::ArmString_> publisher(TOPIC);
     publisher.InitChannel();
 

@@ -5,6 +5,9 @@ import shlex
 from pathlib import Path
 import time
 
+# CycloneDDS 双网卡绑定已在 C++ 源码层面修复（Init(0, "ens37")），
+# Python 层不再需要设置环境变量。
+
 class UnitreeD1Arm:
     """Unitree D1机械臂控制类，封装各类操作接口"""
     
@@ -333,4 +336,3 @@ if __name__ == "__main__":
         
     except Exception as e:
         print(f"操作失败: {e}")
-

@@ -32,7 +32,7 @@ void ServoHandler(const void* msg)
 
 int main()
 {
-    ChannelFactory::Instance()->Init(0);
+    ChannelFactory::Instance()->Init(0, "ens37");
     ChannelSubscriber<PubServoInfo_> sub(TOPIC_SERVO);
     sub.InitChannel(ServoHandler);
 

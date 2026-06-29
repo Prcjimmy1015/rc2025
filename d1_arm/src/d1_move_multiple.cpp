@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     double angle4 = atof(argv[5]);
     double angle5 = atof(argv[6]);
     double angle6 = atof(argv[7]);
-    ChannelFactory::Instance()->Init(0);
+    ChannelFactory::Instance()->Init(0, "ens37");
     ChannelPublisher<unitree_arm::msg::dds_::ArmString_> publisher(TOPIC);
     publisher.InitChannel();
 
