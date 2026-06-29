@@ -279,6 +279,7 @@ python aruco_detector.py eth0
 | `1-2026睿抗机器人开发者大赛-多模态巡检.pdf` | 竞赛任务说明与规则 |
 | `02_D435深度相机取流及深度信息获取接口说明.pdf` | RealSense D435 使用指南 |
 | `calibration_guide.md` | ★ 机械臂实测标定流程（姿态/相机/舵机映射/验证清单） |
+| `VMware-Ubuntu22.04-双网卡配置指南-2.0.md` | ★ VMware 双网卡配置（NAT上网 + 桥接访问有线设备）含 DDS 组播修复 |
 
 ---
 
@@ -334,3 +335,5 @@ build/
 4. **YOLO 模型**：当前 `best.onnx` 的类别集（water / assam / orange）需确认是否满足竞赛要求的全部类别。
 5. **机械臂版本**：实际使用 `UnitreeD1Arm`（通过 subprocess 调用 C++ 可执行文件），`D1RobotArmController`（7关节C++封装）为备选方案。
 6. **GUI 模式**：`--gui` 仅在有 X11 桌面环境的机器上可用，机载无头模式（headless）请省略该参数。
+7. **VMware 双网卡环境**：如果虚拟机同时有 NAT（上网）和桥接（机械臂）两张网卡，需要在 C++ 源码中将 `ChannelFactory::Instance()->Init(0)` 改为 `Init(0, "ens37")` 并重新编译，否则 DDS 通信会因走错网卡而失败。详见 `docs/VMware-Ubuntu22.04-双网卡配置指南-2.0.md`。
+8. **DDS 绑定**：所有 8 个 C++ 源文件已修复为绑定 `ens37` 网卡（`Init(0, "ens37")`），重新编译后无需额外环境变量即可正常工作。
