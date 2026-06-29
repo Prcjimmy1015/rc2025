@@ -3,7 +3,7 @@
 rc2025 copy.cpp
 
 # 构建产物
-build/
+
 d1_arm/build/CMakeCache.txt
 d1_arm/build/CMakeFiles/
 d1_arm/build/Makefile
