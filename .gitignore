@@ -1,18 +1,18 @@
+# 用户指定忽略
 .cursor/
 .vscode/
 rc2025 copy.cpp
 
-# 构建产物
+# 忽略所有 build 文件夹
+build/
 
-d1_arm/build/CMakeCache.txt
+# 但不忽略 d1_arm/build 这个特定的 build 文件夹
+!d1_arm/build/
+
+# 排除 d1_arm/build 中的 CMake 构建中间产物
 d1_arm/build/CMakeFiles/
+d1_arm/build/CMakeCache.txt
 d1_arm/build/Makefile
 d1_arm/build/cmake_install.cmake
 d1_arm/build/.cmake/
-d1_arm/build/*.o
-d1_arm/build/*.o.d
-d1_arm/build/*.dir/
-
-# Python 缓存
-__pycache__/
-*.pyc
+d1_arm/build/__pycache__/

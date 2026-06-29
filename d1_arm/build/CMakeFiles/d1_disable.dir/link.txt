@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/d1_disable.dir/src/d1_disable.cpp.o CMakeFiles/d1_disable.dir/src/msg/ArmString_.cpp.o -o d1_disable  -lunitree_sdk2 -lddsc -lddscxx -lrt -lpthread 
