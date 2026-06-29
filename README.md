@@ -29,7 +29,8 @@ rc2025/
 ├── docs/                          # 竞赛文档与技术资料
 │   ├── 1-2026睿抗机器人开发者大赛-多模态巡检.pdf
 │   ├── 02_D435深度相机取流及深度信息获取接口说明.pdf
-│   └── calibration_guide.md       # ★ 机械臂标定流程文档（姿态/相机/舵机映射）
+│   ├── calibration_guide.md       # ★ 机械臂标定流程文档（姿态/相机/舵机映射）
+│   └── VMware-Ubuntu22.04-双网卡配置指南-2.0.md  # ★ 双网卡配置（NAT + 桥接 + DDS 组播修复）
 │
 ├── go2_runner/                    # 【模块一】Go2 机器狗导航与控制 (C++)
 │   ├── CMakeLists.txt             # CMake 构建配置
@@ -319,11 +320,20 @@ build/
 
 # 但不忽略 d1_arm/build（包含 Python 脚本、模型、URDF 等必要资源）
 !d1_arm/build/
+
+# 排除 d1_arm/build 中的 CMake 构建中间产物
+d1_arm/build/CMakeFiles/
+d1_arm/build/CMakeCache.txt
+d1_arm/build/Makefile
+d1_arm/build/cmake_install.cmake
+d1_arm/build/.cmake/
+d1_arm/build/__pycache__/
 ```
 
 效果：
 - 根目录 `build/` 和 `go2_runner/build/` 被忽略（纯 CMake 构建产物）
 - `d1_arm/build/` 不被忽略，所有资源文件（Python 脚本、ONNX 模型、URDF、编译后的可执行文件等）可被 Git 追踪
+- `d1_arm/build/` 中的 CMake 中间文件和 `__pycache__/` 被排除
 
 ---
 
@@ -335,3 +345,5 @@ build/
 4. **YOLO 模型**：当前 `best.onnx` 的类别集（water / assam / orange）需确认是否满足竞赛要求的全部类别。
 5. **机械臂版本**：实际使用 `UnitreeD1Arm`（通过 subprocess 调用 C++ 可执行文件），`D1RobotArmController`（7关节C++封装）为备选方案。
 6. **GUI 模式**：`--gui` 仅在有 X11 桌面环境的机器上可用，机载无头模式（headless）请省略该参数。
+7. **VMware 双网卡环境**：如果虚拟机使用双网卡（NAT 上网 + 桥接访问机械臂），所有 8 个 C++ 源文件已将 `ChannelFactory::Instance()->Init(0)` 改为 `Init(0, "ens37")`，确保 DDS 通信绑定到有线桥接网卡。重新编译后无需额外环境变量。详见 `docs/VMware-Ubuntu22.04-双网卡配置指南-2.0.md`。
+8. **ens37 组播路由**：netplan 已配置 `224.0.0.0/4` 组播路由指向 ens37，`/etc/sysctl.conf` 已设置 `net.ipv4.conf.ens37.rp_filter=0` 防止组播包被内核丢弃。
