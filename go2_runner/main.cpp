@@ -24,41 +24,28 @@ static atomic<bool> g_exit(false);
 void sig(int s){if(s==SIGINT){cout<<"\n[SIGINT]\n";g_exit=true;}}
 
 static void t0(go2::SportClient &sc,Mat &f){
-static bool once=false;if(!once){cout<<"\n=== V16_THRESH ===\n"<<endl;once=true;}
+static bool once=false;if(!once){cout<<"\n=== V17_RESTORE_V7 ===\n"<<endl;once=true;}
 static int cnt=0;cnt++;
 static bool settled=false;static int n_st=0;static double yaw_settle=0;
 if(!settled){n_st++;sc.StaticWalk();sc.Euler(0,0.8,0);if(n_st==1)yaw_settle=yaw;
 double yd=yaw-yaw_settle;if(yd>M_PI)yd-=2*M_PI;if(yd<-M_PI)yd+=2*M_PI;
 double steer=-yd*2.0;steer=max(-0.3,min(0.3,steer));sc.Move(0,0,steer);
-if(n_st>=30){settled=true;cout<<"[V16] Settled, go.\n"<<endl;}return;}
+if(n_st>=30){settled=true;cout<<"[V17] Settled, go.\n"<<endl;}return;}
 
-sc.Euler(0,0.8,0);
 Mat g,b,n;cvtColor(f,g,COLOR_BGR2GRAY);GaussianBlur(g,b,{5,5},0);
-threshold(b,n,80,255,THRESH_BINARY_INV);
+threshold(b,n,50,255,THRESH_BINARY_INV);
 {Mat k=getStructuringElement(MORPH_RECT,Size(3,3));morphologyEx(n,n,MORPH_OPEN,k);}
 int rh=100,roiy=b.rows-rh;if(roiy<0)roiy=0;double e=0;int ci=0,rw=n.cols;vector<int>cc(rw,0);
 for(int r=roiy;r<b.rows;++r){const uchar*row=n.ptr(r);for(int x=0;x<rw;++x)if(row[x]){cc[x]++;ci++;}}
 int pc=-1,pk=0;for(int x=0;x<rw;++x)if(cc[x]>pk){pk=cc[x];pc=x;}
-bool ok=(pk>=5&&ci>=50&&ci<=30000);if(ok)e=pc-640;
+bool ok=(pk>=5&&ci>=50&&ci<=50000);if(ok)e=pc-640;
 if(ok){int cx=max(0,min(1279,pc));int cy=b.rows-rh/2;
 circle(f,Point(cx,cy),10,Scalar(0,255,0),-1);line(f,Point(cx,cy+25),Point(cx,cy-25),Scalar(0,255,0),2);}
-
-if(cnt%15==0){if(ok)printf("[V16] LINE err=%.0f ci=%d pk=%d\n",e,ci,pk);else printf("[V16] NO LINE ci=%d pk=%d\n",ci,pk);}
+if(cnt%15==0){if(ok)printf("[V17] LINE err=%.0f ci=%d pk=%d\n",e,ci,pk);else printf("[V17] NO LINE ci=%d pk=%d\n",ci,pk);}
 double ly=0;{double _,dy;transformLocal(px,py,yaw,_,ly,dy);}double lc=(ly>0.35)?-0.3:(ly<-0.35)?0.3:0;
-
-double ya=fmod(yaw,2*M_PI);if(ya<0)ya+=2*M_PI;double deg=ya*180.0/M_PI;int card=-1;
-if(deg<=20||deg>=340)card=0;else if(deg>=70&&deg<=110)card=90;else if(deg>=160&&deg<=200)card=180;else if(deg>=250&&deg<=290)card=270;
-static int cf=0,lcrd=-1;if(card==lcrd)cf++;else{lcrd=card;cf=1;}bool snap=(cf>45);
-bool is_cross=(ci>2500&&pk<ci*0.025);
-
-if(ok&&abs(e)<400&&ci>100){
-    if(snap){double t=card*M_PI/180.0,ey=t-yaw;if(ey>M_PI)ey-=2*M_PI;if(ey<-M_PI)ey+=2*M_PI;double s=ey*5.0;s=max(-1.0,min(1.0,s));sc.Move(0.12,0,s);}
-    else if(is_cross){sc.Move(0.15,0,0);}
-    else{double tg=e/1280.0*60.0*M_PI/180.0;double s=-tg*6.0;s=max(-1.0,min(1.0,s));double vx=(abs(e)>200)?0.06:0.15;sc.Move(vx,0,s);if(cnt%15==0)printf("[V16] servo s=%.2f vx=%.2f\n",s,vx);}
-}else if(ok){
-    if(snap){double t=card*M_PI/180.0,ey=t-yaw;if(ey>M_PI)ey-=2*M_PI;if(ey<-M_PI)ey+=2*M_PI;double s=ey*5.0;s=max(-1.0,min(1.0,s));sc.Move(0.10,0,s);}
-    else{double tg=e/1280.0*60.0*M_PI/180.0;if(abs(e)>=400){double s=max(-1.0,min(1.0,-tg*6.0));sc.Move(0,0,s);}else{double s=max(-1.0,min(1.0,-tg*6.0));sc.Move(0.12,0,s);}}
-}else{double s=max(-1.0,min(1.0,lc));sc.Move(0.12,0,s);}}
+if(ok&&abs(e)<400&&ci>100){double tg=e/1280.0*60.0*M_PI/180.0;double s=-tg*3.0;s=max(-0.8,min(0.8,s));if(abs(lc)>0.01)s=lc;s=max(-0.8,min(0.8,s));double vx=(abs(e)>300)?0.10:0.15;sc.Move(vx,0,s);if(cnt%15==0)printf("[V17] servo s=%.2f vx=%.2f\n",s,vx);}
+else if(ok){double tg=e/1280.0*60.0*M_PI/180.0;if(abs(e)>=400){double s=max(-0.8,min(0.8,-tg*3.0));sc.Move(0,0,s);if(cnt%15==0)printf("[V17] STOP+TURN\n");}else{double s=max(-0.8,min(0.8,-tg*3.0));if(abs(lc)>0.01)s=lc;s=max(-0.8,min(0.8,s));sc.Move(0.12,0,s);}}
+else{double s=max(-0.8,min(0.8,lc));sc.Move(0.12,0,s);}}
 
 int main(int ac,char**av){
 if(ac<2){cerr<<"Usage: "<<av[0]<<" <eth_if> [--gui] [--task N]\n";return -1;}
