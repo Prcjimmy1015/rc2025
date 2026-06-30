@@ -44,10 +44,10 @@ circle(f,Point(cx,cy),10,Scalar(0,255,0),-1);line(f,Point(cx,cy+25),Point(cx,cy-
 if(cnt%15==0){if(ok)printf("[V18] err=%.0f ci=%d pk=%d cross=%.1f sharp_e=%d sharp_ci=%d\n",e,ci,pk,(double)pk/(ci>0?ci:1),abs(e));else printf("[V18] NO LINE ci=%d pk=%d\n",ci,pk);}
 double ly=0;{double _,dy;transformLocal(px,py,yaw,_,ly,dy);}double lc=(ly>0.35)?-0.3:(ly<-0.35)?0.3:0;
 
-// 十字路口检测: ci很大且pk/ci很小（均匀分布）
-bool is_cross=(ci>5000 && pk*100/ci < 2);
-// 直角弯检测: err很大且ci骤降但pk仍较高
-bool is_sharp=(abs(e)>500 && ci<15000 && pk>30);
+// 十字路口检测: ci很大(>8000)且pk/ci很小(<1.5%)，说明白像素均匀分布在整个ROI
+bool is_cross=(ci>8000 && pk*100/ci < 1);
+// 直角弯检测: err很大(>500)且ci骤降(<10000)但pk仍较高(>50)，说明线条偏到边缘
+bool is_sharp=(abs(e)>500 && ci<10000 && pk>50);
 
 if(ok&&abs(e)<400&&ci>100){
     if(is_cross){sc.Move(0.15,0,0);if(cnt%15==0)printf("[V18] >>> CROSSROAD <<< ci=%d pk=%d ratio=%.3f\n",ci,pk,pk*100.0/ci);}}
