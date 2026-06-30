@@ -5,3 +5,6 @@ rc2025 copy.cpp
 
 # CMake / 本地构建产物（建议）
 build/
+
+# Python
+__pycache__/
