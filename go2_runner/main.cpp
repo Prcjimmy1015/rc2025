@@ -57,13 +57,16 @@ if(cnt%15==0){
 
 double ly=0;{double _,dy;transformLocal(px,py,yaw,_,ly,dy);}double lc=(ly>0.35)?-0.3:(ly<-0.35)?0.3:0;
 
-    if(is_cross){
-        sc.Move(0.15,0,0);
-    }else if(is_sharp){
-        double s=-e*0.025;s=max(-1.0,min(1.0,s));
-        sc.Move(0.05,0,s);
-        if(cnt%15==0)printf("[V20] >> SHARP s=%.2f\n",s);
-    }else if(ok){
+if(is_cross){
+    sc.Move(0.15,0,0);
+}else if(is_sharp){
+    static int sharp_frames=0;
+    sharp_frames++;
+    double s=-e*0.03;s=max(-1.0,min(1.0,s));
+    sc.Move(0,0,s);
+    if(cnt%15==0)printf("[V20] >> SHARP_STOP %d/150 s=%.2f\n",sharp_frames,s);
+}else{
+    if(ok){
         double tg=e/1280.0*60.0*M_PI/180.0;
         double s=-tg*6.0;s=max(-1.0,min(1.0,s));
         if(abs(e)>=400){sc.Move(0,0,s);if(cnt%15==0)printf("[V20] STOP+TURN s=%.2f\n",s);}
@@ -71,7 +74,7 @@ double ly=0;{double _,dy;transformLocal(px,py,yaw,_,ly,dy);}double lc=(ly>0.35)?
     }else{
         double s=max(-0.8,min(0.8,lc));sc.Move(0.12,0,s);
     }
-}
+}}
 
 int main(int ac,char**av){
 if(ac<2){cerr<<"Usage: "<<av[0]<<" <eth_if> [--gui] [--task N]\n";return -1;}
