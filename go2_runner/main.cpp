@@ -47,7 +47,7 @@ if(cnt%15==0){if(ok)printf("[V16] LINE err=%.0f ci=%d pk=%d\n",e,ci,pk);else pri
 double ly=0;{double _,dy;transformLocal(px,py,yaw,_,ly,dy);}double lc=(ly>0.35)?-0.3:(ly<-0.35)?0.3:0;
 
 double ya=fmod(yaw,2*M_PI);if(ya<0)ya+=2*M_PI;double deg=ya*180.0/M_PI;int card=-1;
-if(deg<=25||deg>=335)card=0;else if(deg>=65&&deg<=115)card=90;else if(deg>=155&&deg<=205)card=180;else if(deg>=245&&deg<=295)card=270;
+if(deg<=20||deg>=340)card=0;else if(deg>=70&&deg<=110)card=90;else if(deg>=160&&deg<=200)card=180;else if(deg>=250&&deg<=290)card=270;
 static int cf=0,lcrd=-1;if(card==lcrd)cf++;else{lcrd=card;cf=1;}bool snap=(cf>45);
 bool is_cross=(ci>2500&&pk<ci*0.025);
 
