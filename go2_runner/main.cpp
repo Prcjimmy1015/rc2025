@@ -41,21 +41,20 @@ int pc=-1,pk=0;for(int x=0;x<rw;++x)if(cc[x]>pk){pk=cc[x];pc=x;}
 bool ok=(pk>=5&&ci>=50&&ci<=50000);if(ok)e=pc-640;
 if(ok){int cx=max(0,min(1279,pc));int cy=b.rows-rh/2;
 circle(f,Point(cx,cy),10,Scalar(0,255,0),-1);line(f,Point(cx,cy+25),Point(cx,cy-25),Scalar(0,255,0),2);}
-if(cnt%15==0){if(ok)printf("[V18] LINE err=%.0f ci=%d pk=%d\n",e,ci,pk);else printf("[V18] NO LINE ci=%d pk=%d\n",ci,pk);}
+if(cnt%15==0){if(ok)printf("[V18] err=%.0f ci=%d pk=%d cross=%.1f sharp_e=%d sharp_ci=%d\n",e,ci,pk,(double)pk/(ci>0?ci:1),abs(e));else printf("[V18] NO LINE ci=%d pk=%d\n",ci,pk);}
 double ly=0;{double _,dy;transformLocal(px,py,yaw,_,ly,dy);}double lc=(ly>0.35)?-0.3:(ly<-0.35)?0.3:0;
 
-// 十字路口检测
-bool is_cross=(ci>4000&&pk<ci*0.03);
-// 直角弯检测
-bool is_sharp=(abs(e)>500&&ci<10000&&pk>50);
+// 十字路口检测: ci很大且pk/ci很小（均匀分布）
+bool is_cross=(ci>5000 && pk*100/ci < 2);
+// 直角弯检测: err很大且ci骤降但pk仍较高
+bool is_sharp=(abs(e)>500 && ci<15000 && pk>30);
 
 if(ok&&abs(e)<400&&ci>100){
-    if(is_cross){sc.Move(0.15,0,0);if(cnt%15==0)printf("[V18] CROSS\n");}
-    else if(is_sharp){double s=-e*0.015;s=max(-1.0,min(1.0,s));sc.Move(0.05,0,s);if(cnt%15==0)printf("[V18] SHARP s=%.2f\n",s);}
-    else{double tg=e/1280.0*60.0*M_PI/180.0;double s=-tg*3.0;s=max(-0.8,min(0.8,s));if(abs(lc)>0.01)s=lc;s=max(-0.8,min(0.8,s));double vx=(abs(e)>300)?0.10:0.15;sc.Move(vx,0,s);if(cnt%15==0)printf("[V18] servo s=%.2f vx=%.2f\n",s,vx);}}
+    if(is_cross){sc.Move(0.15,0,0);if(cnt%15==0)printf("[V18] >>> CROSSROAD <<< ci=%d pk=%d ratio=%.3f\n",ci,pk,pk*100.0/ci);}}
 else if(ok){
-    if(is_sharp){double s=-e*0.015;s=max(-1.0,min(1.0,s));sc.Move(0,0,s);if(cnt%15==0)printf("[V18] SHARP_STOP s=%.2f\n",s);}
-    else{double tg=e/1280.0*60.0*M_PI/180.0;if(abs(e)>=400){double s=max(-0.8,min(0.8,-tg*3.0));sc.Move(0,0,s);if(cnt%15==0)printf("[V18] STOP+TURN\n");}else{double s=max(-0.8,min(0.8,-tg*3.0));if(abs(lc)>0.01)s=lc;s=max(-0.8,min(0.8,s));sc.Move(0.12,0,s);}}}
+    if(is_cross){sc.Move(0.15,0,0);if(cnt%15==0)printf("[V18] >>> CROSSROAD <<< ci=%d pk=%d ratio=%.3f\n",ci,pk,pk*100.0/ci);}
+    else if(is_sharp){double s=-e*0.015;s=max(-1.0,min(1.0,s));sc.Move(0.05,0,s);if(cnt%15==0)printf("[V18] >>> SHARP TURN <<< err=%d ci=%d pk=%d steer=%.2f\n",(int)e,ci,pk,s);}
+    else{double tg=e/1280.0*60.0*M_PI/180.0;if(abs(e)>=400){double s=max(-0.8,min(0.8,-tg*3.0));sc.Move(0,0,s);if(cnt%15==0)printf("[V18] STOP+TURN err=%d\n",(int)e);}else{double s=max(-0.8,min(0.8,-tg*3.0));if(abs(lc)>0.01)s=lc;s=max(-0.8,min(0.8,s));sc.Move(0.12,0,s);}}}
 else{double s=max(-0.8,min(0.8,lc));sc.Move(0.12,0,s);}}
 
 int main(int ac,char**av){
