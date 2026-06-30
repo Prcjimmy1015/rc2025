@@ -32,6 +32,7 @@ double yd=yaw-yaw_settle;if(yd>M_PI)yd-=2*M_PI;if(yd<-M_PI)yd+=2*M_PI;
 double steer=-yd*2.0;steer=max(-0.3,min(0.3,steer));sc.Move(0,0,steer);
 if(n_st>=30){settled=true;cout<<"[V5] Settled, go.\n"<<endl;}return;}
 
+sc.Euler(0,0.8,0);
 Mat g,b,n;cvtColor(f,g,COLOR_BGR2GRAY);GaussianBlur(g,b,{5,5},0);
 threshold(b,n,50,255,THRESH_BINARY_INV);
 {Mat k=getStructuringElement(MORPH_RECT,Size(3,3));morphologyEx(n,n,MORPH_OPEN,k);}
