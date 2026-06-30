@@ -39,7 +39,7 @@ threshold(b,n,50,255,THRESH_BINARY_INV);
 int rh=100,roiy=b.rows-rh;if(roiy<0)roiy=0;double e=0;int ci=0,rw=n.cols;vector<int>cc(rw,0);
 for(int r=roiy;r<b.rows;++r){const uchar*row=n.ptr(r);for(int x=0;x<rw;++x)if(row[x]){cc[x]++;ci++;}}
 int pc=-1,pk=0;for(int x=0;x<rw;++x)if(cc[x]>pk){pk=cc[x];pc=x;}
-bool ok=(pk>=5&&ci>=50&&ci<=80000);if(ok)e=pc-640;
+bool ok=(pk>=5&&ci>=50&&ci<=100000);if(ok)e=pc-640;
 if(ok){int cx=max(0,min(1279,pc));int cy=b.rows-rh/2;
 circle(f,Point(cx,cy),10,Scalar(0,255,0),-1);line(f,Point(cx,cy+25),Point(cx,cy-25),Scalar(0,255,0),2);}
 
@@ -57,21 +57,21 @@ if(cnt%15==0){
 
 double ly=0;{double _,dy;transformLocal(px,py,yaw,_,ly,dy);}double lc=(ly>0.35)?-0.3:(ly<-0.35)?0.3:0;
 
-if(ok){
     if(is_cross){
         sc.Move(0.18,0,0);
     }else if(is_sharp){
         double s=-e*0.02;s=max(-1.0,min(1.0,s));
         sc.Move(0.06,0,s);
         if(cnt%15==0)printf("[V20] >> SHARP s=%.2f\n",s);
-    }else{
+    }else if(ok){
         double tg=e/1280.0*60.0*M_PI/180.0;
         double s=-tg*4.5;s=max(-0.8,min(0.8,s));
-        if(abs(lc)>0.01)s=lc;s=max(-0.8,min(0.8,s));
         if(abs(e)>=400){sc.Move(0,0,s);if(cnt%15==0)printf("[V20] STOP+TURN s=%.2f\n",s);}
         else{double vx=(abs(e)>300)?0.10:0.15;sc.Move(vx,0,s);}
+    }else{
+        double s=max(-0.8,min(0.8,lc));sc.Move(0.12,0,s);
     }
-}else{double s=max(-0.8,min(0.8,lc));sc.Move(0.12,0,s);}}
+}
 
 int main(int ac,char**av){
 if(ac<2){cerr<<"Usage: "<<av[0]<<" <eth_if> [--gui] [--task N]\n";return -1;}
