@@ -58,16 +58,16 @@ if(cnt%15==0){
 double ly=0;{double _,dy;transformLocal(px,py,yaw,_,ly,dy);}double lc=(ly>0.35)?-0.3:(ly<-0.35)?0.3:0;
 
     if(is_cross){
-        sc.Move(0.18,0,0);
+        sc.Move(0.15,0,0);
     }else if(is_sharp){
-        double s=-e*0.02;s=max(-1.0,min(1.0,s));
-        sc.Move(0.06,0,s);
+        double s=-e*0.025;s=max(-1.0,min(1.0,s));
+        sc.Move(0.05,0,s);
         if(cnt%15==0)printf("[V20] >> SHARP s=%.2f\n",s);
     }else if(ok){
         double tg=e/1280.0*60.0*M_PI/180.0;
-        double s=-tg*4.5;s=max(-0.8,min(0.8,s));
+        double s=-tg*6.0;s=max(-1.0,min(1.0,s));
         if(abs(e)>=400){sc.Move(0,0,s);if(cnt%15==0)printf("[V20] STOP+TURN s=%.2f\n",s);}
-        else{double vx=(abs(e)>300)?0.10:0.15;sc.Move(vx,0,s);}
+        else{double vx=(abs(e)>300)?0.08:0.12;sc.Move(vx,0,s);}
     }else{
         double s=max(-0.8,min(0.8,lc));sc.Move(0.12,0,s);
     }
