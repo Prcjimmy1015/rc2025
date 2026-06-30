@@ -44,8 +44,8 @@ if(ok){int cx=max(0,min(1279,pc));int cy=b.rows-rh/2;
 circle(f,Point(cx,cy),10,Scalar(0,255,0),-1);line(f,Point(cx,cy+25),Point(cx,cy-25),Scalar(0,255,0),2);}
 
 double pcross=(ci>0)?pk*100.0/ci:999;
-bool is_cross=(ci>45000 && pcross<0.25);
-bool is_sharp=(abs(e)>350 && ci<20000 && pk>40);
+bool is_cross=(ci>45000 && pcross<0.25 && abs(e)<500);
+bool is_sharp=(abs(e)>300 && ci<35000 && pk>30);
 
 if(cnt%15==0){
     const char*tag="NORM";
@@ -57,14 +57,14 @@ if(cnt%15==0){
 
 double ly=0;{double _,dy;transformLocal(px,py,yaw,_,ly,dy);}double lc=(ly>0.35)?-0.3:(ly<-0.35)?0.3:0;
 
-if(is_cross){
-    sc.Move(0.15,0,0);
-}else if(is_sharp){
+if(is_sharp){
     static int sharp_frames=0;
     sharp_frames++;
     double s=-e*0.03;s=max(-1.0,min(1.0,s));
     sc.Move(0,0,s);
     if(cnt%15==0)printf("[V20] >> SHARP_STOP %d/150 s=%.2f\n",sharp_frames,s);
+}else if(is_cross){
+    sc.Move(0.15,0,0);
 }else{
     if(ok){
         double tg=e/1280.0*60.0*M_PI/180.0;
