@@ -24,7 +24,7 @@ static atomic<bool> g_exit(false);
 void sig(int s){if(s==SIGINT){cout<<"\n[SIGINT]\n";g_exit=true;}}
 
 static void t0(go2::SportClient &sc,Mat &f){
-static bool once=false;if(!once){cout<<"\n=== V15_STEER_FAST ===\n"<<endl;once=true;}
+static bool once=false;if(!once){cout<<"\n=== V16_THRESH ===\n"<<endl;once=true;}
 static int cnt=0;cnt++;
 static bool settled=false;static int n_st=0;static double yaw_settle=0;
 if(!settled){n_st++;sc.StaticWalk();sc.Euler(0,0.8,0);if(n_st==1)yaw_settle=yaw;
@@ -34,7 +34,7 @@ if(n_st>=30){settled=true;cout<<"[V15] Settled, go.\n"<<endl;}return;}
 
 sc.Euler(0,0.8,0);
 Mat g,b,n;cvtColor(f,g,COLOR_BGR2GRAY);GaussianBlur(g,b,{5,5},0);
-threshold(b,n,50,255,THRESH_BINARY_INV);
+threshold(b,n,80,255,THRESH_BINARY_INV);
 {Mat k=getStructuringElement(MORPH_RECT,Size(3,3));morphologyEx(n,n,MORPH_OPEN,k);}
 int rh=100,roiy=b.rows-rh;if(roiy<0)roiy=0;double e=0;int ci=0,rw=n.cols;vector<int>cc(rw,0);
 for(int r=roiy;r<b.rows;++r){const uchar*row=n.ptr(r);for(int x=0;x<rw;++x)if(row[x]){cc[x]++;ci++;}}
