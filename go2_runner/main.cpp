@@ -41,11 +41,12 @@ int pc=-1,pk=0;for(int x=0;x<rw;++x)if(cc[x]>pk){pk=cc[x];pc=x;}
 bool ok=(pk>=5&&ci>=50&&ci<=50000);if(ok)e=pc-640;
 if(ok){int cx=max(0,min(1279,pc));int cy=b.rows-rh/2;
 circle(f,Point(cx,cy),10,Scalar(0,255,0),-1);line(f,Point(cx,cy+25),Point(cx,cy-25),Scalar(0,255,0),2);}
-if(cnt%15==0){if(ok)printf("[V18] err=%.0f ci=%d pk=%d cross=%.1f sharp_e=%d sharp_ci=%d\n",e,ci,pk,(double)pk/(ci>0?ci:1),abs(e));else printf("[V18] NO LINE ci=%d pk=%d\n",ci,pk);}
+if(cnt%15==0){if(ok)printf("[V18] err=%.0f ci=%d pk=%d cross=%.3f\n",e,ci,pk,pk*100.0/ci);else printf("[V18] NO LINE ci=%d pk=%d\n",ci,pk);}
 double ly=0;{double _,dy;transformLocal(px,py,yaw,_,ly,dy);}double lc=(ly>0.35)?-0.3:(ly<-0.35)?0.3:0;
 
-// 十字路口检测: ci很大(>8000)且pk/ci很小(<1.5%)，说明白像素均匀分布在整个ROI
-bool is_cross=(ci>8000 && pk*100/ci < 1);
+// 十字路口检测: ci非常大(>30000)且pk/ci很小(<0.5%)，说明白像素均匀分布在整个ROI
+// 正常巡线ci约15000-25000，十字路口会达到30000+
+bool is_cross=(ci>30000 && pk*100/ci < 0.5);
 // 直角弯检测: err很大(>500)且ci骤降(<10000)但pk仍较高(>50)，说明线条偏到边缘
 bool is_sharp=(abs(e)>500 && ci<10000 && pk>50);
 
