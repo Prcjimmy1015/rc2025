@@ -99,7 +99,7 @@ signal(SIGINT,sig);ChannelFactory::Instance()->Init(0,eth);AppRuntime rt;if(!ini
 px0=px;py0=py;yaw0=yaw;thread t(aruco_socket_server,5005);t.detach();cout<<(g_enable_gui?"GUI\n":"Headless\n")<<flush;
 go2::SportClient &sc=rt.sc;go2::ObstaclesAvoidClient &avc=rt.avoid_client;VideoCapture &cap=rt.cap;Mat frame,undist;int fc=0;auto t0t=chrono::steady_clock::now();
 while(!g_exit){if(!cap.read(frame)||frame.empty())break;fc++;undistort(frame,undist,K,D);if(g_force_task>=0)Flag_Task=g_force_task;
-if(g_case0_skip_init){t0(sc,undist);if(g_enable_gui){double fps=fc/chrono::duration<double>(chrono::steady_clock::now()-t0t).count();putText(undist,format("V22 FPS %.1f",fps),{10,30},FONT_HERSHEY_SIMPLEX,1,{0,255,0},2);imshow("Go2",undist);if(waitKey(1)==27)break;}continue;}
+if(g_case0_skip_init){t0(sc,undist);if(g_enable_gui){double fps=fc/chrono::duration<double>(chrono::steady_clock::now()-t0t).count();putText(undist,format("V22 FPS %.1f",fps),{10,30},FONT_HERSHEY_SIMPLEX,1,{0,255,0},2);imshow("Go2",undist);int key=waitKey(1);if(key==27)break;if(key=='r'){double rlx,rly,rdyaw;transformLocal(px,py,yaw,rlx,rly,rdyaw);static int recn=0;printf("\n[RECORD] #%d: lx=%.2f ly=%.2f yaw=%.3f\n\n",++recn,rlx,rly,yaw);}}continue;}
 double lx,ly,dyaw;transformLocal(px,py,yaw,lx,ly,dyaw);
 switch(Flag_Task){case 0:{int ret=case0_tick(sc,undist,rt.stateCB.state,fc);if(g_force_task<0){if(ret==1){Flag_Task=1;g_case0_second_pass=false;case1_reset_statics();}else if(ret==2){Flag_Task=2;g_case0_second_pass=false;case2_reset();}}break;}
 case 1:if(g_force_task<0&&case1_tick(sc,fc,lx,ly,yaw)){Flag_Task=0;g_case0_second_pass=true;case0_reset_statics();}break;
