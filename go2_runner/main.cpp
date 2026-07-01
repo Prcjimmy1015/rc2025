@@ -69,8 +69,8 @@ if(is_sharp){
     if(ok){
         double tg=e/1280.0*60.0*M_PI/180.0;
         double s=-tg*6.0;s=max(-1.0,min(1.0,s));
-        if(abs(e)>=400){sc.Move(0,0,s);if(cnt%15==0)printf("[V20] STOP+TURN s=%.2f\n",s);}
-        else{double vx=(abs(e)>300)?0.08:0.12;sc.Move(vx,0,s);}
+        double vx=(abs(e)>300)?0.08:0.12;
+        sc.Move(vx,0,s);
     }else{
         double s=max(-0.8,min(0.8,lc));sc.Move(0.12,0,s);
     }
