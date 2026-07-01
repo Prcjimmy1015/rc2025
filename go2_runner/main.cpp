@@ -68,12 +68,15 @@ if(cnt%15==0){
 double ly=0;{double _,dy;transformLocal(px,py,yaw,_,ly,dy);}double lc=(ly>0.35)?-0.3:(ly<-0.35)?0.3:0;
 
 static int sharp_burst=0;
-if(is_sharp&&sharp_burst==0){sharp_burst=60;}
+static int burst_cooldown=0;
+if(is_sharp&&sharp_burst==0&&burst_cooldown==0){sharp_burst=30;}
+if(burst_cooldown>0)burst_cooldown--;
 if(sharp_burst>0){
     sharp_burst--;
-    double s=-e*0.06;s=max(-1.0,min(1.0,s));
+    double s=-e*0.12;s=max(-1.0,min(1.0,s));
     sc.Move(0,0,s);
-    if(cnt%15==0)printf("[V22] >> BURST %d/60 s=%.2f\n",60-sharp_burst,s);
+    if(cnt%15==0)printf("[V22] >> BURST %d/30 s=%.2f\n",30-sharp_burst,s);
+    if(sharp_burst==0)burst_cooldown=15;
 }else if(is_cross){
     sc.Move(0.15,0,0);
 }else{
