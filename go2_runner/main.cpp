@@ -40,7 +40,13 @@ int rh=100,roiy=b.rows-rh;if(roiy<0)roiy=0;double e=0;int ci=0,rw=n.cols;vector<
 for(int r=roiy;r<b.rows;++r){const uchar*row=n.ptr(r);for(int x=0;x<rw;++x)if(row[x]){cc[x]++;ci++;}}
 static int last_pc=640;
 int win_l=max(0,last_pc-300),win_r=min(rw-1,last_pc+300);
-int pc=-1,pk=0;for(int x=win_l;x<=win_r;++x)if(cc[x]>pk){pk=cc[x];pc=x;}
+int pk=0;for(int x=win_l;x<=win_r;++x)if(cc[x]>pk)pk=cc[x];
+int pc=-1;
+if(pk>=5){
+    double sum_w=0,sum_wx=0;
+    for(int x=win_l;x<=win_r;++x)if(cc[x]>pk*0.5){sum_w+=cc[x];sum_wx+=cc[x]*x;}
+    if(sum_w>0)pc=(int)(sum_wx/sum_w);
+}
 if(pc<0){pc=last_pc;}
 bool ok=(pk>=5&&ci>=50&&ci<=100000);if(ok)e=pc-640;
 if(ok&&ci>5000&&pk>80)last_pc=pc;
