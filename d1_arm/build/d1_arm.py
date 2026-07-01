@@ -412,13 +412,13 @@ class D1RobotArmController:
 
     def blinx_photograph_attitude(self):
         """移动到拍照姿态（需实测D1的拍照关节角度）"""
-        photo_joints = [0, 40, 13.5, 0, -30, 0, 30]
+        photo_joints = [0, 40, 13.5, 0, -30, 0, 50]
         self.blinx_movej(photo_joints)
         print("D1移动到拍照姿态")
 
     def blinx_pre_pick_posture(self):
         """移动到待抓取姿态（需实测D1的关节角度）"""
-        pre_pick_joints = [-90, 53, 40, 0, -90, 0, 60]  # 替换为D1实测值
+        pre_pick_joints = [0, 53, 40, 0, -90, 0, 50]  # 替换为D1实测值
         self.blinx_movej(pre_pick_joints)
         print("D1移动到待抓取姿态")
 

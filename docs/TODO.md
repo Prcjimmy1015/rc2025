@@ -15,12 +15,12 @@
 |---|------|--------|------|------------|
 | [*] | 导航（空载行走） | `blinx_navigation_attitude()` | `d1_arm/build/d1_arm.py` | ~271 |
 | [*] | 拍照 | `blinx_photograph_attitude()` | `d1_arm/build/d1_arm.py` | ~277 |
-| [ ] | 预抓取 | `blinx_pre_pick_posture()` | `d1_arm/build/d1_arm.py` | ~283 |
-| [ ] | 载货行走 | `go_carry_navigation()` | `arm_task/arm_controller.py` | ~101 |
-| [ ] | 抬升 | `go_lift()` | `arm_task/arm_controller.py` | ~117 |
-| [ ] | 中转平台卸载 | `go_unload_transit()` | `arm_task/arm_controller.py` | ~128 |
-| [ ] | 一号放置平台 | `go_place_platform(1)` | `arm_task/arm_controller.py` | ~137 |
-| [ ] | 二号放置平台 | `go_place_platform(2)` | `arm_task/arm_controller.py` | ~143 |
+| [*] | 预抓取 | `blinx_pre_pick_posture()` | `d1_arm/build/d1_arm.py` | ~283 |
+| [*] | 载货行走 | `go_carry_navigation()` | `arm_task/arm_controller.py` | ~101 |
+| [*] | 抬升 | `go_lift()` | `arm_task/arm_controller.py` | ~117 |
+| [*] | 中转平台卸载 | `go_unload_transit()` | `arm_task/arm_controller.py` | ~128 |
+| [*] | 一号放置平台 | `go_place_platform(1)` | `arm_task/arm_controller.py` | ~137 |
+| [*] | 二号放置平台 | `go_place_platform(2)` | `arm_task/arm_controller.py` | ~143 |
 | [ ] | 正三棱锥抓取 | `_grasp_tetrahedron()` | `arm_task/arm_controller.py` | ~166 |
 
 ### 2. 笛卡尔运动 IK 标定

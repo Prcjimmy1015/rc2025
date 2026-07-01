@@ -113,7 +113,7 @@ class ArmTaskController:
             from arm_task.calibration import POSE_LIFT
             joints = list(POSE_LIFT)
         except ImportError:
-            joints = [-90, 60, 20, 0, -90, 0, D1RobotArmController.GRIPPER_GRASP]
+            joints = [0, 75, -60, 2, -16.5, -2, 28, D1RobotArmController.GRIPPER_GRASP]
         self.arm.blinx_movej(joints)
         time.sleep(2)
         print("[Arm] 已抬升机械臂")
@@ -124,7 +124,7 @@ class ArmTaskController:
             from arm_task.calibration import POSE_UNLOAD_TRANSIT
             joints = list(POSE_UNLOAD_TRANSIT)
         except ImportError:
-            joints = [-90, 70, 20, 0, -90, 0, D1RobotArmController.GRIPPER_GRASP]
+            joints = [0, 75, -60, 2, -16.5, -2, 28, D1RobotArmController.GRIPPER_GRASP]
         self.arm.blinx_movej(joints)
         time.sleep(2)
         print("[Arm] 已切换至中转平台卸载姿态")
@@ -139,8 +139,8 @@ class ArmTaskController:
             }
         except ImportError:
             defaults = {
-                1: [-90, 60, 30, 0, -90, 0, D1RobotArmController.GRIPPER_GRASP],
-                2: [90, 60, 30, 0, -90, 0, D1RobotArmController.GRIPPER_GRASP],
+                1: [-120, 60, 35, -89.5, -90, -3, D1RobotArmController.GRIPPER_GRASP],
+                2: [60, 60, 35, -89.5, -90, -3, D1RobotArmController.GRIPPER_GRASP],
             }
         if platform_id in defaults:
             self.arm.blinx_movej(defaults[platform_id])
