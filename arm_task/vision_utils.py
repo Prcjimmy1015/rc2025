@@ -252,47 +252,6 @@ class VisionSystem:
         self._affine_matrix = matrix.copy()
         print("[Vision] 仿射变换矩阵已更新")
 
-    # ==================================================================
-    # 识别标志检测（留空，使用与几何体不同的识别模型）
-    # ==================================================================
-
-    def detect_platform_marker(self, timeout: float = 5.0) -> int:
-        """
-        识别抓取平台正面的识别标志（1号标识或2号标识）
-
-        TODO: 使用与几何体不同的识别模型实现
-        当前留空，返回默认值 1
-
-        Args:
-            timeout: 超时时间
-
-        Returns:
-            int: 识别标志 ID（1 或 2）
-        """
-        # TODO: 实现识别标志检测
-        print("[Vision] detect_platform_marker() 未实现，返回默认值 1")
-        return 1
-
-    def detect_warning_marker(self, timeout: float = 5.0) -> int:
-        """
-        识别检测平台的警示标志类型
-
-        TODO: 使用与几何体不同的识别模型实现
-        警示标志映射：
-            0 = 当心触电 → 伸懒腰
-            1 = 当心强氧化物 → 打招呼
-            2 = 当心辐射 → 闪烁前灯三次
-
-        Args:
-            timeout: 超时时间
-
-        Returns:
-            int: 警示标志 ID（0/1/2）
-        """
-        # TODO: 实现警示标志检测
-        print("[Vision] detect_warning_marker() 未实现，返回默认值 0")
-        return 0
-
 
 # ======================================================================
 # 独立测试

@@ -31,14 +31,14 @@ rc2025/
 │   ├── 1-2026睿抗机器人开发者大赛-多模态巡检.pdf   # 竞赛规则
 │   ├── 02_D435深度相机取流及深度信息获取接口说明.pdf # D435 使用指南
 │   ├── calibration_guide.md       # ★ 机械臂标定流程文档（9种姿态 + DH参数 + 相机标定）
-│   ├── TODO.md                    # ★ 待办事项清单（标定/C++集成/模型）
+│   ├── TODO.md                    # ★ 待办事项清单
 │   └── VMware-Ubuntu22.04-双网卡配置指南-2.0.md   # 双网卡配置
 │
 ├── go2_runner/                    # 【模块一】Go2 机器狗导航与控制 (C++)
 │   ├── CMakeLists.txt
 │   ├── run.sh                     # 一键编译+运行脚本
 │   ├── main.cpp                   # ★ 入口：信道初始化 → 主循环 → 状态机调度
-│   ├── arm_bridge.h               # ★ C++ 调用 Python 机械臂任务脚本的桥接
+│   ├── arm_bridge.h               # ★ C++ ↔ Python 机械臂任务桥接（3阶段 + 机器狗摄像头识别函数）
 │   ├── params.h                   # 相机内参 & 全局参数常量
 │   ├── globals.h / globals.cpp    # 全局状态变量
 │   ├── app_runtime.h / .cpp       # 运行时对象定义与初始化
@@ -71,10 +71,10 @@ rc2025/
 ├── arm_task/                      # 【模块三】★ 机械臂任务模块 (Python)
 │   ├── __init__.py                # 模块入口
 │   ├── calibration.py             # ★ 参数集中管理（9种姿态角度 + DH参数 + 仿射矩阵标定点）
-│   ├── calibrate_affine.py        # ★ 像素→世界坐标独立标定工具（--collect/--compute/--verify）
+│   ├── calibrate_affine.py        # ★ 像素→世界坐标独立标定工具
 │   ├── arm_controller.py          # ★ 机械臂高层控制（9种姿态 + 抓手 + 正三棱锥专用抓取）
 │   ├── vision_utils.py            # ★ 视觉识别（YOLO几何体识别 + D435测距 + 坐标变换）
-│   └── task_planner.py            # ★ 4阶段CLI任务脚本（--stage 1/2/3/4）
+│   └── task_planner.py            # ★ 3阶段CLI任务脚本
 │
 ├── perception/                    # 【模块四】视觉感知
 │   ├── aruco_detector.py          # ArUco 标记检测 + TCP 回传
@@ -99,7 +99,7 @@ rc2025/
 | 文件 | 功能 |
 |------|------|
 | `main.cpp` | 程序入口。解析命令行参数，初始化 DDS 通道与 Sport 客户端，启动 ArUco TCP 服务端，进入主循环 |
-| `arm_bridge.h` | **C++ ↔ Python 桥接**。通过 `popen()` 调用 `task_planner.py` 执行机械臂4阶段任务 |
+| `arm_bridge.h` | **C++ ↔ Python 桥接**。提供 `armCallStage1/2/3` 调用 Python 机械臂脚本，以及 C++ 端 `dogDetectPlatformMarker` / `dogDetectWarningMarker` 识别函数（留空）和 `dogDoAlertAction` 警示动作 |
 | `params.h` | 全局参数：相机内参 K/D、雷达安全阈值、巡线 PID、迷宫路口判定等 |
 | `globals.h` | 全局变量：雷达测距、机体位姿、任务状态机标志、ArUco ID 原子变量 |
 | `app_runtime.h` | `AppRuntime` 结构体：聚合 DDS 订阅器、Sport 客户端、避障客户端、相机 |
@@ -116,31 +116,30 @@ rc2025/
 | **Case 3** | 前进 → 右转 → 过台阶 → 左转 → 终点前跳 |
 | **Case 4** | 任务完成，恢复遥控器控制 |
 
-### 与机械臂任务的集成
+### 与机械臂任务的集成（3阶段）
 
-到达各平台后，C++ 端通过 `arm_bridge.h` 调用 Python 脚本：
+识别标志和警示标志由 C++ 端机器狗前视摄像头完成，机械臂只负责抓取/卸载动作：
 
 ```cpp
 #include "arm_bridge.h"
-static int g_platform_marker_id = -1;
+static int g_marker_id = -1;
 
-// 到达抓取平台
-sc.StopMove();
-g_platform_marker_id = armCallStage1();  // 抓取物资 + 识别标志
+// 阶段1: 先识别抓取平台标志，再调用机械臂抓取
+g_marker_id = dogDetectPlatformMarker(frame);  // C++ 摄像头识别
+armCallStage1(g_marker_id);                     // Python 机械臂抓取
 
-// 到达中转平台
-sc.StopMove();
-armCallStage2();  // 卸货 + 抓取场地物资
+// 阶段2: 中转平台卸货+装货
+armCallStage2();
 
-// 到达检测点
-sc.StopMove();
-int warning_id = armCallStage3();    // 识别警示标志
-dogDoAlertAction(sc, warning_id);    // 机器狗执行动作
+// 检测点 (C++ 独立处理，无需 Python)
+int wid = dogDetectWarningMarker(frame);        // C++ 摄像头识别警示标志
+dogDoAlertAction(sc, wid);                      // C++ 执行机器狗动作
 
-// 到达放置平台
-sc.StopMove();
-armCallStage4(g_platform_marker_id); // 卸载到指定平台
+// 阶段3: 放置平台卸货
+armCallStage3(g_marker_id);
 ```
+
+机械臂在阶段1结束后到阶段3卸载前，始终保持抓取行走姿态（抓手28°载货）。
 
 ---
 
@@ -181,11 +180,11 @@ armCallStage4(g_platform_marker_id); // 卸载到指定平台
 
 ## 模块三：机械臂任务模块（arm_task）
 
-核心模块，提供完整的识别→抓取→卸载任务流程。供 C++ 行走程序通过 `popen()` 调用。
+核心模块，提供完整的抓取→卸载任务流程。供 C++ 行走程序通过 `popen()` 调用。
 
 ### 参数集中管理（calibration.py）
 
-**所有姿态角度、DH 参数、IK 参数、仿射矩阵标定点集中在此文件**。标定后只需修改这一个文件，其他模块自动延迟导入。
+**所有姿态角度、DH 参数、IK 参数集中在此文件**。标定后只需修改这一个文件，其他模块自动延迟导入。
 
 | 参数组 | 说明 |
 |--------|------|
@@ -203,9 +202,11 @@ python3 calibrate_affine.py --compute   # 计算仿射矩阵 → calib_matrix.js
 python3 calibrate_affine.py --verify    # 验证矩阵效果
 ```
 
+`vision_utils.py` 初始化时自动从 `calib_matrix.json` 加载矩阵。
+
 ### 高层控制（arm_controller.py）
 
-`ArmTaskController` 类，直接从 `calibration.py` 导入参数：
+`ArmTaskController` 类，从 `calibration.py` 导入参数：
 
 | 方法 | 功能 |
 |------|------|
@@ -215,29 +216,28 @@ python3 calibrate_affine.py --verify    # 验证矩阵效果
 | `go_pre_pick()` | 预抓取姿态 |
 | `grasp_by_type(class_id)` | 根据几何体类型抓取（正三棱锥→专用子函数） |
 | `_grasp_tetrahedron()` | 正三棱锥专用抓取 |
-| `go_photo_for_warning()` | 警示标志识别流程（拍照→识别→回抓取行走姿态） |
 
 ### 视觉识别（vision_utils.py）
 
-`VisionSystem` 类：
+`VisionSystem` 类，仅负责几何体识别和坐标变换。识别标志和警示标志由 C++ 端机器狗摄像头完成。
 
 | 方法 | 功能 | 状态 |
 |------|------|------|
 | `detect_geometry(timeout)` | YOLO ONNX 识别4种几何体 + D435测距 | ✅ 已实现 |
 | `get_world_coord(px, depth)` | 像素→世界坐标（自动加载 calib_matrix.json） | ✅ 已实现 |
-| `detect_platform_marker(timeout)` | 识别抓取平台标志（1号/2号标识） | ⬜ 留空 |
-| `detect_warning_marker(timeout)` | 识别警示标志（触电/强氧化物/辐射） | ⬜ 留空 |
 
 ### 任务规划器（task_planner.py）
 
-4阶段 CLI 脚本，供 C++ 通过 `sudo python3 ... --stage N` 调用：
+3阶段 CLI 脚本，供 C++ 通过 `sudo python3 ... --stage N` 调用：
 
 | 阶段 | 命令 | 功能 |
 |------|------|------|
-| 1 | `--stage 1` | 抓取平台：拍照→YOLO识别→笛卡尔运动→抓取→识别标志→载货行走 |
+| 1 | `--stage 1 --marker 1\|2` | 抓取平台：拍照→YOLO识别→笛卡尔运动→抓取→载货行走 |
 | 2 | `--stage 2` | 中转平台：卸载起始物资→YOLO识别→抓取场地物资→载货行走 |
-| 3 | `--stage 3` | 检测点：拍照→识别警示标志→回传 `WARNING_ID=N`→载货行走 |
-| 4 | `--stage 4 --target 1\|2` | 放置平台：移动到指定平台→卸货→空载行走 |
+| 3 | `--stage 3 --target 1\|2` | 放置平台：移动到指定平台→卸货→空载行走 |
+
+机械臂在阶段1结束后到阶段3卸载前，始终保持抓取行走姿态（抓手28°载货）。
+检测点的警示标志识别和机器狗动作由 C++ 端独立完成，Python 端不参与。
 
 ---
 
@@ -288,7 +288,6 @@ python3 calibrate_affine.py --verify    # 验证矩阵效果
 | numpy | 数值计算（IK、坐标变换） |
 | opencv-python | 图像处理、仿射变换 |
 | pyrealsense2 | Intel RealSense D435 驱动 |
-| unitree_sdk2 (Python) | DDS 通信（d1_arm C++ 程序依赖） |
 
 ---
 
@@ -318,11 +317,10 @@ make -j$(nproc)
 # 安装 Python 依赖
 pip install ultralytics numpy opencv-python pyrealsense2
 
-# 全流程测试
-sudo python3 arm_task/task_planner.py --stage 1
+# 全流程测试（3阶段）
+sudo python3 arm_task/task_planner.py --stage 1 --marker 1
 sudo python3 arm_task/task_planner.py --stage 2
-sudo python3 arm_task/task_planner.py --stage 3
-sudo python3 arm_task/task_planner.py --stage 4 --target 1
+sudo python3 arm_task/task_planner.py --stage 3 --target 1
 
 # 姿态单项测试
 python3 arm_task/arm_controller.py --test pose --pose photo
@@ -366,11 +364,11 @@ START
   ├─ [台阶] 上下三级台阶
   │
   ▼
-[到达抓取平台]
+[到达抓取平台]  ← C++ 机器狗摄像头识别平台标志
   ├─ 拍照 → YOLO 识别几何体
   ├─ 笛卡尔运动到位
   ├─ 抓取起始物资（28°抓手）
-  ├─ 抬升 → 识别平台标志
+  ├─ 抬升
   └─ ★ 载货行走姿态（抓手保持28°）
   │
   ▼
@@ -381,10 +379,10 @@ START
   └─ ★ 载货行走姿态
   │
   ▼
-[到达检测点]
-  ├─ 拍照 → 识别警示标志（触电/强氧化物/辐射）
-  ├─ 回到载货行走姿态
-  └─ ★ 机器狗执行对应动作（伸懒腰/打招呼/闪烁前灯）
+[到达检测点]  ← 完全由 C++ 端处理
+  ├─ 机器狗摄像头识别警示标志
+  ├─ 机器狗执行对应动作（伸懒腰/打招呼/闪烁前灯）
+  └─ 机械臂保持载货行走姿态（无需 Python 调用）
   │
   ▼
 [到达放置平台]
@@ -406,5 +404,7 @@ START
 4. **相机内参**：`go2_runner/params.h` 中的 K、D 矩阵需按实机标定替换。
 5. **网卡接口**：`eth_if` 为 Go2 与主机通信的有线网卡名（如 `ens37`），CycloneDDS 已固定绑定。
 6. **YOLO 模型**：`best.onnx` 需确认类别映射 0=球、1=长方体、2=正三棱锥、3=直圆柱体。如有变化修改 `vision_utils.py` 中的 `GEOMETRY_CLASSES`。
-7. **识别标志/警示标志**：`detect_platform_marker()` 和 `detect_warning_marker()` 当前留空，需提供识别模型后实现。
+7. **识别标志/警示标志**：由 C++ 端机器狗前视摄像头完成（`dogDetectPlatformMarker` / `dogDetectWarningMarker`），当前留空待实现。
 8. **笛卡尔 IK**：DH 参数为近似值，实测后需在 `calibration.py` 中更新。
+9. **机械臂姿态**：阶段1结束后至阶段3卸载前，机械臂始终保持抓取行走姿态（抓手28°载货），无需额外调用。
+10. **检测点**：检测点的警示标志识别和机器狗动作完全由 C++ 端独立完成，Python 端不参与。

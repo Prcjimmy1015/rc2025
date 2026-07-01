@@ -3,7 +3,7 @@
 - 封装 D1RobotArmController，提供面向任务的高层接口
 - 各姿态（行走/空载行走/抓取行走/拍照/预抓取/抬升/卸载/放置） + 抓手控制
 - 正三棱锥专用抓取子函数
-- 警示标志识别流程（拍照→识别→回到抓取行走姿态，动作由机器狗执行）
+- 识别标志和警示标志：由机器狗前视摄像头识别，机械臂不参与
 """
 
 import sys
@@ -95,7 +95,7 @@ class ArmTaskController:
         print("[Arm] 已归位")
 
     def go_photo(self):
-        """拍照姿态：D435相机能清晰拍摄平台顶面"""
+        """拍照姿态：D435相机能清晰拍摄平台顶面（仅用于几何体识别）"""
         self.arm.blinx_photograph_attitude()
         time.sleep(2)
         print("[Arm] 已切换至拍照姿态")
@@ -170,17 +170,6 @@ class ArmTaskController:
         self.arm._move_single_joint(6, angle, 1000)
         self._gripper_state = angle
 
-    # ==================================================================
-    # 警示标志识别流程（机械臂只负责拍照识别，动作由机器狗执行）
-    # ==================================================================
-    def go_photo_for_warning(self):
-        """检测点识别流程：拍照→等待视觉识别→回到抓取行走姿态"""
-        self.go_photo()
-        time.sleep(1)
-        print("[Arm] 拍照姿态就绪，等待视觉识别警示标志...")
-        self.go_carry_navigation()
-        return "photo_done"
-
 
 # ======================================================================
 # 独立测试
@@ -189,7 +178,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="机械臂控制测试")
-    parser.add_argument("--test", choices=["gripper", "pose", "photo_warning"], default="pose")
+    parser.add_argument("--test", choices=["gripper", "pose"], default="pose")
     parser.add_argument("--pose", type=str, default="navigation")
     args = parser.parse_args()
 
@@ -224,10 +213,6 @@ if __name__ == "__main__":
                 fn()
             else:
                 print(f"未知姿态: {args.pose}，可用: {list(pose_map.keys())}")
-
-        elif args.test == "photo_warning":
-            print("=== 警示标志识别流程测试 ===")
-            ctrl.go_photo_for_warning()
 
     except Exception as e:
         print(f"操作失败: {e}")

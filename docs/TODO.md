@@ -13,8 +13,8 @@
 
 | # | 姿态 | 函数名 | 文件 | 行号（约） |
 |---|------|--------|------|------------|
-| [ ] | 导航（空载行走） | `blinx_navigation_attitude()` | `d1_arm/build/d1_arm.py` | ~271 |
-| [ ] | 拍照 | `blinx_photograph_attitude()` | `d1_arm/build/d1_arm.py` | ~277 |
+| [*] | 导航（空载行走） | `blinx_navigation_attitude()` | `d1_arm/build/d1_arm.py` | ~271 |
+| [*] | 拍照 | `blinx_photograph_attitude()` | `d1_arm/build/d1_arm.py` | ~277 |
 | [ ] | 预抓取 | `blinx_pre_pick_posture()` | `d1_arm/build/d1_arm.py` | ~283 |
 | [ ] | 载货行走 | `go_carry_navigation()` | `arm_task/arm_controller.py` | ~101 |
 | [ ] | 抬升 | `go_lift()` | `arm_task/arm_controller.py` | ~117 |

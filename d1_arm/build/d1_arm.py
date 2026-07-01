@@ -406,14 +406,13 @@ class D1RobotArmController:
 
     def blinx_navigation_attitude(self):
         """恢复导航（初始）姿态（对应原代码同名方法）"""
-        # 定义D1的初始关节角度（需实测调整）
-        init_joints = [0, -90, 90, 0, 0, 0, 30]
+        init_joints = [0, -90, 90, 0, 0, 0, 50]
         self.blinx_movej(init_joints)
         print("D1恢复初始姿态")
 
     def blinx_photograph_attitude(self):
         """移动到拍照姿态（需实测D1的拍照关节角度）"""
-        photo_joints = [-90, 0, 40, 0, 0, 0, 60]  # 替换为D1实测值
+        photo_joints = [0, 40, 13.5, 0, -30, 0, 30]
         self.blinx_movej(photo_joints)
         print("D1移动到拍照姿态")
 
