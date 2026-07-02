@@ -5,6 +5,7 @@
 
 #include <unitree/robot/go2/sport/sport_client.hpp>
 #include <unitree/robot/go2/obstacles_avoid/obstacles_avoid_client.hpp>
+#include <unitree/robot/go2/vui/vui_client.hpp>
 #include <unitree/robot/channel/channel_subscriber.hpp>
 #include <unitree/idl/go2/SportModeState_.hpp>
 #include <unitree/idl/ros2/PointStamped_.hpp>

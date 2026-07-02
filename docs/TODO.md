@@ -54,15 +54,17 @@
 
 ## 🟡 优先级2：模型和算法
 
-### 5. 抓取平台识别标志
+### 5. 抓取平台识别标志 ✅
 
-- [ ] 提供识别标志的识别模型（1号标识 vs 2号标识）
-- [ ] 实现 `arm_task/vision_utils.py` → `detect_platform_marker(timeout)` — 当前 `pass`，返回默认值 1
+- [x] 识别模型：`cv_Sign/Res18_5in2/2in1.onnx`
+- [x] C++ 端实现：`go2_runner/arm_bridge.h` → `dogDetectPlatformMarker(frame)` 使用 OpenCV DNN 推理
+- 注意：Python 端 `detect_platform_marker()` 已废弃，识别完全由 C++ 端机器狗摄像头完成
 
-### 6. 检测平台警示标志
+### 6. 检测平台警示标志 ✅
 
-- [ ] 提供警示标志的识别模型（当心触电 / 当心强氧化物 / 当心辐射）
-- [ ] 实现 `arm_task/vision_utils.py` → `detect_warning_marker(timeout)` — 当前 `pass`，返回默认值 0
+- [x] 识别模型：`cv_Sign/Res18_5in2/3in1.onnx`
+- [x] C++ 端实现：`go2_runner/arm_bridge.h` → `dogDetectWarningMarker(frame)` 使用 OpenCV DNN 推理
+- 注意：Python 端 `detect_warning_marker()` 已废弃，识别完全由 C++ 端机器狗摄像头完成
 
 ### 7. 正三棱锥抓取微调
 
