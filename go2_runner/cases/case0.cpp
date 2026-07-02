@@ -54,9 +54,11 @@ int case0_tick(go2::SportClient &sc, const Mat &undist,
     double lx,ly,dyaw;transformLocal(px,py,yaw,lx,ly,dyaw);
     static int st=0;
 
+    static int dbg=0;
+    if(dbg++%15==0)printf("[case0] st=%d lx=%.2f px=%.2f py=%.2f\n",st,lx,px,py);
     if(g_case0_skip_init && st<3){st=3;cout<<"=== T0 ACTIVE ==="<<endl;}
     if(st==0){sc.StaticWalk();sc.Euler(0,0,0);sc.Move(0.15,0,0);
-        if(lx>=0.2){sc.StopMove();sc.Move(0,0,0);st=1;}return 0;}
+        if(lx>=0.2 || lx<=-0.2){sc.StopMove();sc.Move(0,0,0);st=1;}return 0;}
     if(st==1){sc.FrontJump();st=2;
         this_thread::sleep_for(chrono::milliseconds(300));px0=px;py0=py;yaw0=yaw;return 0;}
     if(st==2){sc.BalanceStand();this_thread::sleep_for(chrono::milliseconds(500));st=3;return 0;}
