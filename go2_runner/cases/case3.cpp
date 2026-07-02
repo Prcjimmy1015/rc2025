@@ -5,10 +5,27 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include <csignal>
 using namespace unitree::robot;
 using namespace cv;
 using namespace std;
+
+struct Checkpoint {
+    double lx, ly, yaw_target;
+    int type;          // 0=回正, 1=任务
+    bool done;
+    const char* name;
+};
+
+static Checkpoint cps[] = {
+    {0.50,  2.90,  0.967,  0, false, "A1"},
+    {-0.19, 1.08, -1.967,  1, false, "T1"},
+    {1.22,  3.93, -0.433,  1, false, "T2"},
+    {-1.44, 3.61,  1.908,  1, false, "T3"},
+    {-1.46, 1.91,  2.916,  1, false, "T4"},
+    {-1.24, 1.10,  2.832,  1, false, "T5"},
+    {0,     0,      0,      0, false, "A2"},
+};
+static const int N_CPS = sizeof(cps)/sizeof(cps[0]);
 
 static bool settled=false;
 static int n_st=0;
@@ -18,9 +35,15 @@ static int last_pc=640;
 static int sharp_burst=0;
 static int burst_cooldown=0;
 
+static int cp_idx=0;
+static bool in_cp=false;
+static int cp_timer=0;
+
 void case3_reset(){
     settled=false; n_st=0; cnt=0; last_pc=640;
     sharp_burst=0; burst_cooldown=0;
+    cp_idx=0; in_cp=false; cp_timer=0;
+    for(int i=0;i<N_CPS;i++)cps[i].done=false;
 }
 
 int case3_tick(go2::SportClient &sc,
@@ -78,6 +101,48 @@ int case3_tick(go2::SportClient &sc,
     if(ok)e=pc-640;
     if(ok&&ci>5000&&pk>80)last_pc=pc;
 
+    // ── Checkpoint 检测 ──
+    if(!in_cp && cp_idx<N_CPS && !cps[cp_idx].done){
+        double dx=lx-cps[cp_idx].lx, dy=ly-cps[cp_idx].ly;
+        double dist=sqrt(dx*dx+dy*dy);
+        if(dist<0.4){
+            in_cp=true; cp_timer=0;
+            sc.StopMove();
+            printf("\n[CP] ARRIVE %s (lx=%.2f ly=%.2f yaw=%.2f) dist=%.2f\n\n",
+                   cps[cp_idx].name,lx,ly,yaw,dist);
+        }
+    }
+
+    // ── Checkpoint 执行 ──
+    if(in_cp){
+        cp_timer++;
+        if(cps[cp_idx].type==0){
+            // 回正：旋转到目标航向
+            double ey=cps[cp_idx].yaw_target-yaw;
+            if(ey>M_PI)ey-=2*M_PI;if(ey<-M_PI)ey+=2*M_PI;
+            double s=-ey*3.0;
+            if(ey>0)s=-s;  // ey>0 目标在左→左转 steer+=positive
+            s=max(-0.5,min(0.5,s));
+            sc.Move(0,0,s);
+            if(cp_timer%15==0)printf("[CP] %s ALIGN %d d=%.1fdeg\n",
+                cps[cp_idx].name,cp_timer,fabs(ey)*180/M_PI);
+            if(fabs(ey)<0.15&&cp_timer>30){
+                in_cp=false; cps[cp_idx].done=true; cp_idx++;
+                printf("[CP] %s ALIGN DONE\n",cps[cp_idx-1].name);
+            }
+        }else{
+            // 任务：原地暂停
+            sc.Move(0,0,0);
+            if(cp_timer%15==0)printf("[CP] %s TASK %d/90\n",
+                cps[cp_idx].name,cp_timer);
+            if(cp_timer>=90){
+                in_cp=false; cps[cp_idx].done=true; cp_idx++;
+                printf("[CP] %s TASK DONE\n",cps[cp_idx-1].name);
+            }
+        }
+        return 0;
+    }
+
     // 检测条件
     double pcross=(ci>0)?pk*100.0/ci:999;
     bool is_cross=(ci>45000 && pcross<0.25 && abs(e)<400);
@@ -113,7 +178,7 @@ int case3_tick(go2::SportClient &sc,
         double vy=e*0.0006;vy=max(-0.15,min(0.15,vy));
         sc.Move(vx,vy,s);
     }else{
-        sc.Move(0,0,0.3);  // 原地左转搜索线条
+        sc.Move(0,0,0.3);
     }
 
     return 0;
