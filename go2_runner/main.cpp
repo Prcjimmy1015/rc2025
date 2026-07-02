@@ -87,7 +87,7 @@ if(sharp_burst>0){
         double vy=e*0.0006;vy=max(-0.15,min(0.15,vy));
         sc.Move(vx,vy,s);
     }else{
-        double s=max(-0.8,min(0.8,lc));sc.Move(0.12,0,s);
+        sc.Move(0,0,0.3);  // 原地左转，搜索线条
     }
 }}
 
