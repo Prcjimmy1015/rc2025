@@ -171,7 +171,7 @@ static inline void dogActionFlashLights(unitree::robot::go2::VuiClient &vc)
         vc.SetBrightness(0);
         usleep(400000);
     }
-    vc.SetBrightness(10);
+    vc.SetBrightness(0);
 }
 
 /** 根据 warning_id 执行对应的机器狗警示动作 */
