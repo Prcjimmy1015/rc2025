@@ -34,6 +34,10 @@ rc2025/
 │   ├── TODO.md                    # ★ 待办事项清单
 │   └── VMware-Ubuntu22.04-双网卡配置指南-2.0.md   # 双网卡配置
 │
+├── cv_Sign/                       # 标志识别模型（ResNet18 ONNX）
+│   ├── Res18_5in2/2in1.onnx      # 抓取平台识别标志（1号/2号标识）
+│   └── Res18_5in2/3in1.onnx      # 检测点警示标志（触电/强氧化物/辐射）
+│
 ├── go2_runner/                    # 【模块一】Go2 机器狗导航与控制 (C++)
 │   ├── CMakeLists.txt
 │   ├── run.sh                     # 一键编译+运行脚本
@@ -99,7 +103,7 @@ rc2025/
 | 文件 | 功能 |
 |------|------|
 | `main.cpp` | 程序入口。解析命令行参数，初始化 DDS 通道与 Sport 客户端，启动 ArUco TCP 服务端，进入主循环 |
-| `arm_bridge.h` | **C++ ↔ Python 桥接**。提供 `armCallStage1/2/3` 调用 Python 机械臂脚本，以及 C++ 端 `dogDetectPlatformMarker` / `dogDetectWarningMarker` 识别函数（留空）和 `dogDoAlertAction` 警示动作 |
+| `arm_bridge.h` | **C++ ↔ Python 桥接**。提供 `armCallStage1/2/3` 调用 Python 机械臂脚本，C++ 端 ONNX 识别函数 `dogDetectPlatformMarker` / `dogDetectWarningMarker`（基于 `cv_Sign/Res18_5in2`），以及 `dogDoAlertAction` 机器狗警示动作（`sc.Stretch`/`sc.Hello`/`vui_client.SetBrightness`） |
 | `params.h` | 全局参数：相机内参 K/D、雷达安全阈值、巡线 PID、迷宫路口判定等 |
 | `globals.h` | 全局变量：雷达测距、机体位姿、任务状态机标志、ArUco ID 原子变量 |
 | `app_runtime.h` | `AppRuntime` 结构体：聚合 DDS 订阅器、Sport 客户端、避障客户端、相机 |
@@ -404,7 +408,7 @@ START
 4. **相机内参**：`go2_runner/params.h` 中的 K、D 矩阵需按实机标定替换。
 5. **网卡接口**：`eth_if` 为 Go2 与主机通信的有线网卡名（如 `ens37`），CycloneDDS 已固定绑定。
 6. **YOLO 模型**：`best.onnx` 需确认类别映射 0=球、1=长方体、2=正三棱锥、3=直圆柱体。如有变化修改 `vision_utils.py` 中的 `GEOMETRY_CLASSES`。
-7. **识别标志/警示标志**：由 C++ 端机器狗前视摄像头完成（`dogDetectPlatformMarker` / `dogDetectWarningMarker`），当前留空待实现。
+7. **识别标志/警示标志**：由 C++ 端机器狗前视摄像头完成（`dogDetectPlatformMarker` / `dogDetectWarningMarker`），使用 OpenCV DNN 加载 `cv_Sign/Res18_5in2/` 下的 ONNX 模型推理。
 8. **笛卡尔 IK**：DH 参数为近似值，实测后需在 `calibration.py` 中更新。
 9. **机械臂姿态**：阶段1结束后至阶段3卸载前，机械臂始终保持抓取行走姿态（抓手28°载货），无需额外调用。
 10. **检测点**：检测点的警示标志识别和机器狗动作完全由 C++ 端独立完成，Python 端不参与。
