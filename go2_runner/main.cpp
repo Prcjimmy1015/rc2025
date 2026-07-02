@@ -18,7 +18,6 @@
 #include "cases/case1.h"
 #include "cases/case2.h"
 #include "cases/case3.h"
-#include "cases/case4.h"
 using namespace unitree::robot;using namespace cv;using namespace std;
 static atomic<bool> g_exit(false);
 void sig(int s){if(s==SIGINT){cout<<"\n[SIGINT]\n";g_exit=true;}}
@@ -87,7 +86,7 @@ if(sharp_burst>0){
         double vy=e*0.0006;vy=max(-0.15,min(0.15,vy));
         sc.Move(vx,vy,s);
     }else{
-        sc.Move(0,0,0.3);  // 原地左转，搜索线条
+        sc.Move(0,0,0.3);
     }
 }}
 
@@ -104,8 +103,7 @@ if(g_case0_skip_init){t0(sc,undist);if(g_enable_gui){double fps=fc/chrono::durat
 double lx,ly,dyaw;transformLocal(px,py,yaw,lx,ly,dyaw);
 switch(Flag_Task){case 0:{int ret=case0_tick(sc,undist,rt.stateCB.state,fc);if(g_force_task<0){if(ret==1){Flag_Task=1;g_case0_second_pass=false;case1_reset_statics();}else if(ret==2){Flag_Task=2;g_case0_second_pass=false;case2_reset();}}break;}
 case 1:if(g_force_task<0&&case1_tick(sc,fc,lx,ly,yaw)){Flag_Task=0;g_case0_second_pass=true;case0_reset_statics();}break;
-case 2:if(g_force_task<0&&case2_tick(sc))Flag_Task=3;break;
-case 3:case 4:case 5:case 6:case 7:case 8:if(g_force_task<0&&case3_tick(sc,lx,ly,dyaw))Flag_Task=9;break;
-case 9:if(case4_tick(sc,avc))return 0;break;}
+case 2:if(g_force_task<0&&case2_tick(sc,lx,ly)){Flag_Task=3;case3_reset();}break;
+case 3:case3_tick(sc,undist,lx,ly);break;}
 if(g_enable_gui){double fps=fc/chrono::duration<double>(chrono::steady_clock::now()-t0t).count();putText(undist,format("V22 FPS %.1f",fps),{10,30},FONT_HERSHEY_SIMPLEX,1,{0,255,0},2);imshow("Go2",undist);if(waitKey(1)==27)break;}}
 sc.StopMove();avc.UseRemoteCommandFromApi(false);avc.SwitchSet(false);avc.Move(0,0,0);this_thread::sleep_for(chrono::milliseconds(200));sc.SwitchJoystick(true);sc.RecoveryStand();this_thread::sleep_for(chrono::milliseconds(500));sc.BalanceStand();cout<<"[Exit] Remote restored.\n";return 0;}

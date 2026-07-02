@@ -1,19 +1,14 @@
 #pragma once
 
 #include <unitree/robot/go2/sport/sport_client.hpp>
+#include <opencv2/opencv.hpp>
 
-// =============================================================================
-// case3：Flag_Task=4~8 序列
-//   4: 右转90° → 5: FreeWalk过台阶 → 6: StaticWalk前进
-//   → 7: 左转90° → 8: 跳进终点区
-// 与 rc2025.cpp Flag_Task=4~8 完全一致
+// case3：V22巡线 + checkpoint任务中断
 // 返回:
-//   1 → Flag_Task=9 (完成终点跳)
-//   0 → 继续进行中
-// =============================================================================
-bool case3_tick(unitree::robot::go2::SportClient &sc,
-                double lx,
-                double ly,
-                double dyaw);
-
+//   0 → 巡线中
+//   1 → 检查到 case4 结束信号（暂不使用）
 void case3_reset();
+int case3_tick(unitree::robot::go2::SportClient &sc,
+               const cv::Mat &undist,
+               double lx,
+               double ly);

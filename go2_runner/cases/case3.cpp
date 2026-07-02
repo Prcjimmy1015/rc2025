@@ -1,155 +1,120 @@
 #include "case3.h"
 #include "../globals.h"
-
+#include "../utils.h"
+#include <opencv2/opencv.hpp>
 #include <cmath>
 #include <iostream>
-#include <thread>
-#include <chrono>
-
+#include <vector>
+#include <csignal>
 using namespace unitree::robot;
+using namespace cv;
 using namespace std;
 
-// =============================================================================
-// case3：覆盖旧代码 Flag_Task=4~8
-//
-// 内部子状态:
-//   0: 右转90° (Flag_Task=4)
-//   1: FreeWalk过台阶 (Flag_Task=5)
-//   2: StaticWalk前进 (Flag_Task=6)
-//   3: 左转90° (Flag_Task=7)
-//   4: 前跳 → 前进 → 切换到 Flag_Task=9 (Flag_Task=8)
-// =============================================================================
+static bool settled=false;
+static int n_st=0;
+static double yaw_settle=0;
+static int cnt=0;
+static int last_pc=640;
+static int sharp_burst=0;
+static int burst_cooldown=0;
 
-static int case3_phase = 0;
-static double case3_yaw_start = 0;
-static double case3_lx_anchor = 0;
-static bool case3_lx_anchor_set = false;
-
-void case3_reset()
-{
-    case3_phase = 0;
-    case3_yaw_start = 0;
-    case3_lx_anchor = 0;
-    case3_lx_anchor_set = false;
+void case3_reset(){
+    settled=false; n_st=0; cnt=0; last_pc=640;
+    sharp_burst=0; burst_cooldown=0;
 }
 
-bool case3_tick(go2::SportClient &sc,
-                double lx,
-                double ly,
-                double dyaw)
+int case3_tick(go2::SportClient &sc,
+               const cv::Mat &undist,
+               double lx,
+               double ly)
 {
-    (void)ly;
-    (void)dyaw;
+    static bool once=false;
+    if(!once){cout<<"\n=== V22_CASE3 ===\n"<<endl;once=true;}
+    cnt++;
 
-    // ---- Phase 0: 右转90° (Flag_Task=4) ----
-    if (case3_phase == 0)
-    {
-        if (case3_yaw_start == 0)
-        {
-            sc.StopMove();
-            case3_yaw_start = yaw;
-        }
-
-        double yaw_diff = yaw - case3_yaw_start;
-        if (yaw_diff < -M_PI) yaw_diff += 2 * M_PI;
-        if (yaw_diff > M_PI) yaw_diff -= 2 * M_PI;
-
-        if (yaw_diff > M_PI / 2 * 0.9)  // Right turn 90°
-        {
-            sc.StopMove();
-            case3_phase = 1;
-            case3_yaw_start = 0;
-            case3_lx_anchor_set = false;
-            cout << "[case3] Phase 0 DONE: Right turn 90° → FreeWalk stairs" << endl;
-        }
-        else
-        {
-            sc.Move(0, 0, -0.15);
-        }
-        return false;
-    }
-
-    // ---- Phase 1: FreeWalk 过台阶 (Flag_Task=5) ----
-    if (case3_phase == 1)
-    {
-        sc.FreeWalk();
-        sc.Move(0.15, 0, 0);
-
-        if (!case3_lx_anchor_set)
-        {
-            case3_lx_anchor = lx;
-            case3_lx_anchor_set = true;
-        }
-        double lx_since = lx - case3_lx_anchor;
-
-        // 走 2.0m 后切到下一个阶段
-        const double kStairsDist = 0.8;  // 使用旧代码的 obstacle_trigger_px + 2.0 ≈ 2.8m total, but from this anchor
-        if (lx_since > kStairsDist)
-        {
-            case3_phase = 2;
-            case3_lx_anchor_set = false;
-            cout << "[case3] Phase 1 DONE: Stairs traversed (lx_since=" << lx_since << "m) → StaticWalk forward" << endl;
-        }
-        return false;
-    }
-
-    // ---- Phase 2: StaticWalk 前进 (Flag_Task=6) ----
-    if (case3_phase == 2)
-    {
+    // 稳定期 30 帧
+    if(!settled){
+        n_st++;
         sc.StaticWalk();
-        sc.Move(0.2, 0, 0);
-
-        // 检测到 ArUco marker → 进入左转阶段
-        if (g_last_aruco_id > 0)
-        {
-            case3_phase = 3;
-            case3_yaw_start = 0;
-            cout << "[case3] Phase 2 DONE: ArUco marker " << g_last_aruco_id.load() << " detected → Left turn 90°" << endl;
-        }
-        return false;
+        sc.Euler(0,0.8,0);
+        if(n_st==1) yaw_settle=yaw;
+        double yd=yaw-yaw_settle;
+        if(yd>M_PI)yd-=2*M_PI;if(yd<-M_PI)yd+=2*M_PI;
+        double steer=-yd*2.0;steer=max(-0.3,min(0.3,steer));
+        sc.Move(0,0,steer);
+        if(n_st>=30){settled=true;cout<<"[V22] Settled, go.\n"<<endl;}
+        return 0;
     }
 
-    // ---- Phase 3: 左转90° (Flag_Task=7) ----
-    if (case3_phase == 3)
-    {
-        if (case3_yaw_start == 0)
-        {
-            sc.StopMove();
-            case3_yaw_start = yaw;
-        }
+    sc.Euler(0,0.8,0);
 
-        double yaw_diff = yaw - case3_yaw_start;
-        if (yaw_diff < -M_PI) yaw_diff += 2 * M_PI;
-        if (yaw_diff > M_PI) yaw_diff -= 2 * M_PI;
+    // 图像处理
+    Mat g,b,n;
+    cvtColor(undist,g,COLOR_BGR2GRAY);
+    GaussianBlur(g,b,{5,5},0);
+    threshold(b,n,50,255,THRESH_BINARY_INV);
+    {Mat k=getStructuringElement(MORPH_RECT,Size(3,3));morphologyEx(n,n,MORPH_OPEN,k);}
 
-        if (yaw_diff < -M_PI / 2 * 0.9)  // Left turn 90°
-        {
-            sc.StopMove();
-            case3_phase = 4;
-            case3_yaw_start = 0;
-            end_jump_times = 0;
-            cout << "[case3] Phase 3 DONE: Left turn 90° → Jump into finish area" << endl;
-        }
-        else
-        {
-            sc.Move(0, 0, 0.15);
-        }
-        return false;
+    int rh=100,roiy=b.rows-rh;if(roiy<0)roiy=0;
+    double e=0;int ci=0,rw=n.cols;
+    vector<int>cc(rw,0);
+    for(int r=roiy;r<b.rows;++r){
+        const uchar*row=n.ptr(r);
+        for(int x=0;x<rw;++x)if(row[x]){cc[x]++;ci++;}
     }
 
-    // ---- Phase 4: 前跳 + 前进 (Flag_Task=8 → Flag_Task=9) ----
-    if (case3_phase == 4)
-    {
-        if (end_jump_times == 0)
-        {
-            sc.FrontJump();
-            end_jump_times++;
-            cout << "[case3] Phase 4: Front jump → switching to Flag_Task=9 (finish)" << endl;
-        }
-        sc.Move(0.2, 0, 0);
-        // 跳完后直接切换到 case4 (Flag_Task=9)
-        return true;  // → Flag_Task = 9
+    // 加权质心
+    int win_l=max(0,last_pc-300),win_r=min(rw-1,last_pc+300);
+    int pk=0;for(int x=win_l;x<=win_r;++x)if(cc[x]>pk)pk=cc[x];
+    int pc=-1;
+    if(pk>=5){
+        double sum_w=0,sum_wx=0;
+        for(int x=win_l;x<=win_r;++x)
+            if(cc[x]>pk*0.5){sum_w+=cc[x];sum_wx+=cc[x]*x;}
+        if(sum_w>0)pc=(int)(sum_wx/sum_w);
+    }
+    if(pc<0)pc=last_pc;
+    bool ok=(pk>=5&&ci>=50&&ci<=100000);
+    if(ok)e=pc-640;
+    if(ok&&ci>5000&&pk>80)last_pc=pc;
+
+    // 检测条件
+    double pcross=(ci>0)?pk*100.0/ci:999;
+    bool is_cross=(ci>45000 && pcross<0.25 && abs(e)<400);
+    bool is_sharp=(abs(e)>400);
+
+    if(cnt%15==0){
+        const char*tag="NORM";
+        if(is_cross)tag="CROSS";
+        else if(is_sharp)tag="SHARP";
+        else if(!ok)tag="NOLINE";
+        printf("[V22] %s err=%.0f ci=%d pk=%d cr=%.2f%%\n",tag,e,ci,pk,pcross);
     }
 
-    return false;
+    // ly 纠偏 (无线条时备用)
+    double lc=(ly>0.35)?-0.3:(ly<-0.35)?0.3:0;
+
+    // ── 四模式控制 ──
+    if(is_sharp&&sharp_burst==0&&burst_cooldown==0){sharp_burst=30;}
+    if(burst_cooldown>0)burst_cooldown--;
+
+    if(sharp_burst>0){
+        sharp_burst--;
+        double s=-e*0.12;s=max(-1.0,min(1.0,s));
+        sc.Move(0,0,s);
+        if(cnt%15==0)printf("[V22] >> BURST %d/30 s=%.2f\n",30-sharp_burst,s);
+        if(sharp_burst==0)burst_cooldown=15;
+    }else if(is_cross){
+        sc.Move(0.15,0,0);
+    }else if(ok){
+        double tg=e/1280.0*60.0*M_PI/180.0;
+        double s=-tg*6.0;s=max(-1.0,min(1.0,s));
+        double vx=(abs(e)>300)?0.08:0.12;
+        double vy=e*0.0006;vy=max(-0.15,min(0.15,vy));
+        sc.Move(vx,vy,s);
+    }else{
+        sc.Move(0,0,0.3);  // 原地左转搜索线条
+    }
+
+    return 0;
 }
