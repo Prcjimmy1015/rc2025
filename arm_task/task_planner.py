@@ -64,7 +64,9 @@ def stage1_pickup_platform(ctrl: ArmTaskController, vision: VisionSystem, marker
         # 1. 拍照 → 检测几何体
         print("[Stage1] 步骤1/5: 拍照检测几何体")
         ctrl.go_navigation()
+        time.sleep(2)  # 确保 navigation 关节运动完全执行完毕
         ctrl.go_photo()
+        time.sleep(2)  # 确保 photo 关节运动完全执行完毕，双臂稳定后再拍照
         geometry = vision.detect_geometry(timeout=10.0)
         class_id = geometry["class_id"]
         class_name = geometry["class_name"]
@@ -158,6 +160,7 @@ def stage2_transit_platform(ctrl: ArmTaskController, vision: VisionSystem) -> bo
 
         print("[Stage2] 步骤B1: 拍照检测场地物资")
         ctrl.go_photo()
+        time.sleep(2)  # 等待关节运动完成、机械臂稳定后再拍照
         geometry = vision.detect_geometry(timeout=10.0)
         class_id = geometry["class_id"]
         class_name = geometry["class_name"]

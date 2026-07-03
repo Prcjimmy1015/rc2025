@@ -74,7 +74,7 @@ rc2025/
 │
 ├── arm_task/                      # 【模块三】★ 机械臂任务模块 (Python)
 │   ├── __init__.py                # 模块入口
-│   ├── calibration.py             # ★ 参数集中管理（9种姿态角度 + DH参数 + 仿射矩阵标定点）
+│   ├── calibration.py             # ★ 参数集中管理（9种姿态角度 + DH参数 + IK参数）
 │   ├── calibrate_affine.py        # ★ 像素→世界坐标独立标定工具
 │   ├── arm_controller.py          # ★ 机械臂高层控制（9种姿态 + 抓手 + 正三棱锥专用抓取）
 │   ├── vision_utils.py            # ★ 视觉识别（YOLO几何体识别 + D435测距 + 坐标变换）
@@ -404,11 +404,13 @@ START
 
 1. **抓手参数**：6号舵机控制，范围 0-50 度。0°=闭合，50°=张开，28°=球/长方体/直圆柱体抓取位。
 2. **标定**：所有姿态角度和 DH 参数集中在 `arm_task/calibration.py`，标定后只需修改此文件。
-3. **sudo 要求**：机械臂 DDS 通信需要 `sudo`，所有 `task_planner.py` 调用需加 `sudo`。
-4. **相机内参**：`go2_runner/params.h` 中的 K、D 矩阵需按实机标定替换。
-5. **网卡接口**：`eth_if` 为 Go2 与主机通信的有线网卡名（如 `ens37`），CycloneDDS 已固定绑定。
-6. **YOLO 模型**：`best.onnx` 需确认类别映射 0=球、1=长方体、2=正三棱锥、3=直圆柱体。如有变化修改 `vision_utils.py` 中的 `GEOMETRY_CLASSES`。
-7. **识别标志/警示标志**：由 C++ 端机器狗前视摄像头完成（`dogDetectPlatformMarker` / `dogDetectWarningMarker`），使用 OpenCV DNN 加载 `cv_Sign/Res18_5in2/` 下的 ONNX 模型推理。
-8. **笛卡尔 IK**：DH 参数为近似值，实测后需在 `calibration.py` 中更新。
-9. **机械臂姿态**：阶段1结束后至阶段3卸载前，机械臂始终保持抓取行走姿态（抓手28°载货），无需额外调用。
-10. **检测点**：检测点的警示标志识别和机器狗动作完全由 C++ 端独立完成，Python 端不参与。
+3. **sudo 要求**：机械臂 DDS 通信需要 `sudo`，所有 `task_planner.py` 调用需加 `sudo`。由于 `pyrealsense2` 安装在用户级路径，`vision_utils.py` 已在 `_init_camera()` 中自动添加 `/home/linux/.local/lib/python3.10/site-packages` 到 `sys.path`，确保 sudo 环境下也能正确导入。
+4. **D435 未连接时的降级处理**：如果 D435 相机未连接，`camera_d435.py` 的 `Camera.__init__()` 会抛出 `RuntimeError: No device connected`。此时任务规划器将失败退出。如需在无 D435 环境下测试，可在运行时跳过视觉识别步骤（临时修改 `task_planner.py` 中的 `detect_geometry` 调用）。
+5. **相机内参**：`go2_runner/params.h` 中的 K、D 矩阵需按实机标定替换。
+6. **网卡接口**：`eth_if` 为 Go2 与主机通信的有线网卡名（如 `ens37`），CycloneDDS 已固定绑定。
+7. **YOLO 模型**：`best.onnx` 需确认类别映射 0=球、1=长方体、2=正三棱锥、3=直圆柱体。如有变化修改 `vision_utils.py` 中的 `GEOMETRY_CLASSES`。
+8. **识别标志/警示标志**：由 C++ 端机器狗前视摄像头完成（`dogDetectPlatformMarker` / `dogDetectWarningMarker`），使用 OpenCV DNN 加载 `cv_Sign/Res18_5in2/` 下的 ONNX 模型推理。
+9. **笛卡尔 IK**：DH 参数为近似值，实测后需在 `calibration.py` 中更新。
+10. **机械臂姿态**：阶段1结束后至阶段3卸载前，机械臂始终保持抓取行走姿态（抓手28°载货），无需额外调用。
+11. **检测点**：检测点的警示标志识别和机器狗动作完全由 C++ 端独立完成，Python 端不参与。
+12. **机械臂动作延时**：`arm_controller.py` 所有姿态方法的 `time.sleep` 已设为 3 秒，`task_planner.py` 中连续动作间额外插入 `time.sleep(2)`，确保每个关节运动完全执行完毕后再发送下一条指令。

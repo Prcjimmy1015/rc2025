@@ -58,6 +58,10 @@ class VisionSystem:
         if self._camera is None:
             # 将父目录加入 sys.path 以导入 perception 模块
             sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+            # sudo 环境下用户级 site-packages 不在默认搜索路径中，手动添加
+            _user_site = "/home/linux/.local/lib/python3.10/site-packages"
+            if os.path.isdir(_user_site) and _user_site not in sys.path:
+                sys.path.insert(0, _user_site)
             try:
                 from perception.d435_camera.camera_d435 import Camera
 

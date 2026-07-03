@@ -74,7 +74,7 @@ class ArmTaskController:
         """行走姿态（空载）：手臂收起，抓手张开"""
         self.arm.blinx_navigation_attitude()
         self.gripper_open()
-        time.sleep(2)
+        time.sleep(10)  # 关节大幅度运动，需充分等待
         print("[Arm] 已切换至行走姿态（空载）")
 
     def go_carry_navigation(self):
@@ -85,25 +85,25 @@ class ArmTaskController:
         except ImportError:
             joints = [0, -90, 90, 0, 0, 0, D1RobotArmController.GRIPPER_GRASP]
         self.arm.blinx_movej(joints)
-        time.sleep(2)
+        time.sleep(10)  # 关节大幅度运动，需充分等待
         print(f"[Arm] 已切换至抓取行走姿态（抓手{joints[6]}°）")
 
     def go_home(self):
         """机械臂归位"""
         self.arm.blinx_navigation_attitude()
-        time.sleep(3)
+        time.sleep(10)
         print("[Arm] 已归位")
 
     def go_photo(self):
         """拍照姿态：D435相机能清晰拍摄平台顶面（仅用于几何体识别）"""
         self.arm.blinx_photograph_attitude()
-        time.sleep(2)
+        time.sleep(10)  # 关节运动到位 + 机械臂稳定，确保拍照清晰
         print("[Arm] 已切换至拍照姿态")
 
     def go_pre_pick(self):
         """预抓取姿态：靠近物资上方，抓手张开"""
         self.arm.blinx_pre_pick_posture()
-        time.sleep(2)
+        time.sleep(3)  # 关节运动到位
         self.gripper_open()
         print("[Arm] 已切换至预抓取姿态")
 
@@ -115,7 +115,7 @@ class ArmTaskController:
         except ImportError:
             joints = [0, 75, -60, 2, -16.5, -2, 28, D1RobotArmController.GRIPPER_GRASP]
         self.arm.blinx_movej(joints)
-        time.sleep(2)
+        time.sleep(10)  # 抬升动作需充分等待，避免与下一动作冲突
         print("[Arm] 已抬升机械臂")
 
     def go_unload_transit(self):
@@ -126,7 +126,7 @@ class ArmTaskController:
         except ImportError:
             joints = [0, 75, -60, 2, -16.5, -2, 28, D1RobotArmController.GRIPPER_GRASP]
         self.arm.blinx_movej(joints)
-        time.sleep(2)
+        time.sleep(10)  # 关节运动到位
         print("[Arm] 已切换至中转平台卸载姿态")
 
     def go_place_platform(self, platform_id: int):
@@ -147,7 +147,7 @@ class ArmTaskController:
             print(f"[Arm] 已切换至{platform_id}号放置平台姿态")
         else:
             raise ValueError(f"无效的平台ID: {platform_id}，仅支持1或2")
-        time.sleep(2)
+        time.sleep(10)  # 大幅度关节运动，需充分等待
 
     # ==================================================================
     # 抓取逻辑
