@@ -105,7 +105,7 @@ int case3_tick(go2::SportClient &sc,
     if(!in_cp && cp_idx<N_CPS && !cps[cp_idx].done){
         double dx=lx-cps[cp_idx].lx, dy=ly-cps[cp_idx].ly;
         double dist=sqrt(dx*dx+dy*dy);
-        if(dist<0.2){
+        if(dist<0.3){
             in_cp=true; cp_timer=0;
             sc.StopMove();
             printf("\n[CP] ARRIVE %s (lx=%.2f ly=%.2f yaw=%.2f) dist=%.2f\n\n",
