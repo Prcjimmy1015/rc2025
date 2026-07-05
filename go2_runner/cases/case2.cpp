@@ -107,7 +107,7 @@ bool case2_tick(go2::SportClient &sc,
         stair_step = 10;
     }
     else if (stair_step == 0){
-        sc.StaticWalk();
+        sc.ClassicWalk(true);
         sc.Move(0.18, 0, yaw_corr);
         double dpx = px - px_start, dpy = py - py_start;
         double d2d = sqrt(dpx*dpx + dpy*dpy);
@@ -124,7 +124,7 @@ bool case2_tick(go2::SportClient &sc,
         }
     }
     else if (stair_step == 1){
-        sc.StaticWalk();
+        sc.ClassicWalk(true);
         sc.Move(0.15, 0, yaw_corr);
         double dpx = px - px_start, dpy = py - py_start;
         double d2d = sqrt(dpx*dpx + dpy*dpy);
