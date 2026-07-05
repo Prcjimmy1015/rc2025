@@ -109,11 +109,14 @@ bool case2_tick(go2::SportClient &sc,
     else if (stair_step == 0){
         sc.StaticWalk();
         sc.Move(0.18, 0, yaw_corr);
+        double dpx = px - px_start, dpy = py - py_start;
+        double d2d = sqrt(dpx*dpx + dpy*dpy);
+        bool moved_enough = (d2d > 0.25);
         if (stair_cnt % 10 == 0)
-            cout << "[S0] cnt=" << stair_cnt << " ob_x=" << ob_x << " py=" << py << endl;
-        if (isfinite(ob_x) && ob_x < 0.55 && ob_x > 0.1){
+            cout << "[S0] cnt=" << stair_cnt << " d2d=" << d2d << " ob_x=" << ob_x << " py=" << py << endl;
+        if (moved_enough && isfinite(ob_x) && ob_x < 0.55 && ob_x > 0.1){
             sc.StopMove();
-            cout << "[S0→1] ob_x=" << ob_x << " → CLIMB" << endl;
+            cout << "[S0→1] d2d=" << d2d << " ob_x=" << ob_x << " → CLIMB" << endl;
             stair_cnt = 0; stair_step = 1;
         }else if (stair_cnt > 200){
             cout << "[S0→1] TIMEOUT → CLIMB" << endl;
@@ -128,9 +131,9 @@ bool case2_tick(go2::SportClient &sc,
         if (obx_far_at == 0 && isfinite(ob_x) && ob_x > 1.5) obx_far_at = stair_cnt;
         if (stair_cnt % 10 == 0)
             cout << "[S1] cnt=" << stair_cnt << " d2d=" << d2d << " ob_x=" << ob_x << " obx_far_at=" << obx_far_at << endl;
-        bool A = (d2d > 0.95);
-        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 115);
-        bool C = (stair_cnt > 310);
+        bool A = (d2d > 0.60);  // 降低前进距离要求
+        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 60);
+        bool C = (stair_cnt > 200);  // 降低帧数兜底
         if (A || B || C){
             cout << "[S1→5] A=" << A << " B=" << B << " C=" << C << endl;
             stair_cnt = 0; stair_step = 5;
