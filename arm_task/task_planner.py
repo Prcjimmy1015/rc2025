@@ -1,112 +1,74 @@
 #!/usr/bin/env python3
 """
-任务规划器 — 3阶段 CLI 脚本
-供 C++ 行走程序通过 subprocess/popen 调用
+机械臂任务入口 — 暴露 3 个阶段函数接口供 C++ 主程序调用
 
-调用方式：
-    sudo python3 arm_task/task_planner.py --stage 1 --marker 1|2
-    sudo python3 arm_task/task_planner.py --stage 2
-    sudo python3 arm_task/task_planner.py --stage 3 --target 1|2
+3 个函数接口:
+  stage1_pickup(ctrl, vision, marker_id) -> int   抓取平台装货
+  stage2_transit(ctrl, vision) -> bool             中转平台卸货+装货
+  stage3_place(ctrl, target_platform) -> bool      放置平台卸货
 
-机械臂姿态说明：
-    阶段1 结束后 → go_carry_navigation（抓取行走姿态，抓手28°载货）
-    阶段2 结束后 → go_carry_navigation（同上）
-    阶段3 结束后 → go_navigation（空载行走姿态，抓手50°张开）
-    阶段1 到 阶段3 之间始终保持在抓取行走姿态，无需额外调用。
-    检测点的警示标志识别和动作完全由 C++ 端机器狗独立完成，Python 端不参与。
-
-返回值：
-    exit 0 成功，stdout 输出结果（阶段1输出 marker_id）
-    exit 1 失败
+CLI 用法 (与 arm_bridge.h 兼容):
+  sudo python3 arm_task/task_planner.py --stage 1 --marker 1|2
+  sudo python3 arm_task/task_planner.py --stage 2
+  sudo python3 arm_task/task_planner.py --stage 3 --target 1|2
 """
 
 import sys
 import os
 import time
-import json
 import argparse
 import traceback
 
-# 将 arm_task 目录加入路径
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+# 路径设置
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_PROJECT = os.path.dirname(_HERE)
+if _PROJECT not in sys.path:
+    sys.path.insert(0, _PROJECT)
 
-from arm_task.arm_controller import ArmTaskController
-from arm_task.vision_utils import VisionSystem
+from arm_task.core.controller import ArmTaskController
+from arm_task.vision import VisionSystem
 
 
 # ==========================================================================
 # 阶段1: 抓取平台 — 抓取起始物资
 # ==========================================================================
-def stage1_pickup_platform(ctrl: ArmTaskController, vision: VisionSystem, marker_id: int = 1) -> int:
+def stage1_pickup(ctrl: ArmTaskController, vision: VisionSystem, marker_id: int = 1) -> int:
     """
-    阶段1: 在抓取平台执行装货。
-    识别标志由 C++ 端机器狗摄像头完成，通过 --marker 参数传入。
+    在抓取平台执行装货。marker_id 由 C++ 端机器狗摄像头识别后传入。
 
-    动作序列：
-        1. photo 拍照姿态 → 用 YOLO 检测几何体
-        2. pre_pick 预抓取姿态
-        3. 笛卡尔运动到物资上方
-        4. grasp_by_type 根据种类抓取
-        5. lift 抬升
-        6. go_carry_navigation 抓取行走姿态（载货）
-
-    Args:
-        marker_id: 识别标志 ID（1 或 2），由 C++ 端机器狗摄像头识别后传入
-
-    Returns:
-        int: 识别标志 ID（1 或 2），-1 失败
+    动作序列: photo → detect → pre_pick → cartesian move → grasp → lift → carry_navigation
     """
-    print("\n" + "=" * 60)
-    print(f"[Stage1] 开始：抓取平台装货（识别标志={marker_id}）")
-    print("=" * 60)
+    print(f"\n{'='*60}\n  Stage 1 开始 — 识别标志={marker_id}\n{'='*60}")
 
     try:
-        # 1. 拍照 → 检测几何体
-        print("[Stage1] 步骤1/5: 拍照检测几何体")
         ctrl.go_navigation()
-        time.sleep(2)  # 确保 navigation 关节运动完全执行完毕
+        time.sleep(2)
+
+        # 拍照 + 检测几何体
         ctrl.go_photo()
-        time.sleep(2)  # 确保 photo 关节运动完全执行完毕，双臂稳定后再拍照
+        time.sleep(5)
+
         geometry = vision.detect_geometry(timeout=10.0)
-        class_id = geometry["class_id"]
-        class_name = geometry["class_name"]
-        center_xy = geometry["center_xy"]
-        depth_mm = geometry["depth_mm"]
+        world_x, world_z = vision.get_world_coord(geometry["center_xy"], geometry["depth_mm"])
+        print(f"  [Stage1] 检测: {geometry['class_name']}(ID={geometry['class_id']}), "
+              f"世界坐标 (X={world_x:.1f}, Z={world_z:.1f})")
 
-        world_x, world_z = vision.get_world_coord(center_xy, depth_mm)
-        print(
-            f"[Stage1] 几何体: {class_name} (ID={class_id}), "
-            f"世界坐标 (X={world_x:.1f}mm, Z={world_z:.1f}mm)"
-        )
-
-        # 2. 预抓取姿态
-        print("[Stage1] 步骤2/5: 预抓取姿态")
+        # 预抓取 + 笛卡尔运动到位
         ctrl.go_pre_pick()
-
-        # 3. 笛卡尔运动到位
-        print(
-            f"[Stage1] 步骤3/5: 笛卡尔运动到物资上方 "
-            f"(X={world_x:.1f}, Z={world_z:.1f})"
-        )
-        ctrl.arm.blinx_movel([world_x, depth_mm, world_z, 0, 0, 0])
+        ctrl.arm.blinx_movel([world_x, geometry["depth_mm"], world_z, 0, 0, 0])
         time.sleep(1)
 
-        # 4. 抓取
-        print(f"[Stage1] 步骤4/5: 抓取 {class_name}")
-        ctrl.grasp_by_type(class_id)
-
-        # 5. 抬升 + 抓取行走姿态
-        print("[Stage1] 步骤5/5: 抬升 + 切换至抓取行走姿态")
+        # 抓取 + 抬升 + 载货行走
+        ctrl.grasp_by_type(geometry["class_id"])
         time.sleep(1)
         ctrl.go_lift()
         ctrl.go_carry_navigation()
 
-        print(f"[Stage1] 完成！识别标志 ID = {marker_id}（由C++端传入）")
-        print(f"MARKER_ID={marker_id}")
+        print(f"\n  [Stage1] ✅ 完成！MARKER_ID={marker_id}")
         return marker_id
 
     except Exception as e:
-        print(f"[Stage1] 错误: {e}")
+        print(f"\n  [Stage1] ❌ 错误: {e}")
         traceback.print_exc()
         return -1
 
@@ -114,90 +76,49 @@ def stage1_pickup_platform(ctrl: ArmTaskController, vision: VisionSystem, marker
 # ==========================================================================
 # 阶段2: 中转平台 — 卸载起始物资 + 抓取场地物资
 # ==========================================================================
-def stage2_transit_platform(ctrl: ArmTaskController, vision: VisionSystem) -> bool:
+def stage2_transit(ctrl: ArmTaskController, vision: VisionSystem) -> bool:
     """
-    阶段2: 在中转平台执行卸货 + 装货。
-    机械臂已在抓取行走姿态（载货），结束时恢复抓取行走姿态。
+    在中转平台执行卸货 + 装货。机械臂已在载货行走姿态。
 
-    动作序列：
-        Part A — 卸载起始物资:
-            a1. go_unload_transit 移动到卸载位置
-            a2. gripper_open 张开抓手卸货
-            a3. go_lift 抬升
-        Part B — 抓取场地物资:
-            b1. go_photo 拍照 → YOLO 检测几何体
-            b2. go_pre_pick 预抓取
-            b3. 笛卡尔运动到位
-            b4. grasp_by_type 抓取
-            b5. go_lift 抬升
-            b6. go_carry_navigation 抓取行走姿态（载货）
-
-    Returns:
-        bool: True 成功
+    动作序列:
+      Part A (卸货): unload_transit → gripper_open → go_lift
+      Part B (装货): photo → detect → pre_pick → cartesian move → grasp → lift → carry_navigation
     """
-    print("\n" + "=" * 60)
-    print("[Stage2] 开始：中转平台卸货 + 装货")
-    print("=" * 60)
+    print(f"\n{'='*60}\n  Stage 2 开始 — 中转平台卸货+装货\n{'='*60}")
 
     try:
-        # ==== Part A: 卸载起始物资 ====
-        print("[Stage2] Part A: 卸载起始物资")
-
-        print("[Stage2] 步骤A1: 移动到中转平台卸载位置")
+        # Part A: 卸载起始物资
+        print("\n  === Part A: 卸载起始物资 ===")
         ctrl.go_unload_transit()
-
-        print("[Stage2] 步骤A2: 张开抓手卸货")
         ctrl.gripper_open()
         time.sleep(1.5)
-
-        print("[Stage2] 步骤A3: 抬升离开平台")
         ctrl.go_lift()
+        print("  [Stage2] ✅ Part A 完成")
 
-        print("[Stage2] Part A 完成：起始物资已卸载到中转平台")
-
-        # ==== Part B: 抓取场地物资 ====
-        print("[Stage2] Part B: 抓取场地物资")
-
-        print("[Stage2] 步骤B1: 拍照检测场地物资")
+        # Part B: 抓取场地物资
+        print("\n  === Part B: 抓取场地物资 ===")
         ctrl.go_photo()
-        time.sleep(2)  # 等待关节运动完成、机械臂稳定后再拍照
+        time.sleep(2)
+
         geometry = vision.detect_geometry(timeout=10.0)
-        class_id = geometry["class_id"]
-        class_name = geometry["class_name"]
-        center_xy = geometry["center_xy"]
-        depth_mm = geometry["depth_mm"]
+        world_x, world_z = vision.get_world_coord(geometry["center_xy"], geometry["depth_mm"])
+        print(f"  [Stage2] 场地物资: {geometry['class_name']}(ID={geometry['class_id']}), "
+              f"世界坐标 (X={world_x:.1f}, Z={world_z:.1f})")
 
-        world_x, world_z = vision.get_world_coord(center_xy, depth_mm)
-        print(
-            f"[Stage2] 场地物资: {class_name} (ID={class_id}), "
-            f"世界坐标 (X={world_x:.1f}mm, Z={world_z:.1f}mm)"
-        )
-
-        print("[Stage2] 步骤B2: 预抓取姿态")
         ctrl.go_pre_pick()
-
-        print(
-            f"[Stage2] 步骤B3: 笛卡尔运动到物资上方 "
-            f"(X={world_x:.1f}, Z={world_z:.1f})"
-        )
-        ctrl.arm.blinx_movel([world_x, depth_mm, world_z, 0, 0, 0])
+        ctrl.arm.blinx_movel([world_x, geometry["depth_mm"], world_z, 0, 0, 0])
         time.sleep(1)
 
-        print(f"[Stage2] 步骤B4: 抓取 {class_name}")
-        ctrl.grasp_by_type(class_id)
-
-        print("[Stage2] 步骤B5: 抬升机械臂")
+        ctrl.grasp_by_type(geometry["class_id"])
         time.sleep(1)
         ctrl.go_lift()
-
-        print("[Stage2] 步骤B6: 切换至抓取行走姿态")
         ctrl.go_carry_navigation()
 
-        print("[Stage2] 完成！")
+        print("\n  [Stage2] ✅ 完成！")
         return True
 
     except Exception as e:
-        print(f"[Stage2] 错误: {e}")
+        print(f"\n  [Stage2] ❌ 错误: {e}")
         traceback.print_exc()
         return False
 
@@ -205,53 +126,33 @@ def stage2_transit_platform(ctrl: ArmTaskController, vision: VisionSystem) -> bo
 # ==========================================================================
 # 阶段3: 放置平台 — 卸载场地物资
 # ==========================================================================
-def stage3_placing_platform(
-    ctrl: ArmTaskController, target_platform: int
-) -> bool:
+def stage3_place(ctrl: ArmTaskController, target_platform: int) -> bool:
     """
-    阶段3: 根据阶段1识别的标志，将场地物资卸载到指定放置平台。
-    机械臂卸载后回到空载行走姿态（抓手张开）。
+    将场地物资卸载到指定放置平台。卸载后回到空载行走姿态。
 
-    动作序列：
-        1. go_place_platform(target) 移动到指定平台
-        2. gripper_open 张开抓手卸货
-        3. go_lift 抬升
-        4. go_navigation 空载行走姿态
-
-    Args:
-        target_platform: 1=一号放置平台, 2=二号放置平台
-
-    Returns:
-        bool: True 成功
+    动作序列: go_place_platform → gripper_open → go_lift → go_navigation
     """
-    print("\n" + "=" * 60)
-    print(f"[Stage3] 开始：卸载场地物资到 {target_platform}号放置平台")
-    print("=" * 60)
+    print(f"\n{'='*60}\n  Stage 3 开始 — 卸载到 {target_platform}号放置平台\n{'='*60}")
 
     try:
-        print(f"[Stage3] 步骤1/3: 移动到 {target_platform}号放置平台")
         ctrl.go_place_platform(target_platform)
-
-        print("[Stage3] 步骤2/3: 张开抓手卸货")
         ctrl.gripper_open()
         time.sleep(1.5)
-
-        print("[Stage3] 步骤3/3: 恢复空载行走姿态")
         ctrl.go_lift()
         time.sleep(1)
         ctrl.go_navigation()
 
-        print("[Stage3] 完成！")
+        print(f"\n  [Stage3] ✅ 完成！")
         return True
 
     except Exception as e:
-        print(f"[Stage3] 错误: {e}")
+        print(f"\n  [Stage3] ❌ 错误: {e}")
         traceback.print_exc()
         return False
 
 
 # ==========================================================================
-# 主入口
+# CLI 入口（供 arm_bridge.h 通过 system() 调用）
 # ==========================================================================
 def main():
     parser = argparse.ArgumentParser(
@@ -263,33 +164,19 @@ def main():
   --stage 2                中转平台卸货 + 抓取场地物资
   --stage 3 --target 1|2   放置平台卸货
 
-检测点的警示标志识别和机器狗动作由 C++ 端独立完成，Python 端不参与。
-阶段1到阶段3之间机械臂始终保持抓取行走姿态。
-
 示例:
-  sudo python3 task_planner.py --stage 1 --marker 1
-  sudo python3 task_planner.py --stage 2
-  sudo python3 task_planner.py --stage 3 --target 1
+  sudo python3 arm_task/task_planner.py --stage 1 --marker 1
+  sudo python3 arm_task/task_planner.py --stage 2
+  sudo python3 arm_task/task_planner.py --stage 3 --target 1
         """,
     )
-    parser.add_argument(
-        "--stage", type=int, required=True, choices=[1, 2, 3],
-        help="任务阶段 (1/2/3)"
-    )
-    parser.add_argument(
-        "--target", type=int, choices=[1, 2], default=1,
-        help="放置平台编号 (仅 --stage 3 时需要，1或2)"
-    )
-    parser.add_argument(
-        "--bin-path", type=str, default=None,
-        help="d1_arm 可执行文件目录"
-    )
-    parser.add_argument(
-        "--marker", type=int, default=1, choices=[1, 2],
-        help="识别标志 ID (仅 --stage 1 时需要，1或2，由C++端传入)"
-    )
+    parser.add_argument("--stage", type=int, required=True, choices=[1, 2, 3])
+    parser.add_argument("--target", type=int, choices=[1, 2], default=1)
+    parser.add_argument("--bin-path", type=str, default=None)
+    parser.add_argument("--marker", type=int, default=1, choices=[1, 2])
     args = parser.parse_args()
 
+    print("[task_planner] 初始化 ArmTaskController + VisionSystem...")
     ctrl = ArmTaskController(bin_path=args.bin_path)
     vision = VisionSystem()
 
@@ -298,35 +185,30 @@ def main():
 
     try:
         if args.stage == 1:
-            marker_id = stage1_pickup_platform(ctrl, vision, args.marker)
+            marker_id = stage1_pickup(ctrl, vision, args.marker)
             success = marker_id > 0
 
         elif args.stage == 2:
-            success = stage2_transit_platform(ctrl, vision)
+            success = stage2_transit(ctrl, vision)
 
         elif args.stage == 3:
-            if args.target not in (1, 2):
-                print(f"错误：--target 必须为 1 或 2，当前值：{args.target}")
-                sys.exit(1)
-            success = stage3_placing_platform(ctrl, args.target)
+            success = stage3_place(ctrl, args.target)
 
     except KeyboardInterrupt:
-        print("\n[TaskPlanner] 用户中断")
-        success = False
+        print("\n[task_planner] 用户中断")
     except Exception as e:
-        print(f"[TaskPlanner] 未捕获异常: {e}")
+        print(f"[task_planner] 未捕获异常: {e}")
         traceback.print_exc()
-        success = False
     finally:
         vision.close()
 
     if success:
-        print(f"\n[TaskPlanner] 阶段{args.stage} 成功完成")
+        print(f"\n[task_planner] ✅ 阶段{args.stage} 成功")
         if args.stage == 1:
             print(f"MARKER_RESULT={marker_id}")
         sys.exit(0)
     else:
-        print(f"\n[TaskPlanner] 阶段{args.stage} 失败")
+        print(f"\n[task_planner] ❌ 阶段{args.stage} 失败")
         sys.exit(1)
 
 

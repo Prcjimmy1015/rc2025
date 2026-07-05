@@ -30,10 +30,10 @@ Python 层通过调用编译好的 C++ 可执行文件下发指令。
 
 | 文件                         | 作用                                                                           |
 | ---------------------------- | ------------------------------------------------------------------------------ |
-| `d1_arm/build/d1_arm.py`     | 底层控制类 `D1RobotArmController`，通过 shell 调用 C++ 可执行文件下发 DDS 指令 |
-| `arm_task/arm_controller.py` | 高层姿态封装 `ArmTaskController`，定义 9 种姿态的关节角度                      |
-| `arm_task/vision_utils.py`   | 视觉识别 `VisionSystem`，YOLO 几何体识别 + D435 深度相机                       |
-| `arm_task/task_planner.py`   | 4 阶段 CLI 任务脚本，供 C++ 行走程序调用                                       |
+| `arm_task/core/d1_bridge.py`   | 底层控制类 `D1RobotArmController`，通过 shell 调用 C++ 可执行文件下发 DDS 指令 |
+| `arm_task/core/controller.py`  | 高层姿态封装 `ArmTaskController`，定义 9 种姿态的关节角度                      |
+| `arm_task/vision/`             | 视觉识别 `VisionSystem`，YOLO 几何体识别 + D435 深度相机                       |
+| `arm_task/task_planner.py`     | 3 阶段 CLI 任务脚本，供 C++ 行走程序调用                                       |
 
 **测试命令**：
 
@@ -50,7 +50,7 @@ sudo python3 arm_task/task_planner.py --stage 3 --target 1  # 阶段3: 放置平
 ### 准备工作
 
 1. 四足机器人停放在比赛场地对应平台旁边
-2. 机械臂控制程序已编译（`d1_arm/build/` 下有 `d1_move_multiple`、`d1_move_single` 等可执行文件）
+2. 机械臂控制程序已编译（`arm_task/bin/` 下有 `d1_move_multiple`、`d1_move_single` 等可执行文件）
 3. 确保 CycloneDDS 网络配置正确（`ens37` 网卡）
 
 ### 操作方法
@@ -263,17 +263,17 @@ arm._move_single_joint(6, 28.0, 1000)  # 6号舵机抓取位
 
 ### 标定工具
 
-使用独立的标定脚本 `arm_task/calibrate_affine.py`，分三步完成：
+使用独立的标定脚本 `arm_task/tools/calibrate_affine.py`，分三步完成：
 
 ```bash
 # 步骤1: 交互式采集标定点（至少3个）
-python3 arm_task/calibrate_affine.py --collect
+python3 arm_task/tools/calibrate_affine.py --collect
 
 # 步骤2: 从采集的点计算仿射矩阵 + 保存到 calib_matrix.json
-python3 arm_task/calibrate_affine.py --compute
+python3 arm_task/tools/calibrate_affine.py --compute
 
 # 步骤3: 验证矩阵效果（可选）
-python3 arm_task/calibrate_affine.py --verify
+python3 arm_task/tools/calibrate_affine.py --verify
 ```
 
 ### 数据文件

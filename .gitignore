@@ -1,19 +1,23 @@
-# 用户指定忽略
+# IDE / 编辑器
 .cursor/
 .vscode/
+*.swp
+*.swo
+
+# 临时文件
 rc2025 copy.cpp
 
-# 忽略所有 build 文件夹
+# 构建产物
 build/
 
-# 但不忽略 d1_arm/build 这个特定的 build 文件夹
-!d1_arm/build/
+# arm_task 构建产物（C++ 编译的二进制，源码在 d1_sdk/）
+arm_task/bin/d1_*
+arm_task/d1_sdk/build/
 
-# 排除 d1_arm/build 中的 CMake 构建中间产物
-d1_arm/build/CMakeFiles/
-d1_arm/build/CMakeCache.txt
-d1_arm/build/Makefile
-d1_arm/build/cmake_install.cmake
-d1_arm/build/.cmake/
-d1_arm/build/__pycache__/
-yolo_Geometry/__pycache__/
+# 运行时生成的标定数据
+arm_task/calib_points.json
+arm_task/calib_matrix.json
+
+# Python 缓存
+__pycache__/
+*.pyc
