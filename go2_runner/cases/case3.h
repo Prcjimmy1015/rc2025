@@ -9,6 +9,6 @@
 //   1 → 检查到 case4 结束信号（暂不使用）
 void case3_reset();
 int case3_tick(unitree::robot::go2::SportClient &sc,
-               const cv::Mat &undist,
+               cv::Mat &undist,
                double lx,
                double ly);

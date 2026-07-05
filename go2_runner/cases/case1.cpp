@@ -9,6 +9,8 @@
 using namespace unitree::robot;
 using namespace std;
 
+static bool g_reset_case1 = false;
+
 // =============================================================================
 // case1：S型走廊避障 (与 rc2025.cpp Flag_Task=1 完全一致)
 // =============================================================================
@@ -25,6 +27,14 @@ bool case1_tick(go2::SportClient &sc,
     static int phase = 0;
     static double phase_start_lx = lx;
     static double yaw_turn_start = yaw_now;
+
+    // 重置 static 变量
+    if (g_reset_case1) {
+        phase = 0;
+        phase_start_lx = lx;
+        yaw_turn_start = yaw_now;
+        g_reset_case1 = false;
+    }
 
     // 雷达三通道 (EMA 滤波值)
     double front_dist = ob_x_f;
@@ -177,6 +187,5 @@ bool case1_tick(go2::SportClient &sc,
 
 void case1_reset_statics()
 {
-    // phase / phase_start_lx / yaw_turn_start 等 static 变量在 case1_tick 内部
-    // 此函数为占位，留待后续需要时扩展
+    g_reset_case1 = true;
 }

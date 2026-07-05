@@ -107,6 +107,8 @@ int pureLineFollow(go2::SportClient &sc,
     // 线条跳变检测
     static double prev_line_err = 0;
     static bool had_line_before = false;
+    // ★ 第二遍巡线时重置跳变检测，避免 case1→case0→case1 死循环
+    if (is_second_pass) { prev_line_err = 0; had_line_before = false; }
     if (line_found && had_line_before && lx >= kLineJumpTrigger_m)
     {
         if (abs(line_err - prev_line_err) > kLineJumpThreshold)
