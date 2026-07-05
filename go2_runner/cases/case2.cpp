@@ -109,14 +109,11 @@ bool case2_tick(go2::SportClient &sc,
     else if (stair_step == 0){
         sc.ClassicWalk(true);
         sc.Move(0.18, 0, yaw_corr);
-        double dpx = px - px_start, dpy = py - py_start;
-        double d2d = sqrt(dpx*dpx + dpy*dpy);
-        bool moved_enough = (d2d > 0.25);
         if (stair_cnt % 10 == 0)
-            cout << "[S0] cnt=" << stair_cnt << " d2d=" << d2d << " ob_x=" << ob_x << " py=" << py << endl;
-        if (moved_enough && isfinite(ob_x) && ob_x < 0.55 && ob_x > 0.1){
+            cout << "[S0] cnt=" << stair_cnt << " ob_x=" << ob_x << " py=" << py << endl;
+        if (isfinite(ob_x) && ob_x < 0.55 && ob_x > 0.1){
             sc.StopMove();
-            cout << "[S0→1] d2d=" << d2d << " ob_x=" << ob_x << " → CLIMB" << endl;
+            cout << "[S0→1] ob_x=" << ob_x << " py=" << py << " → CLIMB" << endl;
             stair_cnt = 0; stair_step = 1;
         }else if (stair_cnt > 200){
             cout << "[S0→1] TIMEOUT → CLIMB" << endl;
@@ -131,11 +128,11 @@ bool case2_tick(go2::SportClient &sc,
         if (obx_far_at == 0 && isfinite(ob_x) && ob_x > 1.5) obx_far_at = stair_cnt;
         if (stair_cnt % 10 == 0)
             cout << "[S1] cnt=" << stair_cnt << " d2d=" << d2d << " ob_x=" << ob_x << " obx_far_at=" << obx_far_at << endl;
-        bool A = (d2d > 0.60);  // 降低前进距离要求
-        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 60);
-        bool C = (stair_cnt > 200);  // 降低帧数兜底
+        bool A = (d2d > 0.85);
+        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 100);
+        bool C = (stair_cnt > 270);
         if (A || B || C){
-            cout << "[S1→5] A=" << A << " B=" << B << " C=" << C << endl;
+            cout << "[S1→5] A=" << A << " B=" << B << " C=" << C << " d2d=" << d2d << " → TURN" << endl;
             stair_cnt = 0; stair_step = 5;
         }
     }
@@ -149,6 +146,7 @@ bool case2_tick(go2::SportClient &sc,
             px_turn_start = px; py_turn_start = py;
             cout << "[S5] TURN START yaw=" << yaw << " target=" << target_yaw << endl;
         }
+        const int PUSH_FRAMES = 5;
         double err = target_yaw - yaw;
         if(err>M_PI)err-=2*M_PI; if(err<-M_PI)err+=2*M_PI;
         double vyaw = 0.45 * err;
@@ -157,7 +155,8 @@ bool case2_tick(go2::SportClient &sc,
         double vx = (abs_err>1.0)?0.04:(abs_err>0.3)?0.08:0.12;
         double dpx = px-px_turn_start, dpy = py-py_turn_start;
         double d2d_turn = sqrt(dpx*dpx+dpy*dpy);
-        sc.StaticWalk();
+        if (stair_cnt < PUSH_FRAMES) vyaw = 0;
+        sc.ClassicWalk(true);
         sc.Move(vx,0,vyaw);
         if(stair_cnt%10==0)
             cout<<"[S5] cnt="<<stair_cnt<<" err="<<err<<" vyaw="<<vyaw<<" vx="<<vx<<" d2d="<<d2d_turn<<endl;
@@ -174,20 +173,22 @@ bool case2_tick(go2::SportClient &sc,
         }
     }
     else if (stair_step == 6 || stair_step == 7 || stair_step == 8){
-        sc.StaticWalk();
+        sc.ClassicWalk(true);
         sc.Move(0.10, 0, 0);
         bool dropped = (peak_pitch > 0.30);
         bool settled = (fabs(pitch) < 0.15 && stair_cnt > 20);
         if(dropped&&settled)settle_cnt++;else settle_cnt=0;
-        if(settle_cnt>12||stair_cnt>250){
+        bool on_ground = (stair_cnt > 30 && (!isfinite(ob_x) || ob_x > 2.0));
+        if(settle_cnt>12||on_ground||stair_cnt>250){
             sc.StopMove();
-            stair_cnt=0; stair_step++;
+            stair_cnt=0;
+            stair_step = on_ground ? 9 : stair_step+1;
         }
     }
     else if (stair_step == 9){
-        sc.StaticWalk();
+        sc.ClassicWalk(true);
         sc.Move(0.15, 0, 0);
-        if(stair_cnt > 50){
+        if(stair_cnt > 20){
             sc.StopMove();
             stair_cnt=0; stair_step=0;
             return true;  // → Flag_Task=3
