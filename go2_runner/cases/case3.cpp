@@ -100,6 +100,18 @@ int case3_tick(go2::SportClient &sc,
     if(ok)e=pc-640;
     if(ok&&ci>5000&&pk>80)last_pc=pc;
 
+    // ── 红点检测 (T3) ──
+    static bool has_red = false;
+    {
+        Mat hsv, mask1, mask2;
+        cvtColor(undist, hsv, COLOR_BGR2HSV);
+        inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), mask1);
+        inRange(hsv, Scalar(170, 100, 100), Scalar(180, 255, 255), mask2);
+        Mat mask = mask1 | mask2;
+        int red_px = countNonZero(mask);
+        has_red = (red_px > 50);
+    }
+
     // ── Checkpoint 检测 ──
     if(!in_cp && cp_idx<N_CPS && !cps[cp_idx].done){
         double dist;
@@ -116,7 +128,15 @@ int case3_tick(go2::SportClient &sc,
             if(yaw_err < -M_PI) yaw_err += 2*M_PI;
             yaw_ok = (fabs(yaw_err) < 0.25 || cps[cp_idx].type == 0);
         }
-        if(dist<0.3 && yaw_ok){
+        // T3: 三选二触发 (距离/航向/红点)
+        bool trigger = false;
+        if(strcmp(cps[cp_idx].name, "T3") == 0){
+            int score = (dist<0.3?1:0) + (yaw_ok?1:0) + (has_red?1:0);
+            trigger = (score >= 2);
+        }else{
+            trigger = (dist<0.3 && yaw_ok);
+        }
+        if(trigger){
             in_cp=true; cp_timer=0;
             sc.StopMove();
             printf("\n[CP] ARRIVE %s (lx=%.2f ly=%.2f yaw=%.2f) dist=%.2f\n\n",
