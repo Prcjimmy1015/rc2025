@@ -96,6 +96,7 @@ const char*eth=av[1];
 for(int i=2;i<ac;++i){string a=av[i];if(a=="--gui")g_enable_gui=true;else if(a=="--task"&&i+1<ac){g_force_task=atoi(av[++i]);if(g_force_task==0){g_case0_skip_init=true;g_case0_second_pass=true;}cout<<"[Config] task:"<<g_force_task<<endl;}else{cerr<<"Unknown: "<<a<<"\n";return -1;}}
 signal(SIGINT,sig);ChannelFactory::Instance()->Init(0,eth);AppRuntime rt;if(!initAppRuntime(rt,eth)){cerr<<"Camera fail\n";return -1;}
 // 原点固定为开机位置，永不重置
+g_orig_px=px; g_orig_py=py; g_orig_yaw=yaw;
 px0=px;py0=py;yaw0=yaw;thread t(aruco_socket_server,5005);t.detach();cout<<(g_enable_gui?"GUI\n":"Headless\n")<<flush;
 go2::SportClient &sc=rt.sc;go2::ObstaclesAvoidClient &avc=rt.avoid_client;VideoCapture &cap=rt.cap;Mat frame,undist;int fc=0;auto t0t=chrono::steady_clock::now();
 while(!g_exit){if(!cap.read(frame)||frame.empty())break;fc++;undistort(frame,undist,K,D);if(g_force_task>=0)Flag_Task=g_force_task;

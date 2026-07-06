@@ -21,8 +21,8 @@ static Checkpoint cps[] = {
     {1.22,  3.93, -0.433,  1, false, "T2"},
     {-1.44, 3.61,  1.908,  1, false, "T3"},
     {-1.46, 1.91,  2.916,  1, false, "T4"},
-    {-1.24, 1.10,  2.832,  1, false, "T5"},
-    {0,     0,      0,      0, false, "A2"},
+    {-1.24, 1.10,  2.832,  2, false, "T5"},
+    {g_orig_px, g_orig_py, 0,  0, false, "A2"},
 };
 static const int N_CPS = sizeof(cps)/sizeof(cps[0]);
 
@@ -120,11 +120,17 @@ int case3_tick(go2::SportClient &sc,
     if(in_cp){
         cp_timer++;
         if(cps[cp_idx].type==0){
-            // A1/A2: 不暂停，立即继续
+            // A2: 不暂停，立即继续
             in_cp=false; cps[cp_idx].done=true; cp_idx++;
             printf("[CP] %s PASS (no pause)\n",cps[cp_idx-1].name);
+        }else if(cps[cp_idx].type==2){
+            // 跳跃 (T5)
+            sc.StopMove();
+            sc.FrontJump();
+            in_cp=false; cps[cp_idx].done=true; cp_idx++;
+            printf("[CP] %s JUMP\n",cps[cp_idx-1].name);
         }else{
-            // T1~T5: 原地暂停 90 帧
+            // T1~T4: 原地暂停 90 帧
             sc.Move(0,0,0);
             if(cp_timer%15==0)printf("[CP] %s PAUSE %d/90\n",
                 cps[cp_idx].name,cp_timer);
