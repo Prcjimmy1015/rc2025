@@ -19,6 +19,7 @@ from arm_task.core.config import (
     GRIPPER_CLOSE,
     GRIPPER_GRASP,
     GRIPPER_TETRAHEDRON,
+    PICK_APPROACH_DY,
 )
 
 
@@ -63,7 +64,7 @@ class ArmTaskController:
         _log_call("go_navigation")
         self.arm.blinx_navigation_attitude()
         self.gripper_open()
-        time.sleep(10)
+        time.sleep(12)
         _log_ok("go_navigation", "空载行走")
 
     def go_carry_navigation(self):
@@ -84,7 +85,7 @@ class ArmTaskController:
         """拍照姿态：D435相机能清晰拍摄平台顶面（仅用于几何体识别）"""
         _log_call("go_photo")
         self.arm.blinx_photograph_attitude()
-        time.sleep(10)
+        time.sleep(15)
         _log_ok("go_photo", "拍照")
 
     def go_pre_pick(self):
@@ -123,10 +124,30 @@ class ArmTaskController:
         _log_ok("go_place_platform", f"{platform_id}号平台 joints={joints}")
 
     # ==================================================================
+    # 笛卡尔接近
+    # ==================================================================
+    def cartesian_approach(self, world_x: float, world_z: float, depth_mm: float, open_gripper: bool = True):
+        """笛卡尔运动到物资正上方固定偏移位置（PICK_APPROACH_DY mm）"""
+        _log_call("cartesian_approach", f"X={world_x:.1f}, Z={world_z:.1f}, depth={depth_mm:.1f}, open_gripper={open_gripper}")
+        if open_gripper:
+            self.gripper_open()
+        self.arm.blinx_movel([world_x, depth_mm + PICK_APPROACH_DY, world_z, 0, 0, 0])
+        _log_ok("cartesian_approach", f"已到达物资上方 +{PICK_APPROACH_DY}mm")
+
+    # ==================================================================
     # 抓取逻辑
     # ==================================================================
-    def grasp_by_type(self, class_id: int):
-        """根据几何体类型执行抓取。正三棱锥→专用子函数，其余→通用28°抓取"""
+    def grasp_by_type(self, class_id: int, world_x=None, world_z=None, depth_mm=None):
+        """
+        根据几何体类型执行抓取。
+        若提供坐标则先笛卡尔直线下降到物资位置再闭合抓手。
+        正三棱锥→专用抓取，其余→通用28°抓取。
+        """
+        if world_x is not None and world_z is not None and depth_mm is not None:
+            _log_call("grasp_by_type", f"class_id={class_id}, 笛卡尔下降至 X={world_x:.1f} Z={world_z:.1f} depth={depth_mm:.1f}")
+            self.arm.blinx_movel([world_x, depth_mm, world_z, 0, 0, 0])
+            time.sleep(0.5)
+
         if class_id == 1:
             self._grasp_tetrahedron()
         else:

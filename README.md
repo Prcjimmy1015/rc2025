@@ -30,9 +30,9 @@ rc2025/
 │   ├── move_state.json            # 增量移动状态
 │   │
 │   ├── core/                      # 核心控制逻辑
-│   │   ├── config.py              # 集中配置（姿态/DH/抓手/类别映射）
+│   │   ├── config.py              # 集中配置（姿态/DH/抓手/偏移/类别映射）
 │   │   ├── d1_bridge.py           # D1 底层桥接（subprocess + FK/IK）
-│   │   └── controller.py          # 高层任务控制器（9种姿态 + 抓手 + 抓取逻辑）
+│   │   └── controller.py          # 高层任务控制器（姿态 + 抓手 + 笛卡尔接近 + 抓取逻辑）
 │   │
 │   ├── vision/                    # 视觉感知
 │   │   ├── camera.py              # D435 相机驱动
@@ -105,13 +105,47 @@ sudo python3 arm_task/task_planner.py --stage 2
 sudo python3 arm_task/task_planner.py --stage 3 --target 1
 ```
 
+### 阶段动作序列
+
+**阶段1 — 抓取平台装货**：
+```
+go_navigation → go_photo → detect → cartesian_approach → grasp_by_type → go_lift → go_carry_navigation
+```
+
+**阶段2 — 中转平台卸货 + 装货**（基于场地物资坐标的笛卡尔相对运动）：
+```
+1. go_photo → detect                     侦察场地物资坐标
+2. blinx_movel                            笛卡尔运动到物资正上方（抓手闭合载货）
+3. blinx_movel → 下降 → gripper_open      平移+下降后卸下起始物资
+4. blinx_movel                            上升+平移回物资正上方
+5. grasp_by_type                          下降 + 抓取场地物资
+6. go_lift → go_carry_navigation          抬升 + 载货行走
+```
+
+**阶段3 — 放置平台卸货**：
+```
+go_place_platform → gripper_open → go_lift → go_navigation
+```
+
 ### core/ — 核心控制逻辑
 
 | 文件 | 功能 |
 |------|------|
-| `config.py` | **所有参数集中管理**：9种姿态关节角度、抓手角度、DH参数、IK参数、几何体类别映射 |
+| `config.py` | **所有参数集中管理**：9种姿态关节角度、抓手角度、DH参数、IK参数、笛卡尔偏移量、几何体类别映射 |
 | `d1_bridge.py` | D1 底层桥接：subprocess 调用 C++ 可执行文件 + FK/IK 数学计算 |
-| `controller.py` | 高层任务控制器：9种姿态 + 抓手控制 + `grasp_by_type()` 分类抓取 |
+| `controller.py` | 高层任务控制器：姿态 + 抓手控制 + `cartesian_approach()` 笛卡尔接近 + `grasp_by_type()` 分类抓取 |
+
+### 关键配置常量
+
+| 常量 | 值 | 说明 |
+|------|-----|------|
+| `GEOMETRY_CLASSES` | `{0:球, 1:正三棱锥, 2:正方体, 3:直圆柱体}` | YOLO 模型输出 class_id 映射 |
+| `GRIPPER_OPEN` | 50° | 6号舵机张开角度 |
+| `GRIPPER_CLOSE` | 0° | 6号舵机闭合角度 |
+| `GRIPPER_GRASP` | 28° | 通用抓取位（球/正方体/直圆柱体） |
+| `GRIPPER_TETRAHEDRON` | 28° | 正三棱锥专用抓取角度 |
+| `PICK_APPROACH_DY` | 80mm | 抓取前笛卡尔运动到物资正上方的 Y 方向偏移 |
+| `UNLOAD_OFFSET_DX` | 100mm | 阶段2卸载起始物资时沿 X 方向的平移偏移 |
 
 ### vision/ — 视觉感知
 
@@ -246,8 +280,9 @@ python3 arm_task/tools/calibrate_affine.py --collect
 
 ## 注意事项
 
-1. **抓手参数**：6号舵机控制，范围 0-50 度。0°=闭合，50°=张开，28°=球/长方体/直圆柱体抓取位。
-2. **标定**：所有姿态角度和 DH 参数集中在 `arm_task/core/config.py`，标定后只需修改此文件。
+1. **抓手参数**：6号舵机控制，范围 0-50 度。0°=闭合，50°=张开，28°=球/正方体/直圆柱体抓取位。
+2. **标定**：所有姿态角度、DH 参数、笛卡尔偏移量集中在 `arm_task/core/config.py`，标定后只需修改此文件。
 3. **sudo 要求**：机械臂 DDS 通信需要 `sudo`，所有 `task_planner.py` 调用需加 `sudo`。
 4. **识别标志/警示标志**：由 C++ 端机器狗前视摄像头完成，使用 OpenCV DNN 加载 `arm_task/sign_model/` 下的 ONNX 模型推理。
 5. **机械臂姿态**：阶段1结束后至阶段3卸载前，机械臂始终保持抓取行走姿态（抓手28°载货）。
+6. **笛卡尔相对运动**：阶段2不再使用固定关节姿态（go_unload_transit），改为基于场地物资检测坐标的笛卡尔相对运动，卸载和抓取位移在任意物资位置下保持一致。

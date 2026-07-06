@@ -26,6 +26,7 @@ if _PROJECT not in sys.path:
     sys.path.insert(0, _PROJECT)
 
 from arm_task.core.controller import ArmTaskController
+from arm_task.core.config import PICK_APPROACH_DY, UNLOAD_OFFSET_DX
 from arm_task.vision import VisionSystem
 
 
@@ -42,24 +43,20 @@ def stage1_pickup(ctrl: ArmTaskController, vision: VisionSystem, marker_id: int 
 
     try:
         ctrl.go_navigation()
-        time.sleep(2)
 
         # 拍照 + 检测几何体
         ctrl.go_photo()
-        time.sleep(5)
 
         geometry = vision.detect_geometry(timeout=10.0)
         world_x, world_z = vision.get_world_coord(geometry["center_xy"], geometry["depth_mm"])
         print(f"  [Stage1] 检测: {geometry['class_name']}(ID={geometry['class_id']}), "
               f"世界坐标 (X={world_x:.1f}, Z={world_z:.1f})")
 
-        # 预抓取 + 笛卡尔运动到位
-        ctrl.go_pre_pick()
-        ctrl.arm.blinx_movel([world_x, geometry["depth_mm"], world_z, 0, 0, 0])
-        time.sleep(1)
+        # 笛卡尔接近 + 下降抓取
+        ctrl.cartesian_approach(world_x, world_z, geometry["depth_mm"])
+        ctrl.grasp_by_type(geometry["class_id"], world_x, world_z, geometry["depth_mm"])
 
-        # 抓取 + 抬升 + 载货行走
-        ctrl.grasp_by_type(geometry["class_id"])
+        # 抬升 + 载货行走
         time.sleep(1)
         ctrl.go_lift()
         ctrl.go_carry_navigation()
@@ -81,36 +78,58 @@ def stage2_transit(ctrl: ArmTaskController, vision: VisionSystem) -> bool:
     在中转平台执行卸货 + 装货。机械臂已在载货行走姿态。
 
     动作序列:
-      Part A (卸货): unload_transit → gripper_open → go_lift
-      Part B (装货): photo → detect → pre_pick → cartesian move → grasp → lift → carry_navigation
+      1. photo → detect                 侦察场地物资坐标
+      2. blinx_movel                    笛卡尔运动到场地物资正上方固定偏移（抓手闭合载货）
+      3. blinx_movel → gripper_open     沿X方向平移到卸载位置，卸下起始物资
+      4. blinx_movel                    反向平移回物资正上方
+      5. cartesian_approach + grasp     下降 + 抓取场地物资
+      6. go_lift + go_carry_navigation  抬升 + 载货行走
     """
-    print(f"\n{'='*60}\n  Stage 2 开始 — 中转平台卸货+装货\n{'='*60}")
+    print(f"\n{'='*60}\n  Stage 2 开始 — 中转平台 先侦察→卸货→抓取\n{'='*60}")
 
     try:
-        # Part A: 卸载起始物资
-        print("\n  === Part A: 卸载起始物资 ===")
-        ctrl.go_unload_transit()
-        ctrl.gripper_open()
-        time.sleep(1.5)
-        ctrl.go_lift()
-        print("  [Stage2] ✅ Part A 完成")
-
-        # Part B: 抓取场地物资
-        print("\n  === Part B: 抓取场地物资 ===")
+        # Step 1: 拍照侦察场地物资
+        print("\n  Step 1: 拍照侦察场地物资")
         ctrl.go_photo()
         time.sleep(2)
 
         geometry = vision.detect_geometry(timeout=10.0)
         world_x, world_z = vision.get_world_coord(geometry["center_xy"], geometry["depth_mm"])
+        depth_mm = geometry["depth_mm"]
         print(f"  [Stage2] 场地物资: {geometry['class_name']}(ID={geometry['class_id']}), "
-              f"世界坐标 (X={world_x:.1f}, Z={world_z:.1f})")
+              f"世界坐标 (X={world_x:.1f}, Z={world_z:.1f}, depth={depth_mm:.1f})")
 
-        ctrl.go_pre_pick()
-        ctrl.arm.blinx_movel([world_x, geometry["depth_mm"], world_z, 0, 0, 0])
+        approach_y = depth_mm + PICK_APPROACH_DY
+        unload_x = world_x + UNLOAD_OFFSET_DX
+
+        # Step 2: 笛卡尔运动到场地物资正上方（抓手保持闭合载货，不开爪）
+        print(f"\n  Step 2: 笛卡尔运动到场地物资上方 +{PICK_APPROACH_DY}mm")
+        ctrl.arm.blinx_movel([world_x, approach_y, world_z, 0, 0, 0])
         time.sleep(1)
 
-        ctrl.grasp_by_type(geometry["class_id"])
+        # Step 3: 平移 → 下降 → 放手卸下起始物资
+        print(f"\n  Step 3: 平移 +{UNLOAD_OFFSET_DX}mm → 下降 → 放手")
+        ctrl.arm.blinx_movel([unload_x, approach_y, world_z, 0, 0, 0])
+        time.sleep(0.5)
+        ctrl.arm.blinx_movel([unload_x, depth_mm, world_z, 0, 0, 0])
+        time.sleep(0.5)
+        ctrl.gripper_open()
         time.sleep(1)
+
+        # Step 4: 上升 → 平移回物资正上方
+        print(f"\n  Step 4: 上升 → 平移回物资上方")
+        ctrl.arm.blinx_movel([unload_x, approach_y, world_z, 0, 0, 0])
+        time.sleep(0.5)
+        ctrl.arm.blinx_movel([world_x, approach_y, world_z, 0, 0, 0])
+        time.sleep(0.5)
+
+        # Step 5: 下降 + 抓取场地物资
+        print(f"\n  Step 5: 下降抓取场地物资")
+        ctrl.grasp_by_type(geometry["class_id"], world_x, world_z, depth_mm)
+        time.sleep(1)
+
+        # Step 6: 抬升 + 载货行走
+        print(f"\n  Step 6: 抬升 + 载货行走")
         ctrl.go_lift()
         ctrl.go_carry_navigation()
 
