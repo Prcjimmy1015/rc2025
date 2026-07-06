@@ -20,8 +20,8 @@ static Checkpoint cps[] = {
     {-0.19, 1.08,  0.156,  1, false, "T1"},
     {1.22,  3.93,  1.129,  1, false, "T2"},
     {-1.44, 3.61, -2.579,  1, false, "T3"},
-    {-1.46, 1.91, -1.777,  1, false, "T4"},
-    {-1.24, 1.10, -1.875,  2, false, "T5"},
+    {-1.43, 1.87, -1.777,  1, false, "T4"},
+    {-1.06, 0.68, -1.875,  2, false, "T5"},
     {g_orig_px, g_orig_py, 0,  3, false, "A2"},
 };
 static const int N_CPS = sizeof(cps)/sizeof(cps[0]);
