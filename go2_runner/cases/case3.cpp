@@ -11,7 +11,7 @@ using namespace std;
 
 struct Checkpoint {
     double lx, ly, yaw_target;
-    int type;          // 0=回正, 1=任务
+    int type;
     bool done;
     const char* name;
 };
@@ -54,7 +54,6 @@ int case3_tick(go2::SportClient &sc,
     if(!once){cout<<"\n=== V22_CASE3 ===\n"<<endl;once=true;}
     cnt++;
 
-    // 稳定期 30 帧
     if(!settled){
         n_st++;
         sc.StaticWalk();
@@ -70,7 +69,6 @@ int case3_tick(go2::SportClient &sc,
 
     sc.Euler(0,0.8,0);
 
-    // 图像处理
     Mat g,b,n;
     cvtColor(undist,g,COLOR_BGR2GRAY);
     GaussianBlur(g,b,{5,5},0);
@@ -85,7 +83,6 @@ int case3_tick(go2::SportClient &sc,
         for(int x=0;x<rw;++x)if(row[x]){cc[x]++;ci++;}
     }
 
-    // 加权质心
     int win_l=max(0,last_pc-300),win_r=min(rw-1,last_pc+300);
     int pk=0;for(int x=win_l;x<=win_r;++x)if(cc[x]>pk)pk=cc[x];
     int pc=-1;
@@ -100,7 +97,6 @@ int case3_tick(go2::SportClient &sc,
     if(ok)e=pc-640;
     if(ok&&ci>5000&&pk>80)last_pc=pc;
 
-    // ── 红点检测 (T3) ──
     static bool has_red = false;
     {
         Mat hsv, mask1, mask2;
@@ -112,11 +108,9 @@ int case3_tick(go2::SportClient &sc,
         has_red = (red_px > 50);
     }
 
-    // ── Checkpoint 检测 ──
     if(!in_cp && cp_idx<N_CPS && !cps[cp_idx].done){
         double dist;
         bool yaw_ok = true;
-        // A2: 用世界坐标直接算距离
         if(cp_idx == N_CPS-1){
             double wx = g_orig_px - px, wy = g_orig_py - py;
             dist = sqrt(wx*wx + wy*wy);
@@ -126,15 +120,14 @@ int case3_tick(go2::SportClient &sc,
             double yaw_err = yaw - cps[cp_idx].yaw_target;
             if(yaw_err > M_PI) yaw_err -= 2*M_PI;
             if(yaw_err < -M_PI) yaw_err += 2*M_PI;
-            yaw_ok = (fabs(yaw_err) < 0.25 || cps[cp_idx].type == 0);
+            yaw_ok = (fabs(yaw_err) < 0.35 || cps[cp_idx].type == 0);
         }
-        // T3: 三选二触发 (距离/航向/红点)
         bool trigger = false;
         if(strcmp(cps[cp_idx].name, "T3") == 0){
-            int score = (dist<0.3?1:0) + (yaw_ok?1:0) + (has_red?1:0);
+            int score = (dist<0.4?1:0) + (yaw_ok?1:0) + (has_red?1:0);
             trigger = (score >= 2);
         }else{
-            trigger = (dist<0.3 && yaw_ok);
+            trigger = (dist<0.4 && yaw_ok);
         }
         if(trigger){
             in_cp=true; cp_timer=0;
@@ -144,21 +137,17 @@ int case3_tick(go2::SportClient &sc,
         }
     }
 
-    // ── Checkpoint 执行 ──
     if(in_cp){
         cp_timer++;
         if(cps[cp_idx].type==3){
-            // A2: 到达原始原点 → 任务完成
             in_cp=false; cps[cp_idx].done=true; cp_idx++;
             printf("[CP] %s ARRIVED → FINISH\n",cps[cp_idx-1].name);
         }else if(cps[cp_idx].type==2){
-            // 跳跃 (T5)
             sc.StopMove();
             sc.FrontJump();
             in_cp=false; cps[cp_idx].done=true; cp_idx++;
             printf("[CP] %s JUMP\n",cps[cp_idx-1].name);
         }else{
-            // T1~T4: 原地暂停 90 帧
             sc.Move(0,0,0);
             if(cp_timer%15==0)printf("[CP] %s PAUSE %d/90\n",
                 cps[cp_idx].name,cp_timer);
@@ -167,12 +156,10 @@ int case3_tick(go2::SportClient &sc,
                 printf("[CP] %s DONE\n",cps[cp_idx-1].name);
             }
         }
-        // ── type==3 (A2) 完成后返回 1 结束任务 ──
         if(cps[cp_idx-1].type==3) return 1;
         return 0;
     }
 
-    // ── A2 直行模式: T5跳跃后直走回原始原点 ──
     if(cp_idx == N_CPS-1 && !in_cp){
         double wx = g_orig_px - px, wy = g_orig_py - py;
         double wdist = sqrt(wx*wx + wy*wy);
@@ -189,21 +176,19 @@ int case3_tick(go2::SportClient &sc,
         return 0;
     }
 
-    // 绘制调试信息
     {
         int h=undist.rows, w=undist.cols;
-        rectangle(undist, {0, h-100}, {w, h}, {255,0,0}, 1);  // ROI
+        rectangle(undist, {0, h-100}, {w, h}, {255,0,0}, 1);
         if(ok && pk>=5){
             int px_val = (int)(640 + e);
             px_val = max(0, min(w-1, px_val));
-            circle(undist, {px_val, h-50}, 8, {0,255,0}, 2);    // 绿点
-            line(undist, {640, h}, {640, h-100}, {0,255,255}, 1); // 中心线
+            circle(undist, {px_val, h-50}, 8, {0,255,0}, 2);
+            line(undist, {640, h}, {640, h-100}, {0,255,255}, 1);
         }
         putText(undist, format("err=%.0f ci=%d pk=%d", e, ci, pk),
                 {10, 60}, FONT_HERSHEY_SIMPLEX, 0.6, {0,255,0}, 1);
     }
 
-    // 检测条件
     double pcross=(ci>0)?pk*100.0/ci:999;
     bool is_cross=(ci>45000 && pcross<0.25 && abs(e)<400);
     bool is_sharp=(abs(e)>400);
@@ -216,10 +201,8 @@ int case3_tick(go2::SportClient &sc,
         printf("[V22] %s err=%.0f ci=%d pk=%d cr=%.2f%%\n",tag,e,ci,pk,pcross);
     }
 
-    // ly 纠偏 (无线条时备用)
     double lc=(ly>0.35)?-0.3:(ly<-0.35)?0.3:0;
 
-    // ── 四模式控制 ──
     if(is_sharp&&sharp_burst==0&&burst_cooldown==0){sharp_burst=30;}
     if(burst_cooldown>0)burst_cooldown--;
 
