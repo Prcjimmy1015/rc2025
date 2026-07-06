@@ -111,7 +111,7 @@ bool case1_tick(go2::SportClient &sc,
         double yaw_drift = yaw_now - yaw0;
         if (yaw_drift > M_PI) yaw_drift -= 2*M_PI;
         if (yaw_drift < -M_PI) yaw_drift += 2*M_PI;
-        steer_phase0 += -yaw_drift * 2.0;
+        steer_phase0 += -yaw_drift * 3.5;
         steer_phase0 = max(-0.3, min(0.3, steer_phase0));
 
         if (abs(steer_phase0) > 0.02) {
