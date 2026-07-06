@@ -17,11 +17,11 @@ struct Checkpoint {
 };
 
 static Checkpoint cps[] = {
-    {-0.19, 1.08,  1.571,  1, false, "T1"},
-    {1.22,  3.93, -3.142,  1, false, "T2"},
-    {-1.44, 3.61, -0.785,  1, false, "T3"},
-    {-1.46, 1.91,  0.0,    1, false, "T4"},
-    {-1.24, 1.10,  0.0,    2, false, "T5"},
+    {-0.19, 1.08,  0.156,  1, false, "T1"},
+    {1.22,  3.93,  1.129,  1, false, "T2"},
+    {-1.44, 3.61, -2.579,  1, false, "T3"},
+    {-1.46, 1.91, -1.777,  1, false, "T4"},
+    {-1.24, 1.10, -1.875,  2, false, "T5"},
     {g_orig_px, g_orig_py, 0,  3, false, "A2"},
 };
 static const int N_CPS = sizeof(cps)/sizeof(cps[0]);
@@ -120,7 +120,7 @@ int case3_tick(go2::SportClient &sc,
             double yaw_err = yaw - cps[cp_idx].yaw_target;
             if(yaw_err > M_PI) yaw_err -= 2*M_PI;
             if(yaw_err < -M_PI) yaw_err += 2*M_PI;
-            yaw_ok = (fabs(yaw_err) < 0.35 || cps[cp_idx].type == 0);
+            yaw_ok = (fabs(yaw_err) < 0.5 || cps[cp_idx].type == 0);
         }
         bool trigger = false;
         if(strcmp(cps[cp_idx].name, "T3") == 0){
