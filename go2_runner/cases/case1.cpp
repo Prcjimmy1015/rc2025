@@ -78,11 +78,16 @@ bool case1_tick(go2::SportClient &sc,
     bool is_straight = (phase == 0 || phase == 2 || phase == 4 || phase == 6 || phase == 8 || phase == 10);
     float vy_center = 0.f;
     if (is_straight) {
-        float side_sum = left_dist + right_dist;
+        // 雷达窄波束容易丢一侧墙壁, 用另一侧值补偿
+        float L = left_dist, R = right_dist;
+        if(L > 999.0 || L < 0.01) L = min<float>(R + 0.05f, 0.35f);
+        if(R > 999.0 || R < 0.01) R = max<float>(L - 0.05f, 0.15f);
+        float side_sum = L + R;
         if (side_sum > 0.05f) {
-            vy_center = max(-0.12f, min((float)((left_dist - right_dist) * 0.42f), 0.12f));
+            vy_center = max(-0.12f, min((float)((L - R) * 0.42f), 0.12f));
             if (abs(vy_center) > 0.01f)
-                cout << "[OB] 🎯 Centering: L=" << left_dist << " R=" << right_dist << " vy=" << vy_center << endl;
+                cout << "[OB] 🎯 Centering: L=" << left_dist << " R=" << right_dist
+                     << " (comp L=" << L << " R=" << R << ") vy=" << vy_center << endl;
         }
     }
 
