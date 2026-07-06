@@ -139,7 +139,7 @@ int pureLineFollow(go2::SportClient &sc,
         steer += -dyaw * kLineYawKeepGain;
         steer = max(-kLineSteerMax, min(kLineSteerMax, steer));
 
-        sc.StaticWalk(); sc.Euler(0, 0.4, 0); sc.Move(0.25, 0, steer);
+        sc.StaticWalk(); sc.Euler(0, 0.4, 0); sc.Move(0.15, 0, steer);
     }
     else if (line_found)
     {
@@ -147,12 +147,12 @@ int pureLineFollow(go2::SportClient &sc,
         if (abs(ly_correction) > 0.01) soft_steer = ly_correction;
         soft_steer += -dyaw * kLineYawKeepGain;
         soft_steer = max(-kLineSteerMax, min(kLineSteerMax, soft_steer));
-        sc.StaticWalk(); sc.Euler(0, 0.4, 0); sc.Move(0.2, 0, soft_steer);
+        sc.StaticWalk(); sc.Euler(0, 0.4, 0); sc.Move(0.12, 0, soft_steer);
     }
     else
     {
         double steer = max(-kLineNoLineSteerMax, min(kLineNoLineSteerMax, ly_correction + (-dyaw * kLineYawKeepGain)));
-        sc.StaticWalk(); sc.Euler(0, 0.4, 0); sc.Move(0.15, 0, steer);
+        sc.StaticWalk(); sc.Euler(0, 0.4, 0); sc.Move(0.10, 0, steer);
     }
 
     // 第一段：雷达触发避障
