@@ -178,7 +178,7 @@ bool case2_tick(go2::SportClient &sc,
         bool dropped = (peak_pitch > 0.30);
         bool settled = (fabs(pitch) < 0.15 && stair_cnt > 20);
         if(dropped&&settled)settle_cnt++;else settle_cnt=0;
-        bool on_ground = (stair_cnt > 30 && (!isfinite(ob_x) || ob_x > 2.0));
+        bool on_ground = (stair_cnt > 30 && (!isfinite(ob_x) || ob_x > 3.5));
         if(settle_cnt>12||on_ground||stair_cnt>250){
             sc.StopMove();
             stair_cnt=0;
@@ -188,7 +188,7 @@ bool case2_tick(go2::SportClient &sc,
     else if (stair_step == 9){
         sc.ClassicWalk(true);
         sc.Move(0.15, 0, 0);
-        if(stair_cnt > 20){
+        if(stair_cnt > 5){
             sc.StopMove();
             stair_cnt=0; stair_step=0;
             return true;  // → Flag_Task=3

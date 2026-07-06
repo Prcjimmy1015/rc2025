@@ -17,11 +17,11 @@ struct Checkpoint {
 };
 
 static Checkpoint cps[] = {
-    {-0.19, 1.08, -1.967,  1, false, "T1"},
-    {1.22,  3.93, -0.433,  1, false, "T2"},
-    {-1.44, 3.61,  1.908,  1, false, "T3"},
-    {-1.46, 1.91,  2.916,  1, false, "T4"},
-    {-1.24, 1.10,  2.832,  2, false, "T5"},
+    {-0.19, 1.08,  1.571,  1, false, "T1"},
+    {1.22,  3.93, -3.142,  1, false, "T2"},
+    {-1.44, 3.61, -0.785,  1, false, "T3"},
+    {-1.46, 1.91,  0.0,    1, false, "T4"},
+    {-1.24, 1.10,  0.0,    2, false, "T5"},
     {g_orig_px, g_orig_py, 0,  3, false, "A2"},
 };
 static const int N_CPS = sizeof(cps)/sizeof(cps[0]);
