@@ -17,7 +17,6 @@ struct Checkpoint {
 };
 
 static Checkpoint cps[] = {
-    {0.50,  2.90,  0.967,  0, false, "A1"},
     {-0.19, 1.08, -1.967,  1, false, "T1"},
     {1.22,  3.93, -0.433,  1, false, "T2"},
     {-1.44, 3.61,  1.908,  1, false, "T3"},
@@ -105,7 +104,11 @@ int case3_tick(go2::SportClient &sc,
     if(!in_cp && cp_idx<N_CPS && !cps[cp_idx].done){
         double dx=lx-cps[cp_idx].lx, dy=ly-cps[cp_idx].ly;
         double dist=sqrt(dx*dx+dy*dy);
-        if(dist<0.3){
+        double yaw_err = yaw - cps[cp_idx].yaw_target;
+        if(yaw_err > M_PI) yaw_err -= 2*M_PI;
+        if(yaw_err < -M_PI) yaw_err += 2*M_PI;
+        bool yaw_ok = (fabs(yaw_err) < 0.25 || cps[cp_idx].type == 0);
+        if(dist<0.3 && yaw_ok){
             in_cp=true; cp_timer=0;
             sc.StopMove();
             printf("\n[CP] ARRIVE %s (lx=%.2f ly=%.2f yaw=%.2f) dist=%.2f\n\n",
