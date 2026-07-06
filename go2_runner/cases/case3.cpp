@@ -22,7 +22,7 @@ static Checkpoint cps[] = {
     {-1.44, 3.61,  1.908,  1, false, "T3"},
     {-1.46, 1.91,  2.916,  1, false, "T4"},
     {-1.24, 1.10,  2.832,  2, false, "T5"},
-    {g_orig_px, g_orig_py, 0,  0, false, "A2"},
+    {g_orig_px, g_orig_py, 0,  3, false, "A2"},
 };
 static const int N_CPS = sizeof(cps)/sizeof(cps[0]);
 
@@ -102,12 +102,20 @@ int case3_tick(go2::SportClient &sc,
 
     // ── Checkpoint 检测 ──
     if(!in_cp && cp_idx<N_CPS && !cps[cp_idx].done){
-        double dx=lx-cps[cp_idx].lx, dy=ly-cps[cp_idx].ly;
-        double dist=sqrt(dx*dx+dy*dy);
-        double yaw_err = yaw - cps[cp_idx].yaw_target;
-        if(yaw_err > M_PI) yaw_err -= 2*M_PI;
-        if(yaw_err < -M_PI) yaw_err += 2*M_PI;
-        bool yaw_ok = (fabs(yaw_err) < 0.25 || cps[cp_idx].type == 0);
+        double dist;
+        bool yaw_ok = true;
+        // A2: 用世界坐标直接算距离
+        if(cp_idx == N_CPS-1){
+            double wx = g_orig_px - px, wy = g_orig_py - py;
+            dist = sqrt(wx*wx + wy*wy);
+        }else{
+            double dx=lx-cps[cp_idx].lx, dy=ly-cps[cp_idx].ly;
+            dist=sqrt(dx*dx+dy*dy);
+            double yaw_err = yaw - cps[cp_idx].yaw_target;
+            if(yaw_err > M_PI) yaw_err -= 2*M_PI;
+            if(yaw_err < -M_PI) yaw_err += 2*M_PI;
+            yaw_ok = (fabs(yaw_err) < 0.25 || cps[cp_idx].type == 0);
+        }
         if(dist<0.3 && yaw_ok){
             in_cp=true; cp_timer=0;
             sc.StopMove();
@@ -119,10 +127,10 @@ int case3_tick(go2::SportClient &sc,
     // ── Checkpoint 执行 ──
     if(in_cp){
         cp_timer++;
-        if(cps[cp_idx].type==0){
-            // A2: 不暂停，立即继续
+        if(cps[cp_idx].type==3){
+            // A2: 到达原始原点 → 任务完成
             in_cp=false; cps[cp_idx].done=true; cp_idx++;
-            printf("[CP] %s PASS (no pause)\n",cps[cp_idx-1].name);
+            printf("[CP] %s ARRIVED → FINISH\n",cps[cp_idx-1].name);
         }else if(cps[cp_idx].type==2){
             // 跳跃 (T5)
             sc.StopMove();
@@ -139,6 +147,25 @@ int case3_tick(go2::SportClient &sc,
                 printf("[CP] %s DONE\n",cps[cp_idx-1].name);
             }
         }
+        // ── type==3 (A2) 完成后返回 1 结束任务 ──
+        if(cps[cp_idx-1].type==3) return 1;
+        return 0;
+    }
+
+    // ── A2 直行模式: T5跳跃后直走回原始原点 ──
+    if(cp_idx == N_CPS-1 && !in_cp){
+        double wx = g_orig_px - px, wy = g_orig_py - py;
+        double wdist = sqrt(wx*wx + wy*wy);
+        double target_angle = atan2(wy, wx);
+        double heading_err = target_angle - yaw;
+        if(heading_err > M_PI) heading_err -= 2*M_PI;
+        if(heading_err < -M_PI) heading_err += 2*M_PI;
+        double steer = heading_err * 1.5;
+        steer = max(-0.3, min(0.3, steer));
+        if(cnt%15==0) printf("[A2] dist=%.2f hdg=%.1fdeg steer=%.2f\n",
+            wdist, heading_err*180/M_PI, steer);
+        sc.StaticWalk(); sc.Euler(0,0,0);
+        sc.Move(0.15, 0, steer);
         return 0;
     }
 

@@ -105,7 +105,7 @@ double lx,ly,dyaw;transformLocal(px,py,yaw,lx,ly,dyaw);
 switch(Flag_Task){case 0:{int ret=case0_tick(sc,undist,rt.stateCB.state,fc);if(g_force_task<0){if(ret==1){Flag_Task=1;g_case0_second_pass=false;case1_reset_statics();}else if(ret==2){Flag_Task=2;g_case0_second_pass=false;case2_reset();}}break;}
 case 1:if(g_force_task<0&&case1_tick(sc,fc,lx,ly,yaw)){Flag_Task=2;case2_reset();}break;
 case 2:if(g_force_task<0&&case2_tick(sc,undist,rt.stateCB.state,fc,lx,ly)){Flag_Task=3;case3_reset();}break;
-case 3:case3_tick(sc,undist,lx,ly);break;}
+case 3:{int ret=case3_tick(sc,undist,lx,ly);if(ret==1)Flag_Task=9;}break;}
 if(g_enable_gui){double fps=fc/chrono::duration<double>(chrono::steady_clock::now()-t0t).count();putText(undist,format("V22 FPS %.1f",fps),{10,30},FONT_HERSHEY_SIMPLEX,1,{0,255,0},2);imshow("Go2",undist);int key=waitKey(1);if(key==27)break;
 // if(key=='n'){Flag_Task=3;case3_reset();cout<<"\n[KEY] Jump to case3 V22巡线\n"<<endl;}
 if(key=='r'){double rlx,rly,rdyaw;transformLocal(px,py,yaw,rlx,rly,rdyaw);static int recn=0;printf("\n[RECORD] #%d: lx=%.2f ly=%.2f yaw=%.3f\n\n",++recn,rlx,rly,yaw);}}}
