@@ -191,8 +191,38 @@ armCallStage3(g_marker_id);
 | 文件 | 功能 |
 |------|------|
 | `calibrate_affine.py` | 像素→世界坐标标定（--collect / --compute / --verify） |
-| `move_incremental.py` | 增量移动标定（保持末端姿态的笛卡尔增量运动） |
+| `calibrate_dh.py` | DH 参数离线标定（手动采集多组关节角+实测坐标 → Nelder-Mead 优化 offset） |
+| `move_incremental.py` | 增量移动标定（3-DOF 位置 IK，保持末端姿态的笛卡尔增量运动） |
 | `verify_ik.py` | IK 纯数学验证（无需实机，验证 DH 参数和 IK 求解器） |
+
+### DH 参数标定数据
+
+| 文件 | 功能 |
+|------|------|
+| `dh_calib_data.json` | 手动采集的标定数据（关节角度 + 实测 XYZ 坐标） |
+| `dh_offset_optimized.json` | Nelder-Mead 优化后的 offset 角度 |
+| `dh_optimized.json` | 优化后的完整 DH 参数（供参考） |
+
+**标定流程**：
+
+```bash
+# 1. 手动移动机械臂到不同姿态，记录关节角 + 实测坐标
+python3 arm_task/tools/calibrate_dh.py --list
+
+# 2. 运行优化（固定连杆长度，仅优化 offset 角度）
+python3 arm_task/tools/calibrate_dh.py --solve
+
+# 3. 将优化结果手动写入 arm_task/core/config.py
+```
+
+**当前标定结果**（基于 5 组实测数据）：
+
+| 关节 | 功能 | offset 优化前 | offset 优化后 |
+|------|------|:-----------:|:-----------:|
+| Joint 0 | 基座旋转 | 0° | 0° |
+| Joint 1 | 大臂俯仰 | 90° | **96°** |
+| Joint 2 | 小臂俯仰 | -90° | **-89°** |
+| Joint 3-5 | 腕部/末端 | 0° | 0° |
 
 ---
 
