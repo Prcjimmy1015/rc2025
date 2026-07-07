@@ -96,6 +96,8 @@ bool case2_tick(go2::SportClient &sc,
     static int    prev_step    = -1;
 
     static int s1_settle = 0;
+    static bool s5_timed_out = false;  // S5 超时, 下台阶带左偏
+
     if (stair_step != prev_step){
         px_start    = px;
         py_start    = py;
@@ -129,6 +131,21 @@ bool case2_tick(go2::SportClient &sc,
         static int  s0_align_cnt = 0;
 
         if (s0_phase == 0){
+            // 退出case1后离台阶太近,先后退拉开距离再调正
+            sc.ClassicWalk(true);
+            sc.Move(-0.10, 0, 0);
+
+            if (stair_cnt % 10 == 0)
+                cout << "[S0-BACK] cnt=" << stair_cnt
+                     << " ob_x=" << ob_x << endl;
+
+            if (stair_cnt > 30){
+                sc.StopMove();
+                s0_phase = 1;
+                stair_cnt = 0;
+                cout << "[S0-BACK→FWD] → forward" << endl;
+            }
+        }else if (s0_phase == 1){
             sc.ClassicWalk(true);
             double vx = (isfinite(ob_x) && ob_x < 0.70) ? 0.10 : 0.18;
             sc.Move(vx, 0, yaw_corr);
@@ -142,7 +159,7 @@ bool case2_tick(go2::SportClient &sc,
             if (isfinite(ob_x) && ob_x < 0.55 && ob_x > 0.1){
                 if (aruco_detected && fabs(aruco_angle) > 0.06){
                     sc.StopMove();
-                    s0_phase     = 1;
+                    s0_phase     = 2;
                     s0_align_cnt = 0;
                     cout << "[S0→ALIGN] aruco_angle=" << aruco_angle
                          << " → align first" << endl;
@@ -186,15 +203,20 @@ bool case2_tick(go2::SportClient &sc,
     else if (stair_step == 1){
         s1_settle++;
 
-        double s1_hdg = 0;
-
-        double euler_roll = 0;
+        // 前6帧抑制航向修正 (StopMove→ClassicWalk 切换时 IMU yaw 有跳变)
+        double s1_hdg = heading_corr;
+        if (s1_settle <= 6){
+            s1_hdg = 0;
+            if (s1_settle == 6){
+                s1_start_yaw = yaw;
+                cout << "[S1] YAW RELOCK: " << s1_start_yaw << endl;
+            }
+        }
+        // 左脚打滑检测: roll 变负(左倾) → 右移压回去
         double roll_corr = 0;
-        if (s1_settle > 6 && fabs(roll) > 0.05){
-            euler_roll = -0.8 * roll;
-            euler_roll = max(-0.15, min(0.15, euler_roll));
-            roll_corr = 0.30 * roll;
-            roll_corr = max(-0.25, min(0.25, roll_corr));
+        if (s1_settle > 6 && fabs(roll) > 0.10){
+            roll_corr = 0.15 * roll;
+            roll_corr = max(-0.18, min(0.18, roll_corr));
         }
 
         sc.ClassicWalk(true);
@@ -256,8 +278,6 @@ bool case2_tick(go2::SportClient &sc,
             cout << "[S5] TURN START yaw=" << yaw << " target=" << target_yaw << endl;
         }
 
-        const int PUSH_FRAMES = 5;
-
         double err = target_yaw - yaw;
         if (err >  M_PI) err -= 2.0 * M_PI;
         if (err < -M_PI) err += 2.0 * M_PI;
@@ -272,8 +292,6 @@ bool case2_tick(go2::SportClient &sc,
         else if (abs_err > 0.3)  vx = 0.08;
         else                      vx = 0.12;
 
-        if (stair_cnt < PUSH_FRAMES) vyaw = 0;
-
         double dpx = px-px_turn_start, dpy = py-py_turn_start;
         double d2d_turn = sqrt(dpx*dpx + dpy*dpy);
 
@@ -283,22 +301,23 @@ bool case2_tick(go2::SportClient &sc,
         if(stair_cnt%10==0)
             cout<<"[S5] cnt="<<stair_cnt<<" err="<<err<<" vyaw="<<vyaw<<" vx="<<vx<<" d2d="<<d2d_turn<<" yaw="<<yaw<<endl;
 
-        stair_cnt++;
-
         bool angle_ok=(abs_err<0.08), rear_ok=(d2d_turn>0.25), min_time=(stair_cnt>45);
         if(angle_ok&&rear_ok&&min_time){
             sc.StopMove();
             cout<<"[S5] DONE  err="<<err<<" d2d="<<d2d_turn<<" → DESCEND"<<endl;
-            turn_inited=false; stair_cnt=0; stair_step=6;
-        }else if(stair_cnt>300){
+            turn_inited=false; s5_timed_out=false; stair_cnt=0; stair_step=6;
+        }else if(stair_cnt>200){
             sc.StopMove();
-            cout<<"[S5] TIMEOUT  err="<<err<<" → DESCEND anyway"<<endl;
-            turn_inited=false; stair_cnt=0; stair_step=6;
+            cout<<"[S5] TIMEOUT  err="<<err<<" → DESCEND with drift"<<endl;
+            turn_inited=false; s5_timed_out=true; stair_cnt=0; stair_step=6;
         }
     }
-    else if (stair_step == 6 || stair_step == 7 || stair_step == 8){
+    else if (stair_step == 6)  // 下第一级 (顶层→中层)
+    {
+        double descend_vyaw = s5_timed_out ? 0.04 : 0;
         sc.ClassicWalk(true);
-        sc.Move(0.10, 0, 0);
+        sc.Move(0.10, 0, descend_vyaw);
+
         bool dropped = (peak_pitch > 0.30);
         bool settled = (fabs(pitch) < 0.15 && stair_cnt > 20);
         if(dropped&&settled)settle_cnt++;else settle_cnt=0;
@@ -306,7 +325,39 @@ bool case2_tick(go2::SportClient &sc,
         if(settle_cnt>12||on_ground||stair_cnt>250){
             sc.StopMove();
             stair_cnt=0;
-            stair_step = on_ground ? 9 : stair_step+1;
+            stair_step = on_ground ? 9 : 7;
+        }
+    }
+    else if (stair_step == 7)  // 下第二级 (中层→底层)
+    {
+        double descend_vyaw = s5_timed_out ? 0.04 : 0;
+        sc.ClassicWalk(true);
+        sc.Move(0.10, 0, descend_vyaw);
+
+        bool dropped = (peak_pitch > 0.30);
+        bool settled = (fabs(pitch) < 0.15 && stair_cnt > 20);
+        if(dropped&&settled)settle_cnt++;else settle_cnt=0;
+        bool on_ground = (stair_cnt > 30 && (!isfinite(ob_x) || ob_x > 2.0));
+        if(settle_cnt>12||on_ground||stair_cnt>250){
+            sc.StopMove();
+            stair_cnt=0;
+            stair_step = on_ground ? 9 : 8;
+        }
+    }
+    else if (stair_step == 8)  // 下第三级 (底层→地面)
+    {
+        double descend_vyaw = s5_timed_out ? 0.04 : 0;
+        sc.ClassicWalk(true);
+        sc.Move(0.10, 0, descend_vyaw);
+
+        bool dropped = (peak_pitch > 0.30);
+        bool settled = (fabs(pitch) < 0.15 && stair_cnt > 20);
+        if(dropped&&settled)settle_cnt++;else settle_cnt=0;
+        bool on_ground = (stair_cnt > 30 && (!isfinite(ob_x) || ob_x > 2.0));
+        if(settle_cnt>12||on_ground||stair_cnt>250){
+            sc.StopMove();
+            stair_cnt=0;
+            stair_step = 9;
         }
     }
     else if (stair_step == 9){
