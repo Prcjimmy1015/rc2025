@@ -120,14 +120,14 @@ int case3_tick(go2::SportClient &sc,
             double yaw_err = yaw - cps[cp_idx].yaw_target;
             if(yaw_err > M_PI) yaw_err -= 2*M_PI;
             if(yaw_err < -M_PI) yaw_err += 2*M_PI;
-            yaw_ok = (fabs(yaw_err) < 0.25 || cps[cp_idx].type == 0);
+            yaw_ok = (fabs(yaw_err) < 0.40 || cps[cp_idx].type == 0);
         }
         bool trigger = false;
         if(strcmp(cps[cp_idx].name, "T3") == 0){
-            int score = (dist<0.25?1:0) + (yaw_ok?1:0) + (has_red?1:0);
+            int score = (dist<0.40?1:0) + (yaw_ok?1:0) + (has_red?1:0);
             trigger = (score >= 2);
         }else{
-            trigger = (dist<0.25 && yaw_ok);
+            trigger = (dist<0.40 && yaw_ok);
         }
         if(trigger){
             in_cp=true; cp_timer=0;
