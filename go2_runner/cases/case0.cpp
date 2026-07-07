@@ -61,7 +61,7 @@ int case0_tick(go2::SportClient &sc, const Mat &undist,
         if(lx>=0.2){sc.StopMove();sc.Move(0,0,0);st=1;}return 0;}
     if(st==1){sc.FrontJump();st=2;
         this_thread::sleep_for(chrono::milliseconds(300));px0=px;py0=py;yaw0=yaw;return 0;}
-    if(st==2){sc.BalanceStand();this_thread::sleep_for(chrono::milliseconds(500));st=3;return 0;}
+    if(st==2){sc.BalanceStand();this_thread::sleep_for(chrono::milliseconds(500));sc.StaticWalk();st=3;return 0;}
 
     if(g_case0_skip_init){task0_loop(sc,undist,ly);return 0;}
     return pureLineFollow(sc,undist,lx,ly,dyaw,fcount,g_case0_second_pass);
