@@ -37,11 +37,13 @@ static int burst_cooldown=0;
 static int cp_idx=0;
 static bool in_cp=false;
 static int cp_timer=0;
+static bool has_red = false;  // latch: 看到一次就保持
 
 void case3_reset(){
     settled=false; n_st=0; cnt=0; last_pc=640;
     sharp_burst=0; burst_cooldown=0;
     cp_idx=0; in_cp=false; cp_timer=0;
+    has_red=false;
     for(int i=0;i<N_CPS;i++)cps[i].done=false;
 }
 
@@ -97,7 +99,6 @@ int case3_tick(go2::SportClient &sc,
     if(ok)e=pc-640;
     if(ok&&ci>5000&&pk>80)last_pc=pc;
 
-    static bool has_red = false;
     {
         Mat hsv, mask1, mask2;
         cvtColor(undist, hsv, COLOR_BGR2HSV);
@@ -105,7 +106,10 @@ int case3_tick(go2::SportClient &sc,
         inRange(hsv, Scalar(170, 100, 100), Scalar(180, 255, 255), mask2);
         Mat mask = mask1 | mask2;
         int red_px = countNonZero(mask);
-        has_red = (red_px > 50);
+        if (red_px > 50 && !has_red) {
+            has_red = true;
+            cout << "🔴 RED DETECTED (pixels=" << red_px << ")" << endl;
+        }
     }
 
     if(!in_cp && cp_idx<N_CPS && !cps[cp_idx].done){
