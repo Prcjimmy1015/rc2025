@@ -84,7 +84,7 @@ bool case1_tick(go2::SportClient &sc,
         if(R > 999.0 || R < 0.01) R = max<float>(L - 0.05f, 0.15f);
         float side_sum = L + R;
         if (side_sum > 0.05f) {
-            vy_center = max(-0.20f, min((float)((L - R) * 0.60f), 0.20f));
+            vy_center = max(-0.12f, min((float)((L - R) * 0.42f), 0.12f));
             if (abs(vy_center) > 0.01f)
                 cout << "[OB] 🎯 Centering: L=" << left_dist << " R=" << right_dist
                      << " (comp L=" << L << " R=" << R << ") vy=" << vy_center << endl;
