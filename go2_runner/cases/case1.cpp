@@ -174,6 +174,7 @@ bool case1_tick(go2::SportClient &sc,
             if (phase == 10) {
                 // Phase 10 → 完成 S 型序列，回到巡线
                 phase = 0;
+                sc.StopMove();
                 cout << "[OB] 🎉 S-SHAPED CORRIDOR NAVIGATION COMPLETE! Resuming line follow." << endl;
                 return true;  // → Flag_Task = 0
             } else {
