@@ -17,11 +17,11 @@ struct Checkpoint {
 };
 
 static Checkpoint cps[] = {
-    {-0.19, 1.08,  0.156,  1, false, "T1"},
-    {1.22,  3.93,  1.129,  1, false, "T2"},
-    {-1.44, 3.61, -2.579,  1, false, "T3"},
-    {-1.43, 1.87, -1.777,  1, false, "T4"},
-    {-1.06, 0.68, -1.875,  2, false, "T5"},
+    {0.26,  1.19,  0.57,  1, false, "T1"},
+    {1.70,  3.93,  2.09,  1, false, "T2"},
+    {-0.86, 3.64, -1.22,  1, false, "T3"},
+    {-0.92, 1.94, -0.99,  1, false, "T4"},
+    {-0.75, 1.04, -1.19,  2, false, "T5"},
     {g_orig_px, g_orig_py, 0,  3, false, "A2"},
 };
 static const int N_CPS = sizeof(cps)/sizeof(cps[0]);
@@ -106,7 +106,7 @@ int case3_tick(go2::SportClient &sc,
         inRange(hsv, Scalar(170, 100, 100), Scalar(180, 255, 255), mask2);
         Mat mask = mask1 | mask2;
         int red_px = countNonZero(mask);
-        if (red_px > 50 && !has_red) {
+        if (red_px > 500 && !has_red) {
             has_red = true;
             cout << "🔴 RED DETECTED (pixels=" << red_px << ")" << endl;
         }
@@ -124,14 +124,14 @@ int case3_tick(go2::SportClient &sc,
             double yaw_err = yaw - cps[cp_idx].yaw_target;
             if(yaw_err > M_PI) yaw_err -= 2*M_PI;
             if(yaw_err < -M_PI) yaw_err += 2*M_PI;
-            yaw_ok = (fabs(yaw_err) < 0.40 || cps[cp_idx].type == 0);
+            yaw_ok = (fabs(yaw_err) < 0.30 || cps[cp_idx].type == 0);
         }
         bool trigger = false;
         if(strcmp(cps[cp_idx].name, "T3") == 0){
-            int score = (dist<0.40?1:0) + (yaw_ok?1:0) + (has_red?1:0);
+            int score = (dist<0.30?1:0) + (yaw_ok?1:0) + (has_red?1:0);
             trigger = (score >= 2);
         }else{
-            trigger = (dist<0.40 && yaw_ok);
+            trigger = (dist<0.30 && yaw_ok);
         }
         if(trigger){
             in_cp=true; cp_timer=0;
