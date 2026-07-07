@@ -186,14 +186,7 @@ bool case2_tick(go2::SportClient &sc,
     else if (stair_step == 1){
         s1_settle++;
 
-        double s1_hdg = heading_corr;
-        if (s1_settle <= 6){
-            s1_hdg = 0;
-            if (s1_settle == 6){
-                s1_start_yaw = yaw;
-                cout << "[S1] YAW RELOCK: " << s1_start_yaw << endl;
-            }
-        }
+        double s1_hdg = 0;
 
         double euler_roll = 0;
         double roll_corr = 0;
