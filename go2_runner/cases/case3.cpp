@@ -16,12 +16,13 @@ struct Checkpoint {
     const char* name;
 };
 
+// 四组实测平均值, yaw 不参与触发 (里程计漂移太大)
 static Checkpoint cps[] = {
-    {0.26,  1.19,  0.57,  1, false, "T1"},
-    {1.70,  3.93,  2.09,  1, false, "T2"},
-    {-0.86, 3.64, -1.22,  1, false, "T3"},
-    {-0.92, 1.94, -0.99,  1, false, "T4"},
-    {-0.75, 1.04, -1.19,  2, false, "T5"},
+    {0.20,  1.16,  0,  1, false, "T1"},
+    {1.66,  3.83,  0,  1, false, "T2"},
+    {-0.88, 3.60,  0,  1, false, "T3"},
+    {-0.97, 1.91,  0,  1, false, "T4"},
+    {-0.81, 0.98,  0,  2, false, "T5"},
     {g_orig_px, g_orig_py, 0,  3, false, "A2"},
 };
 static const int N_CPS = sizeof(cps)/sizeof(cps[0]);
@@ -37,7 +38,7 @@ static int burst_cooldown=0;
 static int cp_idx=0;
 static bool in_cp=false;
 static int cp_timer=0;
-static bool has_red = false;  // latch: 看到一次就保持
+static bool has_red = false;  // latch: 在 T2 之后看到红点就保持
 
 void case3_reset(){
     settled=false; n_st=0; cnt=0; last_pc=640;
@@ -99,39 +100,35 @@ int case3_tick(go2::SportClient &sc,
     if(ok)e=pc-640;
     if(ok&&ci>5000&&pk>80)last_pc=pc;
 
-    {
+    // 红点检测: 只在 T2 完成后 (cp_idx>=2) 才开门, 防止远处误检
+    if(!has_red && cp_idx>=2){
         Mat hsv, mask1, mask2;
         cvtColor(undist, hsv, COLOR_BGR2HSV);
         inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), mask1);
         inRange(hsv, Scalar(170, 100, 100), Scalar(180, 255, 255), mask2);
         Mat mask = mask1 | mask2;
         int red_px = countNonZero(mask);
-        if (red_px > 500 && !has_red) {
+        if (red_px > 500){
             has_red = true;
-            cout << "🔴 RED DETECTED (pixels=" << red_px << ")" << endl;
+            cout << "🔴 RED DETECTED (pixels=" << red_px << ") latch ON" << endl;
         }
     }
 
     if(!in_cp && cp_idx<N_CPS && !cps[cp_idx].done){
         double dist;
-        bool yaw_ok = true;
         if(cp_idx == N_CPS-1){
             double wx = g_orig_px - px, wy = g_orig_py - py;
             dist = sqrt(wx*wx + wy*wy);
         }else{
             double dx=lx-cps[cp_idx].lx, dy=ly-cps[cp_idx].ly;
             dist=sqrt(dx*dx+dy*dy);
-            double yaw_err = yaw - cps[cp_idx].yaw_target;
-            if(yaw_err > M_PI) yaw_err -= 2*M_PI;
-            if(yaw_err < -M_PI) yaw_err += 2*M_PI;
-            yaw_ok = (fabs(yaw_err) < 0.30 || cps[cp_idx].type == 0);
         }
+        // 触发: T3 需要红点, 其余纯距离 <0.30
         bool trigger = false;
         if(strcmp(cps[cp_idx].name, "T3") == 0){
-            int score = (dist<0.30?1:0) + (yaw_ok?1:0) + (has_red?1:0);
-            trigger = (score >= 2);
+            trigger = (dist < 0.30 && has_red);
         }else{
-            trigger = (dist<0.30 && yaw_ok);
+            trigger = (dist < 0.30);
         }
         if(trigger){
             in_cp=true; cp_timer=0;
