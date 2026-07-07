@@ -212,9 +212,9 @@ bool case2_tick(go2::SportClient &sc,
                  << " roll=" << roll << " rcorr=" << roll_corr
                  << " obx_far_at=" << obx_far_at << endl;
 
-        bool A = (d2d > 1.13);
-        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 158);
-        bool C = (stair_cnt > 366);
+        bool A = (d2d > 0.80);
+        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 90);
+        bool C = (stair_cnt > 250);
 
         if (A || B || C){
             cout << "[S1→2] A=" << A << " B=" << B << " C=" << C
