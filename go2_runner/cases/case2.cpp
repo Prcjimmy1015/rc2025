@@ -211,9 +211,9 @@ bool case2_tick(go2::SportClient &sc,
                  << " roll=" << roll << " rcorr=" << roll_corr
                  << " obx_far_at=" << obx_far_at << endl;
 
-        bool A = (d2d > 0.80);
-        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 90);
-        bool C = (stair_cnt > 250);
+        bool A = (d2d > 1.13);
+        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 158);
+        bool C = (stair_cnt > 371);
 
         if (A || B || C){
             cout << "[S1→2] A=" << A << " B=" << B << " C=" << C
@@ -310,12 +310,48 @@ bool case2_tick(go2::SportClient &sc,
         }
     }
     else if (stair_step == 9){
-        sc.ClassicWalk(true);
-        sc.Move(0.15, 0, 0);
-        if(stair_cnt > 25){
-            sc.StopMove();
-            stair_cnt=0; stair_step=0;
-            return true;  // → Flag_Task=3
+        static double s9_target_yaw = 0;
+        static bool s9_turn_inited = false;
+        static int s9_phase = 0;  // 0=rotate to south, 1=go straight
+
+        if (!s9_turn_inited){
+            double dy = yaw0 + M_PI;
+            if(dy > M_PI) dy -= 2*M_PI;
+            if(dy < -M_PI) dy += 2*M_PI;
+            s9_target_yaw = dy;
+            s9_turn_inited = true;
+            s9_phase = 0;
+            stair_cnt = 0;
+            cout << "[S9] TURN TO SOUTH start yaw=" << yaw << " target=" << s9_target_yaw << endl;
+        }
+
+        if(s9_phase == 0){
+            double err = s9_target_yaw - yaw;
+            if(err > M_PI) err -= 2*M_PI;
+            if(err < -M_PI) err += 2*M_PI;
+            double vyaw = 0.45 * err;
+            vyaw = max(-0.55, min(0.55, vyaw));
+            sc.ClassicWalk(true);
+            sc.Move(0, 0, vyaw);
+            if(stair_cnt%10==0)
+                cout << "[S9] ROT cnt=" << stair_cnt << " err=" << err
+                     << " vyaw=" << vyaw << " yaw=" << yaw << endl;
+            if(fabs(err) < 0.08 || stair_cnt > 200){
+                sc.StopMove();
+                cout << "[S9] ROT DONE → GO STRAIGHT" << endl;
+                s9_phase = 1;
+                stair_cnt = 0;
+            }
+            stair_cnt++;
+        }else{
+            sc.ClassicWalk(true);
+            sc.Move(0.15, 0, 0);
+            if(stair_cnt > 20){
+                sc.StopMove();
+                s9_turn_inited = false;
+                stair_cnt=0; stair_step=0;
+                return true;  // → Flag_Task=3
+            }
         }
     }
     else if (stair_step == 10){
