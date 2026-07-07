@@ -61,9 +61,19 @@ int case0_tick(go2::SportClient &sc, const Mat &undist,
         if(lx>=0.2){sc.StopMove();sc.Move(0,0,0);st=1;}return 0;}
     if(st==1){sc.FrontJump();st=2;
         this_thread::sleep_for(chrono::milliseconds(300));px0=px;py0=py;yaw0=yaw;return 0;}
-    if(st==2){sc.BalanceStand();this_thread::sleep_for(chrono::milliseconds(500));sc.StaticWalk();sc.Move(0.06,0,0);st=3;return 0;}
+    if(st==2){sc.BalanceStand();this_thread::sleep_for(chrono::milliseconds(800));st=3;return 0;}
 
     if(g_case0_skip_init){task0_loop(sc,undist,ly);return 0;}
+
+    // 稳定期：BalanceStand 后需要几帧让 StaticWalk 生效
+    static int settle_frames = 0;
+    if(st==3 && settle_frames < 30){
+        settle_frames++;
+        sc.StaticWalk(); sc.Euler(0,0,0); sc.Move(0.05, 0, 0);
+        if(settle_frames >= 30){ cout << "[case0] Settled, go.\n" << endl; }
+        return 0;
+    }
+
     return pureLineFollow(sc,undist,lx,ly,dyaw,fcount,g_case0_second_pass);
 }
 void case0_reset_statics(){}
