@@ -17,6 +17,7 @@ arm_task/d1_sdk/build/
 # 运行时生成的标定数据
 arm_task/calib_points.json
 arm_task/calib_matrix.json
+arm_task/move_state.json
 
 # Python 缓存
 __pycache__/

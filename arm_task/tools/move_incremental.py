@@ -47,16 +47,18 @@ class MathOnlyController(D1RobotArmController):
     def __init__(self): self.bin_path = None
     def _check_bin_files(self): pass
 
-# ── 3-DOF position-only Jacobian (joints 0-3 only) ──
+# ── 3-DOF position-only Jacobian (all 6 joints) ──
 def jacobian_pos(arm, joints, dh, eps=0.5):
-    """3×4 Jacobian: ∂pos/∂(j0,j1,j2,j3)"""
-    n = 4
+    """3×6 Jacobian: ∂pos/∂(j0..j5), pos from _fk_full"""
+    n = len(joints)  # 6
     J = np.zeros((3, n))
-    f0 = np.array(arm._fk(joints, dh))
+    f0, _ = arm._fk_full(list(joints), dh)
+    f0 = np.array(f0)
     for i in range(n):
         jp = list(joints)
         jp[i] += eps
-        J[:, i] = (np.array(arm._fk(jp, dh)) - f0) / eps
+        pos1, _ = arm._fk_full(jp, dh)
+        J[:, i] = (np.array(pos1) - f0) / eps
     return J
 
 # ── 主逻辑 ──
@@ -102,8 +104,8 @@ def main():
     step_mm = 5.0
     num_steps = max(1, int(math.ceil(total_dist / step_mm)))
 
-    # 求解关节 0-3（关节4/5保持当前值）
-    joints = np.array(cur[:4], dtype=np.float64)
+    # 求解全部 6 关节（关节4/5先保持当前值，后续可被 IK 微调）
+    joints = np.array(cur[:6], dtype=np.float64)
     lam = IK_LAMBDA
 
     print(f"[IK] 3-DOF pos only | 总位移={total_dist:.1f}mm | 分{num_steps}步 | λ={lam:.1f}")
@@ -112,13 +114,15 @@ def main():
         target_step = pos_cur + total_delta * frac
 
         for it in range(IK_MAX_ITER):
-            fk = np.array(arm._fk(joints.tolist(), DH_PARAMS))
+            pos_i, _ = arm._fk_full(joints.tolist(), DH_PARAMS)
+            fk = np.array(pos_i)
             err = target_step - fk
             if np.linalg.norm(err) < IK_TOLERANCE:
                 break
             J = jacobian_pos(arm, joints, DH_PARAMS)
+            n = len(joints)
             try:
-                dq = np.linalg.solve(J.T @ J + lam * np.eye(4), J.T @ err)
+                dq = np.linalg.solve(J.T @ J + lam * np.eye(n), J.T @ err)
             except np.linalg.LinAlgError:
                 dq = np.linalg.pinv(J) @ err * lam
             joints += dq
@@ -127,7 +131,7 @@ def main():
             sys.exit(1)
 
     # ── 构建最终关节角度 ──
-    full = joints.tolist() + [cur[4], cur[5]]
+    full = joints.tolist()
     if d_pitch is not None:
         full[4] += d_pitch
         print(f"[姿态] 关节4俯仰: {cur[4]:.1f}° → {full[4]:.1f}°")
