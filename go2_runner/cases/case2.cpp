@@ -82,8 +82,8 @@ bool case2_tick(go2::SportClient &sc,
     double imu_yaw_err = yaw - s1_start_yaw;
     if (imu_yaw_err >  M_PI) imu_yaw_err -= 2.0 * M_PI;
     if (imu_yaw_err < -M_PI) imu_yaw_err += 2.0 * M_PI;
-    double imu_corr = -0.55 * imu_yaw_err;
-    imu_corr = max(-0.55, min(0.55, imu_corr));
+    double imu_corr = -0.60 * imu_yaw_err;
+    imu_corr = max(-0.60, min(0.60, imu_corr));
 
     double heading_corr = aruco_detected ? yaw_corr : imu_corr;
 
