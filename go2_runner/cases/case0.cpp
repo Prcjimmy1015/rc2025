@@ -134,7 +134,7 @@ int case0_tick(go2::SportClient &sc, const Mat &undist,
     {
         sc.FrontJump();
         st = 2;
-        this_thread::sleep_for(chrono::milliseconds(2000));
+        this_thread::sleep_for(chrono::milliseconds(1000));
         px0 = px;
         py0 = py;
         yaw0 = yaw;
