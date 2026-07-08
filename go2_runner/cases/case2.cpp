@@ -127,73 +127,135 @@ bool case2_tick(go2::SportClient &sc,
     // ===========================================================
 
     else if (stair_step == 0){
+        // S0: 退出case1后对准台阶
+        // phase 0=评估(盲退/粗调/直走) 1=粗调(原地旋转) 2=前进+微调 3=精调(原地旋转)
         static int  s0_phase     = 0;
         static int  s0_align_cnt = 0;
 
         if (s0_phase == 0){
-            // 退出case1后离台阶太近,先后退拉开距离再调正
-            sc.ClassicWalk(true);
-            sc.Move(-0.10, 0, 0);
+            // ---- 先看ArUco决定策略 ----
+            if (!aruco_detected){
+                // 没看到ArUco(太近出画了) → 后退直到看到, timeout 50帧
+                sc.ClassicWalk(true);
+                sc.Move(-0.15, 0, 0);
 
-            if (stair_cnt % 10 == 0)
-                cout << "[S0-BACK] cnt=" << stair_cnt
-                     << " ob_x=" << ob_x << endl;
+                if (stair_cnt % 10 == 0)
+                    cout << "[S0-BACK] cnt=" << stair_cnt
+                         << " ob_x=" << ob_x
+                         << " aruco=" << aruco_detected << endl;
 
-            if (stair_cnt > 30){
-                sc.StopMove();
-                s0_phase = 1;
+                if (stair_cnt > 50 || aruco_detected){
+                    sc.StopMove();
+                    if (aruco_detected && fabs(aruco_angle) > 0.08){
+                        s0_phase     = 1;
+                        s0_align_cnt = 0;
+                        cout << "[S0-BACK→COARSE] aruco_angle=" << aruco_angle << endl;
+                    }else{
+                        s0_phase  = 2;
+                        cout << "[S0-BACK→FWD] aruco_angle=" << aruco_angle << endl;
+                    }
+                    stair_cnt = 0;
+                }
+            }else if (fabs(aruco_angle) > 0.08){
+                // 看到了但角度偏差大 → 原地粗调
+                sc.ClassicWalk(true);
+                double cyaw = max(-0.40, min(0.40, -0.35 * aruco_angle));
+                sc.Move(0, 0, cyaw);
+                s0_align_cnt++;
+
+                if (s0_align_cnt % 10 == 0)
+                    cout << "[S0-COARSE] cnt=" << s0_align_cnt
+                         << " angle=" << aruco_angle
+                         << " cyaw=" << cyaw << endl;
+
+                if ((aruco_detected && fabs(aruco_angle) < 0.08)
+                    || s0_align_cnt > 60
+                    || !aruco_detected){
+                    sc.StopMove();
+                    s0_phase  = 2;
+                    stair_cnt = 0;
+                    cout << "[S0-COARSE→FWD]" << endl;
+                }
+            }else{
+                // 角度OK → 直接前进微调
+                s0_phase  = 2;
                 stair_cnt = 0;
-                cout << "[S0-BACK→FWD] → forward" << endl;
+                cout << "[S0→FWD] angle=" << aruco_angle << " straight" << endl;
             }
         }else if (s0_phase == 1){
+            // ---- 粗调: 原地旋转对准ArUco (阈值0.08, timeout 60帧) ----
+            sc.ClassicWalk(true);
+            double cyaw = (aruco_detected)
+                ? max(-0.40, min(0.40, -0.35 * aruco_angle))
+                : 0.0;
+            sc.Move(0, 0, cyaw);
+            s0_align_cnt++;
+
+            if (s0_align_cnt % 10 == 0)
+                cout << "[S0-COARSE] cnt=" << s0_align_cnt
+                     << " angle=" << aruco_angle
+                     << " cyaw=" << cyaw << endl;
+
+            if ((aruco_detected && fabs(aruco_angle) < 0.08)
+                || s0_align_cnt > 60
+                || !aruco_detected){
+                sc.StopMove();
+                s0_phase  = 2;
+                stair_cnt = 0;
+                cout << "[S0-COARSE→FWD]" << endl;
+            }
+        }else if (s0_phase == 2){
+            // ---- 前进 + yaw微调 ----
             sc.ClassicWalk(true);
             double vx = (isfinite(ob_x) && ob_x < 0.70) ? 0.10 : 0.18;
             sc.Move(vx, 0, yaw_corr);
 
             if (stair_cnt % 10 == 0)
-                cout << "[S0] cnt=" << stair_cnt
+                cout << "[S0-FWD] cnt=" << stair_cnt
                      << " ob_x=" << ob_x << " py=" << py
                      << " vx=" << vx
-                     << " yaw_corr=" << yaw_corr << endl;
+                     << " yaw_corr=" << yaw_corr
+                     << " angle=" << aruco_angle << endl;
 
             if (isfinite(ob_x) && ob_x < 0.55 && ob_x > 0.1){
                 if (aruco_detected && fabs(aruco_angle) > 0.06){
                     sc.StopMove();
-                    s0_phase     = 2;
+                    s0_phase     = 3;
                     s0_align_cnt = 0;
-                    cout << "[S0→ALIGN] aruco_angle=" << aruco_angle
-                         << " → align first" << endl;
+                    cout << "[S0-FWD→FINE] aruco_angle=" << aruco_angle
+                         << " → fine align" << endl;
                 }else{
                     sc.StopMove();
-                    cout << "[S0→1] ob_x=" << ob_x << " → CLIMB" << endl;
+                    cout << "[S0-FWD→CLIMB] ob_x=" << ob_x << endl;
                     stair_cnt   = 0;
                     s0_phase    = 0;
                     stair_step  = 1;
                 }
             }else if (stair_cnt > 200){
                 s0_phase = 0;
-                cout << "[S0→1] TIMEOUT → CLIMB" << endl;
+                cout << "[S0-FWD→CLIMB] TIMEOUT" << endl;
                 stair_cnt  = 0;
                 stair_step = 1;
             }
-        }else{
+        }else{ // s0_phase == 3
+            // ---- 精调: 靠近后原地细调 (阈值0.05, timeout 50帧, ArUco丢失也退出) ----
             sc.ClassicWalk(true);
-            double align_vyaw = (aruco_detected)
+            double f_yaw = (aruco_detected)
                 ? max(-0.35, min(0.35, -0.30 * aruco_angle))
                 : 0.0;
-            sc.Move(0, 0, align_vyaw);
+            sc.Move(0, 0, f_yaw);
             s0_align_cnt++;
 
             if (s0_align_cnt % 10 == 0)
-                cout << "[S0-ALIGN] cnt=" << s0_align_cnt
-                     << " aruco_angle=" << aruco_angle
-                     << " vyaw=" << align_vyaw << endl;
+                cout << "[S0-FINE] cnt=" << s0_align_cnt
+                     << " angle=" << aruco_angle
+                     << " fyaw=" << f_yaw << endl;
 
             if ((aruco_detected && fabs(aruco_angle) < 0.05)
                 || s0_align_cnt > 50
                 || !aruco_detected){
                 sc.StopMove();
-                cout << "[S0-ALIGN→1] done → CLIMB" << endl;
+                cout << "[S0-FINE→CLIMB]" << endl;
                 stair_cnt   = 0;
                 s0_phase    = 0;
                 stair_step  = 1;
@@ -322,7 +384,7 @@ bool case2_tick(go2::SportClient &sc,
         bool settled = (fabs(pitch) < 0.15 && stair_cnt > 20);
         if(dropped&&settled)settle_cnt++;else settle_cnt=0;
         bool on_ground = (stair_cnt > 30 && (!isfinite(ob_x) || ob_x > 2.0));
-        if(settle_cnt>12||on_ground||stair_cnt>250){
+        if(settle_cnt>12||on_ground||stair_cnt>150){
             sc.StopMove();
             stair_cnt=0;
             stair_step = on_ground ? 9 : 7;
@@ -338,7 +400,7 @@ bool case2_tick(go2::SportClient &sc,
         bool settled = (fabs(pitch) < 0.15 && stair_cnt > 20);
         if(dropped&&settled)settle_cnt++;else settle_cnt=0;
         bool on_ground = (stair_cnt > 30 && (!isfinite(ob_x) || ob_x > 2.0));
-        if(settle_cnt>12||on_ground||stair_cnt>250){
+        if(settle_cnt>12||on_ground||stair_cnt>150){
             sc.StopMove();
             stair_cnt=0;
             stair_step = on_ground ? 9 : 8;
@@ -354,7 +416,7 @@ bool case2_tick(go2::SportClient &sc,
         bool settled = (fabs(pitch) < 0.15 && stair_cnt > 20);
         if(dropped&&settled)settle_cnt++;else settle_cnt=0;
         bool on_ground = (stair_cnt > 30 && (!isfinite(ob_x) || ob_x > 2.0));
-        if(settle_cnt>12||on_ground||stair_cnt>250){
+        if(settle_cnt>12||on_ground||stair_cnt>150){
             sc.StopMove();
             stair_cnt=0;
             stair_step = 9;
