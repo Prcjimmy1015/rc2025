@@ -459,7 +459,7 @@ bool case2_tick(go2::SportClient &sc,
         }else{
             sc.ClassicWalk(true);
             sc.Move(0.15, 0, 0);
-            if(stair_cnt > 30){
+            if(stair_cnt > 50){
                 sc.StopMove();
                 s9_turn_inited = false;
                 stair_cnt=0; stair_step=0;
