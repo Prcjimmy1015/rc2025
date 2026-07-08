@@ -274,6 +274,8 @@ bool case2_tick(go2::SportClient &sc,
                 cout << "[S1] YAW RELOCK: " << s1_start_yaw << endl;
             }
         }
+        // 机械臂负重偏载, 爬台阶方向修正增益×1.3
+        s1_hdg = max(-0.45, min(0.45, s1_hdg * 1.3));
         // 左脚打滑检测: roll 变负(左倾) → 右移压回去
         double roll_corr = 0;
         if (s1_settle > 6 && fabs(roll) > 0.10){
