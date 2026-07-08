@@ -5,6 +5,7 @@ float ob_x = 0, ob_y = 0, ob_z = 0;
 float ob_x_f = 0, ob_y_f = 0, ob_z_f = 0;
 double px = 0, py = 0, yaw = 0;
 double px0 = 0, py0 = 0, yaw0 = 0;
+double g_orig_px = 0, g_orig_py = 0, g_orig_yaw = 0;
 
 // 任务状态机
 int Flag_Task = 0;

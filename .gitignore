@@ -14,7 +14,7 @@ build/
 arm_task/bin/d1_*
 arm_task/d1_sdk/build/
 
-# 运行时生成的标定数据
+# 运行时生成的标定数据（arm_task/）
 arm_task/calib_points.json
 arm_task/calib_matrix.json
 arm_task/move_state.json

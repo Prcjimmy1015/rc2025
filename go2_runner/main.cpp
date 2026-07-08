@@ -1,264 +1,356 @@
 #include <unitree/robot/go2/sport/sport_client.hpp>
 #include <unitree/robot/go2/obstacles_avoid/obstacles_avoid_client.hpp>
 #include <unitree/robot/channel/channel_factory.hpp>
-#include <unitree/common/time/time_tool.hpp>
-
 #include <opencv2/opencv.hpp>
-
 #include <chrono>
 #include <iostream>
 #include <thread>
 #include <csignal>
 #include <atomic>
-
+#include <vector>
+#include <cmath>
 #include "params.h"
 #include "globals.h"
 #include "utils.h"
-#include "visualizer.h"
 #include "aruco_server.h"
 #include "app_runtime.h"
 #include "cases/case0.h"
 #include "cases/case1.h"
 #include "cases/case2.h"
 #include "cases/case3.h"
-#include "cases/case4.h"
-
 using namespace unitree::robot;
 using namespace cv;
 using namespace std;
-
-// =============================================================================
-// Ctrl+C 安全退出
-// =============================================================================
-static atomic<bool> g_exit_requested(false);
-
-void signalHandler(int sig)
+static atomic<bool> g_exit(false);
+void sig(int s)
 {
-    if (sig == SIGINT)
+    if (s == SIGINT)
     {
-        cout << "\n[SIGINT] Ctrl+C caught, will exit after cleanup..." << endl;
-        g_exit_requested = true;
+        cout << "\n[SIGINT]\n";
+        g_exit = true;
     }
 }
 
-// =============================================================================
-// 主循环
-// =============================================================================
-static int runMainLoop(AppRuntime &rt)
+static void t0(go2::SportClient &sc, Mat &f)
 {
-    go2::SportClient &sc = rt.sc;
-    go2::ObstaclesAvoidClient &avoid_client = rt.avoid_client;
-    VideoCapture &cap = rt.cap;
-
-    Mat frame, undist;
-    int fcount = 0;
-    auto t0 = chrono::steady_clock::now();
-
-    while (!g_exit_requested)
+    static bool once = false;
+    if (!once)
     {
-        // ---------- 图像采集与去畸变 ----------
+        cout << "\n=== V22_CONTINUITY ===\n"
+             << endl;
+        once = true;
+    }
+    static int cnt = 0;
+    cnt++;
+    static bool settled = false;
+    static int n_st = 0;
+    static double yaw_settle = 0;
+    if (!settled)
+    {
+        n_st++;
+        sc.StaticWalk();
+        sc.Euler(0, 0.8, 0);
+        if (n_st == 1)
+            yaw_settle = yaw;
+        double yd = yaw - yaw_settle;
+        if (yd > M_PI)
+            yd -= 2 * M_PI;
+        if (yd < -M_PI)
+            yd += 2 * M_PI;
+        double steer = -yd * 2.0;
+        steer = max(-0.3, min(0.3, steer));
+        sc.Move(0, 0, steer);
+        if (n_st >= 30)
+        {
+            settled = true;
+            cout << "[V22] Settled, go.\n"
+                 << endl;
+        }
+        return;
+    }
+
+    sc.Euler(0, 0.8, 0);
+    Mat g, b, n;
+    cvtColor(f, g, COLOR_BGR2GRAY);
+    GaussianBlur(g, b, {5, 5}, 0);
+    threshold(b, n, 50, 255, THRESH_BINARY_INV);
+    {
+        Mat k = getStructuringElement(MORPH_RECT, Size(3, 3));
+        morphologyEx(n, n, MORPH_OPEN, k);
+    }
+    int rh = 100, roiy = b.rows - rh;
+    if (roiy < 0)
+        roiy = 0;
+    double e = 0;
+    int ci = 0, rw = n.cols;
+    vector<int> cc(rw, 0);
+    for (int r = roiy; r < b.rows; ++r)
+    {
+        const uchar *row = n.ptr(r);
+        for (int x = 0; x < rw; ++x)
+            if (row[x])
+            {
+                cc[x]++;
+                ci++;
+            }
+    }
+    static int last_pc = 640;
+    int win_l = max(0, last_pc - 300), win_r = min(rw - 1, last_pc + 300);
+    int pk = 0;
+    for (int x = win_l; x <= win_r; ++x)
+        if (cc[x] > pk)
+            pk = cc[x];
+    int pc = -1;
+    if (pk >= 5)
+    {
+        double sum_w = 0, sum_wx = 0;
+        for (int x = win_l; x <= win_r; ++x)
+            if (cc[x] > pk * 0.5)
+            {
+                sum_w += cc[x];
+                sum_wx += cc[x] * x;
+            }
+        if (sum_w > 0)
+            pc = (int)(sum_wx / sum_w);
+    }
+    if (pc < 0)
+    {
+        pc = last_pc;
+    }
+    bool ok = (pk >= 5 && ci >= 50 && ci <= 100000);
+    if (ok)
+        e = pc - 640;
+    if (ok && ci > 5000 && pk > 80)
+        last_pc = pc;
+    if (ok)
+    {
+        int cx = max(0, min(1279, pc));
+        int cy = b.rows - rh / 2;
+        circle(f, Point(cx, cy), 10, Scalar(0, 255, 0), -1);
+        line(f, Point(cx, cy + 25), Point(cx, cy - 25), Scalar(0, 255, 0), 2);
+    }
+
+    double pcross = (ci > 0) ? pk * 100.0 / ci : 999;
+    bool is_cross = (ci > 45000 && pcross < 0.25 && abs(e) < 400);
+    bool is_sharp = (abs(e) > 400);
+
+    if (cnt % 15 == 0)
+    {
+        const char *tag = "NORM";
+        if (is_cross)
+            tag = "CROSS";
+        else if (is_sharp)
+            tag = "SHARP";
+        else if (!ok)
+            tag = "NOLINE";
+        printf("[V22] %s err=%.0f ci=%d pk=%d cr=%.2f%%\n", tag, e, ci, pk, pcross);
+    }
+
+    double ly = 0;
+    {
+        double _, dy;
+        transformLocal(px, py, yaw, _, ly, dy);
+    }
+    double lc = (ly > 0.35) ? -0.3 : (ly < -0.35) ? 0.3
+                                                  : 0;
+
+    static int sharp_burst = 0;
+    static int burst_cooldown = 0;
+    if (is_sharp && sharp_burst == 0 && burst_cooldown == 0)
+    {
+        sharp_burst = 30;
+    }
+    if (burst_cooldown > 0)
+        burst_cooldown--;
+    if (sharp_burst > 0)
+    {
+        sharp_burst--;
+        double s = -e * 0.12;
+        s = max(-1.0, min(1.0, s));
+        sc.Move(0, 0, s);
+        if (cnt % 15 == 0)
+            printf("[V22] >> BURST %d/30 s=%.2f\n", 30 - sharp_burst, s);
+        if (sharp_burst == 0)
+            burst_cooldown = 15;
+    }
+    else if (is_cross)
+    {
+        sc.Move(0.15, 0, 0);
+    }
+    else
+    {
+        if (ok)
+        {
+            double tg = e / 1280.0 * 60.0 * M_PI / 180.0;
+            double s = -tg * 6.0;
+            s = max(-1.0, min(1.0, s));
+            double vx = (abs(e) > 300) ? 0.08 : 0.12;
+            double vy = e * 0.0006;
+            vy = max(-0.15, min(0.15, vy));
+            sc.Move(vx, vy, s);
+        }
+        else
+        {
+            sc.Move(0, 0, 0.3);
+        }
+    }
+}
+
+int main(int ac, char **av)
+{
+    if (ac < 2)
+    {
+        cerr << "Usage: " << av[0] << " <eth_if> [--gui] [--task N]\n";
+        return -1;
+    }
+    const char *eth = av[1];
+    for (int i = 2; i < ac; ++i)
+    {
+        string a = av[i];
+        if (a == "--gui")
+            g_enable_gui = true;
+        else if (a == "--task" && i + 1 < ac)
+        {
+            g_force_task = atoi(av[++i]);
+            if (g_force_task == 0)
+            {
+                g_case0_skip_init = true;
+                g_case0_second_pass = true;
+            }
+            cout << "[Config] task:" << g_force_task << endl;
+        }
+        else
+        {
+            cerr << "Unknown: " << a << "\n";
+            return -1;
+        }
+    }
+    signal(SIGINT, sig);
+    ChannelFactory::Instance()->Init(0, eth);
+    AppRuntime rt;
+    if (!initAppRuntime(rt, eth))
+    {
+        cerr << "Camera fail\n";
+        return -1;
+    }
+    // 原点固定为开机位置，永不重置
+    g_orig_px = px;
+    g_orig_py = py;
+    g_orig_yaw = yaw;
+    px0 = px;
+    py0 = py;
+    yaw0 = yaw;
+    thread t(aruco_socket_server, 5005);
+    t.detach();
+    cout << (g_enable_gui ? "GUI\n" : "Headless\n") << flush;
+    go2::SportClient &sc = rt.sc;
+    go2::ObstaclesAvoidClient &avc = rt.avoid_client;
+    VideoCapture &cap = rt.cap;
+    Mat frame, undist;
+    int fc = 0;
+    auto t0t = chrono::steady_clock::now();
+    while (!g_exit)
+    {
         if (!cap.read(frame) || frame.empty())
             break;
-        fcount++;
+        fc++;
         undistort(frame, undist, K, D);
-
-        // ---------- 状态日志 (每30帧) ----------
-        if (fcount % 30 == 0)
-        {
-            double lx, ly, dyaw;
-            transformLocal(px, py, yaw, lx, ly, dyaw);
-            cout << "[Status] Flag=" << Flag_Task << " lx=" << lx << " ly=" << ly
-                 << " yaw=" << dyaw << " px=" << px << " py=" << py << endl;
-        }
-
-        // ---------- FPS 叠加 ----------
-        double fps = fcount / chrono::duration<double>(chrono::steady_clock::now() - t0).count();
-        putText(undist, format("FPS %.1f", fps), {10, 30},
-                FONT_HERSHEY_SIMPLEX, 1, {0, 255, 0}, 2);
-
-        // ---------- 相对起点坐标 ----------
-        double lx, ly, dyaw;
-        transformLocal(px, py, yaw, lx, ly, dyaw);
-
-        // ---------- Debug 显示 ----------
-        static Mat display_img = undist.clone();
-
-        // ===================== 主状态机 FSM =====================
         if (g_force_task >= 0)
             Flag_Task = g_force_task;
+        if (g_case0_skip_init)
+        {
+            t0(sc, undist);
+            if (g_enable_gui)
+            {
+                double fps = fc / chrono::duration<double>(chrono::steady_clock::now() - t0t).count();
+                putText(undist, format("V22 FPS %.1f", fps), {10, 30}, FONT_HERSHEY_SIMPLEX, 1, {0, 255, 0}, 2);
+                imshow("Go2", undist);
+                int key = waitKey(1);
+                if (key == 27)
+                    break;
+                if (key == 'r')
+                {
+                    double rlx, rly, rdyaw;
+                    transformLocal(px, py, yaw, rlx, rly, rdyaw);
+                    static int recn = 0;
+                    printf("\n[RECORD] #%d: lx=%.2f ly=%.2f yaw=%.3f\n\n", ++recn, rlx, rly, yaw);
+                }
+            }
+            continue;
+        }
+        double lx, ly, dyaw;
+        transformLocal(px, py, yaw, lx, ly, dyaw);
         switch (Flag_Task)
         {
-        // ---- case 0: 巡线 ----
         case 0:
         {
-            int case0_ret = case0_tick(sc, undist, rt.stateCB.state, fcount);
-            display_img = undist.clone();
-            if (case0_ret == 1)
+            int ret = case0_tick(sc, undist, rt.stateCB.state, fc);
+            if (g_force_task < 0)
             {
-                Flag_Task = 1;
-                g_case0_second_pass = false;  // 第一段巡线结束
-                case1_reset_statics();
+                if (ret == 1)
+                {
+                    Flag_Task = 1;
+                    g_case0_second_pass = false;
+                    case1_reset_statics();
+                }
+                else if (ret == 2)
+                {
+                    Flag_Task = 2;
+                    g_case0_second_pass = false;
+                    case2_reset();
+                }
             }
-            else if (case0_ret == 2)
+            break;
+        }
+        case 1:
+            if (g_force_task < 0 && case1_tick(sc, fc, lx, ly, yaw))
             {
                 Flag_Task = 2;
-                g_case0_second_pass = false;  // 重置标记
                 case2_reset();
             }
             break;
-        }
-
-        // ---- case 1: S型走廊避障 ----
-        case 1:
-        {
-            bool back_to_0 = case1_tick(sc, fcount, lx, ly, yaw);
-            display_img = undist.clone();
-            if (back_to_0)
-            {
-                Flag_Task = 0;
-                g_case0_second_pass = true;  // 第二段巡线：case1 完成后返回
-                case0_reset_statics();
-            }
-            break;
-        }
-
-        // ---- case 2: ArUco 检测 + 左转90° ----
         case 2:
-        {
-            bool to_case3 = case2_tick(sc);
-            if (to_case3)
+            if (g_force_task < 0 && case2_tick(sc, undist, rt.stateCB.state, fc, lx, ly))
             {
                 Flag_Task = 3;
+                case3_reset();
             }
             break;
-        }
-
-        // ---- case 3: 前进找下一个 ArUco → Flag_Task=4~8 ----
         case 3:
         {
-            bool to_case9 = case3_tick(sc, lx, ly, dyaw);
-            if (to_case9)
-            {
+            int ret = case3_tick(sc, undist, lx, ly);
+            if (ret == 1)
                 Flag_Task = 9;
-            }
-            break;
         }
-
-        // ---- case 4~8 合并在 case3 内部子状态处理 ----
-        case 4:
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-        {
-            // 这些 case 在旧代码中是独立的 while(true) 阻塞式，但这里统一走 case3
-            // 如果外部仍有 Flag_Task 设为这些值，也走 case3
-            bool to_case9 = case3_tick(sc, lx, ly, dyaw);
-            if (to_case9)
-            {
-                Flag_Task = 9;
-            }
-            break;
+        break;
         }
-
-        // ---- case 9: 完成 + 恢复遥控 ----
-        case 9:
-        {
-            if (case4_tick(sc, avoid_client))
-            {
-                cout << "[Exit] Mission complete, exiting main loop." << endl;
-                return 0;
-            }
-            break;
-        }
-
-        default:
-            break;
-        }
-
-        // ---------- GUI ----------
         if (g_enable_gui)
         {
-            imshow("Go2 Front Cam - Visual Nav", display_img);
-            if (waitKey(1) == 27 || g_exit_requested)
+            double fps = fc / chrono::duration<double>(chrono::steady_clock::now() - t0t).count();
+            putText(undist, format("V22 FPS %.1f", fps), {10, 30}, FONT_HERSHEY_SIMPLEX, 1, {0, 255, 0}, 2);
+            imshow("Go2", undist);
+            int key = waitKey(1);
+            if (key == 27)
                 break;
+            // if(key=='n'){Flag_Task=3;case3_reset();cout<<"\n[KEY] Jump to case3 V22巡线\n"<<endl;}
+            if (key == 'r')
+            {
+                double rlx, rly, rdyaw;
+                transformLocal(px, py, yaw, rlx, rly, rdyaw);
+                static int recn = 0;
+                printf("\n[RECORD] #%d: lx=%.2f ly=%.2f yaw=%.3f\n\n", ++recn, rlx, rly, yaw);
+            }
         }
     }
-
-    // 退出清理
-    cout << "[Exit] Cleaning up and restoring remote control..." << endl;
     sc.StopMove();
-    avoid_client.UseRemoteCommandFromApi(false);
-    avoid_client.SwitchSet(false);
-    avoid_client.Move(0, 0, 0);
+    avc.UseRemoteCommandFromApi(false);
+    avc.SwitchSet(false);
+    avc.Move(0, 0, 0);
     this_thread::sleep_for(chrono::milliseconds(200));
     sc.SwitchJoystick(true);
     sc.RecoveryStand();
     this_thread::sleep_for(chrono::milliseconds(500));
     sc.BalanceStand();
-    cout << "[Exit] Remote control restored. Goodbye." << endl;
-
+    cout << "[Exit] Remote restored.\n";
     return 0;
-}
-
-// =============================================================================
-// 入口
-// =============================================================================
-int main(int argc, char **argv)
-{
-    if (argc < 2)
-    {
-        cerr << "Usage: " << argv[0] << " <ethernet_if> [--gui]\n"
-             << "  --gui   显示前视窗口（需桌面或 X11）；默认关闭以便无 DISPLAY 运行\n";
-        return -1;
-    }
-
-    const char *eth_if = argv[1];
-    for (int i = 2; i < argc; ++i)
-    {
-        string arg = argv[i];
-        if (arg == "--gui")
-            g_enable_gui = true;
-        else if (arg == "--task" && i + 1 < argc)
-        {
-            g_force_task = atoi(argv[++i]);
-            if (g_force_task == 0)
-                g_case0_skip_init = true;  // --task 0: 跳过跳跃，直接纯巡线
-            cout << "[Config] Force task mode: Flag_Task locked to " << g_force_task << endl;
-        }
-        else
-        {
-            cerr << "Unknown option: " << arg << "\n";
-            return -1;
-        }
-    }
-
-    // 注册 SIGINT 信号处理器
-    signal(SIGINT, signalHandler);
-
-    /* Init Unitree DDS */
-    ChannelFactory::Instance()->Init(0, eth_if);
-
-    AppRuntime rt;
-    if (!initAppRuntime(rt, eth_if))
-    {
-        cerr << "Front camera stream not opened\n";
-        return -1;
-    }
-
-    // 保存初始位姿 (跳跃前)
-    px0 = px;
-    py0 = py;
-    yaw0 = yaw;
-
-    // 启动 ArUco socket 服务线程
-    thread aruco_thread(aruco_socket_server, 5005);
-    aruco_thread.detach();
-
-    if (g_enable_gui)
-        cout << "GUI enabled (ESC in video window to quit)\n";
-    else
-        cout << "GUI disabled (headless); use Ctrl+C to stop\n";
-
-    return runMainLoop(rt);
 }

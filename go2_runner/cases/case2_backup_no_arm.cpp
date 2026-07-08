@@ -1,3 +1,9 @@
+// =============================================================================
+// BACKUP: 未装机械臂版本的 case2 (commit 2bf8910)
+// S1 退出条件: A: d2d>1.13, B: obx_far_at+158, C: cnt>371
+// 加装机械臂后重心改变, 狗前脚刚上第二层就触发退出, 需调整 S1 三值
+// 当前版本见 case2.cpp
+// =============================================================================
 #include "case2.h"
 #include "../globals.h"
 #include "../utils.h"
@@ -72,7 +78,7 @@ bool case2_tick(go2::SportClient &sc,
     // ====== Aruco 方向修正 (分档增益) ======
     double yaw_corr = 0;
     if (aruco_detected && fabs(aruco_angle) > 0.05){
-        double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.25 : 0.12;
+        double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.20 : 0.08;
         yaw_corr = -k_yaw * aruco_angle;
         yaw_corr = max(-0.35, min(0.35, yaw_corr));
     }
@@ -282,8 +288,8 @@ bool case2_tick(go2::SportClient &sc,
         }
 
         sc.ClassicWalk(true);
-        sc.Move(0.25, roll_corr, s1_hdg);
-        double dpx = px - px_start, dpy = py - py_start;s
+        sc.Move(0.15, roll_corr, s1_hdg);
+        double dpx = px - px_start, dpy = py - py_start;
         double d2d = sqrt(dpx*dpx + dpy*dpy);
 
         if (obx_far_at == 0 && isfinite(ob_x) && ob_x > 1.5) obx_far_at = stair_cnt;
@@ -295,9 +301,9 @@ bool case2_tick(go2::SportClient &sc,
                  << " roll=" << roll << " rcorr=" << roll_corr
                  << " obx_far_at=" << obx_far_at << endl;
 
-        bool A = (d2d > 1.12);
-        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 156);
-        bool C = (stair_cnt > 370);
+        bool A = (d2d > 1.13);
+        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 158);
+        bool C = (stair_cnt > 371);
 
         if (A || B || C){
             cout << "[S1→2] A=" << A << " B=" << B << " C=" << C

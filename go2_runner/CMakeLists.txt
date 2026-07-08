@@ -54,7 +54,6 @@ add_executable(rc2025_run
     cases/case1.cpp
     cases/case2.cpp
     cases/case3.cpp
-    cases/case4.cpp
 )
 
 # Ensure we load the SAME DDS libraries at run-time that we linked against.

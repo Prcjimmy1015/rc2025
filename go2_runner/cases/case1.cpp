@@ -9,6 +9,8 @@
 using namespace unitree::robot;
 using namespace std;
 
+static bool g_reset_case1 = false;
+
 // =============================================================================
 // case1：S型走廊避障 (与 rc2025.cpp Flag_Task=1 完全一致)
 // =============================================================================
@@ -25,6 +27,14 @@ bool case1_tick(go2::SportClient &sc,
     static int phase = 0;
     static double phase_start_lx = lx;
     static double yaw_turn_start = yaw_now;
+
+    // 重置 static 变量
+    if (g_reset_case1) {
+        phase = 0;
+        phase_start_lx = lx;
+        yaw_turn_start = yaw_now;
+        g_reset_case1 = false;
+    }
 
     // 雷达三通道 (EMA 滤波值)
     double front_dist = ob_x_f;
@@ -68,11 +78,16 @@ bool case1_tick(go2::SportClient &sc,
     bool is_straight = (phase == 0 || phase == 2 || phase == 4 || phase == 6 || phase == 8 || phase == 10);
     float vy_center = 0.f;
     if (is_straight) {
-        float side_sum = left_dist + right_dist;
+        // 雷达窄波束容易丢一侧墙壁, 用另一侧值补偿
+        float L = left_dist, R = right_dist;
+        if(L > 999.0 || L < 0.01) L = min<float>(R + 0.05f, 0.35f);
+        if(R > 999.0 || R < 0.01) R = max<float>(L - 0.05f, 0.15f);
+        float side_sum = L + R;
         if (side_sum > 0.05f) {
-            vy_center = max(-0.12f, min((float)((left_dist - right_dist) * 0.42f), 0.12f));
+            vy_center = max(-0.12f, min((float)((L - R) * 0.42f), 0.12f));
             if (abs(vy_center) > 0.01f)
-                cout << "[OB] 🎯 Centering: L=" << left_dist << " R=" << right_dist << " vy=" << vy_center << endl;
+                cout << "[OB] 🎯 Centering: L=" << left_dist << " R=" << right_dist
+                     << " (comp L=" << L << " R=" << R << ") vy=" << vy_center << endl;
         }
     }
 
@@ -96,7 +111,7 @@ bool case1_tick(go2::SportClient &sc,
         double yaw_drift = yaw_now - yaw0;
         if (yaw_drift > M_PI) yaw_drift -= 2*M_PI;
         if (yaw_drift < -M_PI) yaw_drift += 2*M_PI;
-        steer_phase0 += -yaw_drift * 2.0;
+        steer_phase0 += -yaw_drift * 3.5;
         steer_phase0 = max(-0.3, min(0.3, steer_phase0));
 
         if (abs(steer_phase0) > 0.02) {
@@ -159,6 +174,7 @@ bool case1_tick(go2::SportClient &sc,
             if (phase == 10) {
                 // Phase 10 → 完成 S 型序列，回到巡线
                 phase = 0;
+                sc.StopMove();
                 cout << "[OB] 🎉 S-SHAPED CORRIDOR NAVIGATION COMPLETE! Resuming line follow." << endl;
                 return true;  // → Flag_Task = 0
             } else {
@@ -177,6 +193,5 @@ bool case1_tick(go2::SportClient &sc,
 
 void case1_reset_statics()
 {
-    // phase / phase_start_lx / yaw_turn_start 等 static 变量在 case1_tick 内部
-    // 此函数为占位，留待后续需要时扩展
+    g_reset_case1 = true;
 }

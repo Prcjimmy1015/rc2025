@@ -9,6 +9,7 @@ extern float ob_x, ob_y, ob_z;       // 雷达原始测距 (front=x, left=y, rig
 extern float ob_x_f, ob_y_f, ob_z_f; // 滤波后测距
 extern double px, py, yaw;           // 机体世界系位姿
 extern double px0, py0, yaw0;        // 程序启动时刻位姿 (跳跃后重置)
+extern double g_orig_px, g_orig_py, g_orig_yaw;  // 原始原点 (永不重置)
 
 // =============================================================================
 // 任务状态机 (与 rc2025.cpp 完全一致: 0-9)
