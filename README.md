@@ -190,10 +190,11 @@ armCallStage3(g_marker_id);
 
 | 文件 | 功能 |
 |------|------|
-| `calibrate_affine.py` | 像素→世界坐标标定（--collect / --compute / --verify） |
-| `calibrate_dh.py` | DH 参数离线标定（手动采集多组关节角+实测坐标 → Nelder-Mead 优化 offset） |
-| `move_incremental.py` | 增量移动标定（3-DOF 位置 IK，保持末端姿态的笛卡尔增量运动） |
-| `verify_ik.py` | IK 纯数学验证（无需实机，验证 DH 参数和 IK 求解器） |
+| `calibrate_affine.py` | 像素→世界坐标标定 |
+| `calibrate_dh.py` | DH 参数离线标定（Nelder-Mead 优化 offset） |
+| `calibrate_tool.py` | TOOL_CORRECTION 离线标定（夹爪指向测量） |
+| `move_incremental.py` | 增量移动标定（两步修正：位置IK + 姿态微调） |
+| `verify_ik.py` | IK 纯数学验证 |
 
 ### DH 参数标定数据
 
@@ -220,8 +221,8 @@ python3 arm_task/tools/calibrate_dh.py --solve
 | 关节 | 功能 | offset 优化前 | offset 优化后 |
 |------|------|:-----------:|:-----------:|
 | Joint 0 | 基座旋转 | 0° | 0° |
-| Joint 1 | 大臂俯仰 | 90° | **96°** |
-| Joint 2 | 小臂俯仰 | -90° | **-89°** |
+| Joint 1 | 大臂俯仰 | 90° | **95°** |
+| Joint 2 | 小臂俯仰 | -90° | **-90°** |
 | Joint 3-5 | 腕部/末端 | 0° | 0° |
 
 

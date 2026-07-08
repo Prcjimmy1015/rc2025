@@ -47,18 +47,17 @@ class MathOnlyController(D1RobotArmController):
     def __init__(self): self.bin_path = None
     def _check_bin_files(self): pass
 
-# ── 3-DOF position-only Jacobian (joints 0-3 only, J4/J5 locked) ──
-def jacobian_pos_locked(arm, joints_03, j4_locked, j5_locked, dh, eps=0.5):
-    """3×4 Jacobian: ∂pos/∂(j0..j3), 关节4/5锁定不变"""
-    J = np.zeros((3, 4))
-    j_full = list(joints_03) + [j4_locked, j5_locked]
-    f0, _ = arm._fk_full(j_full, dh)
+# ── 3-DOF position-only Jacobian (all 6 joints) ──
+def jacobian_pos(arm, joints, dh, eps=0.5):
+    """3×6 Jacobian: ∂pos/∂(j0..j5), pos from _fk_full"""
+    n = len(joints)  # 6
+    J = np.zeros((3, n))
+    f0, _ = arm._fk_full(list(joints), dh)
     f0 = np.array(f0)
-    for i in range(4):
-        jp = list(joints_03)
+    for i in range(n):
+        jp = list(joints)
         jp[i] += eps
-        jp_full = jp + [j4_locked, j5_locked]
-        pos1, _ = arm._fk_full(jp_full, dh)
+        pos1, _ = arm._fk_full(jp, dh)
         J[:, i] = (np.array(pos1) - f0) / eps
     return J
 
@@ -115,45 +114,80 @@ def main():
         if d_pitch is not None:
             R_target_orient = rot_around_axis(R_target_orient[:,1], d_pitch) @ R_target_orient
 
-    # ── 关节0-3位置IK，关节4/5锁定不变 ──
+    # ── 第1步：6关节 3-DOF 位置 IK ──
     total_delta = np.array([dx, dy, dz])
     total_dist = np.linalg.norm(total_delta)
     step_mm = 5.0
     num_steps = max(1, int(math.ceil(total_dist / step_mm)))
 
-    joints03 = np.array(cur[:4], dtype=np.float64)
-    j4_locked = cur[4]
-    j5_locked = cur[5]
+    joints = np.array(cur[:6], dtype=np.float64)
     lam = IK_LAMBDA
 
-    print(f"[IK] 关节0-3位置IK (4/5锁定) | 总位移={total_dist:.1f}mm | 分{num_steps}步")
+    print(f"[IK] Step1: 6关节位置IK | 总位移={total_dist:.1f}mm | 分{num_steps}步")
     for step in range(num_steps):
         frac = (step + 1) / num_steps
         target_step = pos_cur + total_delta * frac
 
         for it in range(IK_MAX_ITER):
-            j_full = joints03.tolist() + [j4_locked, j5_locked]
-            pos_i, _ = arm._fk_full(j_full, DH_PARAMS)
+            pos_i, _ = arm._fk_full(joints.tolist(), DH_PARAMS)
             err = target_step - np.array(pos_i)
             if np.linalg.norm(err) < IK_TOLERANCE:
                 break
-            J = jacobian_pos_locked(arm, joints03, j4_locked, j5_locked, DH_PARAMS)
+            J = jacobian_pos(arm, joints, DH_PARAMS)
+            n = len(joints)
             try:
-                dq = np.linalg.solve(J.T @ J + lam * np.eye(4), J.T @ err)
+                dq = np.linalg.solve(J.T @ J + lam * np.eye(n), J.T @ err)
             except np.linalg.LinAlgError:
                 dq = np.linalg.pinv(J) @ err * lam
-            joints03 += dq
+            joints += dq
         else:
-            print(f"[IK] step {step+1}/{num_steps} 未收敛")
+            print(f"[IK] Step1 step {step+1}/{num_steps} 未收敛")
             sys.exit(1)
 
-    full = joints03.tolist() + [j4_locked, j5_locked, cur[6]]
-    if d_pitch is not None:
-        full[4] += d_pitch
-        print(f"[姿态] 关节4俯仰: {j4_locked:.1f}° → {full[4]:.1f}°")
-    if d_yaw is not None:
-        full[5] += d_yaw
-        print(f"[姿态] 关节5旋转: {j5_locked:.1f}° → {full[5]:.1f}°")
+    # ── 第2步：用关节4/5修正姿态偏差 ──
+    pos_f, rot_f = arm._fk_full(joints.tolist(), DH_PARAMS)
+    R_now = np.array(rot_f)
+
+    # 计算姿态偏差角度
+    def angle_between(v1, v2):
+        return math.degrees(math.acos(max(-1.0, min(1.0, np.dot(v1, v2)))))
+
+    z_err = angle_between(R_now[:,2], R_target_orient[:,2])
+    y_err = angle_between(R_now[:,1], R_target_orient[:,1])
+
+    if z_err > 0.2 or y_err > 0.2:
+        print(f"[IK] Step2: 姿态修正前 Z_err={z_err:.1f}° Y_err={y_err:.1f}°")
+        # 关节5绕X轴→影响Z轴指向，关节4绕Y轴→影响Y轴指向
+        # 用简单的比例修正
+        for _ in range(20):
+            j4, j5 = joints[4], joints[5]
+            # 尝试 +0.5° 和 -0.5° 的方向
+            best_err = z_err + y_err
+            best_dj4, best_dj5 = 0.0, 0.0
+            for dj4 in [-0.5, 0.0, 0.5]:
+                for dj5 in [-0.5, 0.0, 0.5]:
+                    jt = joints.copy()
+                    jt[4] += dj4; jt[5] += dj5
+                    _, rt = arm._fk_full(jt.tolist(), DH_PARAMS)
+                    Rt = np.array(rt)
+                    ze = angle_between(Rt[:,2], R_target_orient[:,2])
+                    ye = angle_between(Rt[:,1], R_target_orient[:,1])
+                    if ze + ye < best_err:
+                        best_err = ze + ye
+                        best_dj4, best_dj5 = dj4, dj5
+            if abs(best_dj4) < 1e-6 and abs(best_dj5) < 1e-6:
+                break
+            joints[4] += best_dj4
+            joints[5] += best_dj5
+
+        # 验证
+        _, rot_fix = arm._fk_full(joints.tolist(), DH_PARAMS)
+        R_fix = np.array(rot_fix)
+        z_err_fix = angle_between(R_fix[:,2], R_target_orient[:,2])
+        y_err_fix = angle_between(R_fix[:,1], R_target_orient[:,1])
+        print(f"[IK] Step2: 姿态修正后 Z_err={z_err_fix:.1f}° Y_err={y_err_fix:.1f}°")
+
+    full = joints.tolist() + [cur[6]]  # 抓手
 
     # ── 关节限位检查 ──
     for i in range(6):
