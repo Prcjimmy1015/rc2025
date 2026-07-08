@@ -1,3 +1,9 @@
+// =============================================================================
+// BACKUP: 未装机械臂版本的 case2 (commit 2bf8910)
+// S1 退出条件: A: d2d>1.13, B: obx_far_at+158, C: cnt>371
+// 加装机械臂后重心改变, 狗前脚刚上第二层就触发退出, 需调整 S1 三值
+// 当前版本见 case2.cpp
+// =============================================================================
 #include "case2.h"
 #include "../globals.h"
 #include "../utils.h"
@@ -295,9 +301,9 @@ bool case2_tick(go2::SportClient &sc,
                  << " roll=" << roll << " rcorr=" << roll_corr
                  << " obx_far_at=" << obx_far_at << endl;
 
-        bool A = (d2d > 1.30);
-        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 170);
-        bool C = (stair_cnt > 370);
+        bool A = (d2d > 1.13);
+        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 158);
+        bool C = (stair_cnt > 371);
 
         if (A || B || C){
             cout << "[S1→2] A=" << A << " B=" << B << " C=" << C
