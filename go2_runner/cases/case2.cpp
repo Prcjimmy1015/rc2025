@@ -72,7 +72,7 @@ bool case2_tick(go2::SportClient &sc,
     // ====== Aruco 方向修正 (分档增益) ======
     double yaw_corr = 0;
     if (aruco_detected && fabs(aruco_angle) > 0.05){
-        double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.20 : 0.08;
+        double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.25 : 0.12;
         yaw_corr = -k_yaw * aruco_angle;
         yaw_corr = max(-0.35, min(0.35, yaw_corr));
     }
