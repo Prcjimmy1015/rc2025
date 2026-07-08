@@ -283,8 +283,8 @@ bool case2_tick(go2::SportClient &sc,
             roll_corr = max(-0.18, min(0.18, roll_corr));
         }
 
-        // 机械臂偏右, 爬台阶加左向vy偏置抵消右漂
-        double vy_arm = -0.04;
+        // 机械臂偏载, 爬台阶vy偏置修正
+        double vy_arm = 0.04;
         sc.ClassicWalk(true);
         sc.Move(0.25, vy_arm + roll_corr, s1_hdg);
         double dpx = px - px_start, dpy = py - py_start;
