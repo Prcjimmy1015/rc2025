@@ -282,7 +282,7 @@ bool case2_tick(go2::SportClient &sc,
         }
 
         sc.ClassicWalk(true);
-        sc.Move(0.18, roll_corr, s1_hdg);
+        sc.Move(0.20, roll_corr, s1_hdg);
         double dpx = px - px_start, dpy = py - py_start;
         double d2d = sqrt(dpx*dpx + dpy*dpy);
 
