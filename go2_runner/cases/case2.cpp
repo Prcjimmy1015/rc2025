@@ -72,9 +72,9 @@ bool case2_tick(go2::SportClient &sc,
     // ====== Aruco 方向修正 (分档增益) ======
     double yaw_corr = 0;
     if (aruco_detected && fabs(aruco_angle) > 0.05){
-        double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.25 : 0.12;
+        double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.30 : 0.15;
         yaw_corr = -k_yaw * aruco_angle;
-        yaw_corr = max(-0.35, min(0.35, yaw_corr));
+        yaw_corr = max(-0.40, min(0.40, yaw_corr));
     }
 
     // ====== IMU 航向锁定 (ArUco 丢失时兜底) ======
@@ -82,8 +82,8 @@ bool case2_tick(go2::SportClient &sc,
     double imu_yaw_err = yaw - s1_start_yaw;
     if (imu_yaw_err >  M_PI) imu_yaw_err -= 2.0 * M_PI;
     if (imu_yaw_err < -M_PI) imu_yaw_err += 2.0 * M_PI;
-    double imu_corr = -0.45 * imu_yaw_err;
-    imu_corr = max(-0.50, min(0.50, imu_corr));
+    double imu_corr = -0.55 * imu_yaw_err;
+    imu_corr = max(-0.55, min(0.55, imu_corr));
 
     double heading_corr = aruco_detected ? yaw_corr : imu_corr;
 
@@ -274,8 +274,8 @@ bool case2_tick(go2::SportClient &sc,
                 cout << "[S1] YAW RELOCK: " << s1_start_yaw << endl;
             }
         }
-        // 机械臂负重偏载, 爬台阶方向修正增益×1.3
-        s1_hdg = max(-0.45, min(0.45, s1_hdg * 1.3));
+        // 机械臂负重偏载, 爬台阶方向修正增益×1.8
+        s1_hdg = max(-0.80, min(0.80, s1_hdg * 1.8));
         // 左脚打滑检测: roll 变负(左倾) → 右移压回去
         double roll_corr = 0;
         if (s1_settle > 6 && fabs(roll) > 0.10){
