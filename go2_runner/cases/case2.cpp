@@ -368,7 +368,7 @@ bool case2_tick(go2::SportClient &sc,
             sc.StopMove();
             cout<<"[S5] DONE  err="<<err<<" d2d="<<d2d_turn<<" → DESCEND"<<endl;
             turn_inited=false; s5_timed_out=false; stair_cnt=0; stair_step=6;
-        }else if(stair_cnt>200){
+        }else if(stair_cnt>100){
             sc.StopMove();
             cout<<"[S5] TIMEOUT  err="<<err<<" → DESCEND with drift"<<endl;
             turn_inited=false; s5_timed_out=true; stair_cnt=0; stair_step=6;
@@ -449,7 +449,7 @@ bool case2_tick(go2::SportClient &sc,
             if(stair_cnt%10==0)
                 cout << "[S9] ROT cnt=" << stair_cnt << " err=" << err
                      << " vyaw=" << vyaw << " yaw=" << yaw << endl;
-            if(fabs(err) < 0.08 || stair_cnt > 200){
+            if(fabs(err) < 0.08 || stair_cnt > 100){
                 sc.StopMove();
                 cout << "[S9] ROT DONE → GO STRAIGHT" << endl;
                 s9_phase = 1;
