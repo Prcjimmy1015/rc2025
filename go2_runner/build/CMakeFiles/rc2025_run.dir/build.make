@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/linux/rc2025_demo/go2_runner
+CMAKE_SOURCE_DIR = /home/linux/rc2025/go2_runner
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/linux/rc2025_demo/go2_runner/build
+CMAKE_BINARY_DIR = /home/linux/rc2025/go2_runner/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/rc2025_run.dir/depend.make
@@ -72,170 +72,184 @@ include CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/main.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/main.cpp.o: ../main.cpp
 CMakeFiles/rc2025_run.dir/main.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/rc2025_run.dir/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/main.cpp.o -MF CMakeFiles/rc2025_run.dir/main.cpp.o.d -o CMakeFiles/rc2025_run.dir/main.cpp.o -c /home/linux/rc2025_demo/go2_runner/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/rc2025_run.dir/main.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/main.cpp.o -MF CMakeFiles/rc2025_run.dir/main.cpp.o.d -o CMakeFiles/rc2025_run.dir/main.cpp.o -c /home/linux/rc2025/go2_runner/main.cpp
 
 CMakeFiles/rc2025_run.dir/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025_demo/go2_runner/main.cpp > CMakeFiles/rc2025_run.dir/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/main.cpp > CMakeFiles/rc2025_run.dir/main.cpp.i
 
 CMakeFiles/rc2025_run.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025_demo/go2_runner/main.cpp -o CMakeFiles/rc2025_run.dir/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/main.cpp -o CMakeFiles/rc2025_run.dir/main.cpp.s
 
 CMakeFiles/rc2025_run.dir/globals.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/globals.cpp.o: ../globals.cpp
 CMakeFiles/rc2025_run.dir/globals.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/rc2025_run.dir/globals.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/globals.cpp.o -MF CMakeFiles/rc2025_run.dir/globals.cpp.o.d -o CMakeFiles/rc2025_run.dir/globals.cpp.o -c /home/linux/rc2025_demo/go2_runner/globals.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/rc2025_run.dir/globals.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/globals.cpp.o -MF CMakeFiles/rc2025_run.dir/globals.cpp.o.d -o CMakeFiles/rc2025_run.dir/globals.cpp.o -c /home/linux/rc2025/go2_runner/globals.cpp
 
 CMakeFiles/rc2025_run.dir/globals.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/globals.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025_demo/go2_runner/globals.cpp > CMakeFiles/rc2025_run.dir/globals.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/globals.cpp > CMakeFiles/rc2025_run.dir/globals.cpp.i
 
 CMakeFiles/rc2025_run.dir/globals.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/globals.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025_demo/go2_runner/globals.cpp -o CMakeFiles/rc2025_run.dir/globals.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/globals.cpp -o CMakeFiles/rc2025_run.dir/globals.cpp.s
 
 CMakeFiles/rc2025_run.dir/callbacks.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/callbacks.cpp.o: ../callbacks.cpp
 CMakeFiles/rc2025_run.dir/callbacks.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/rc2025_run.dir/callbacks.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/callbacks.cpp.o -MF CMakeFiles/rc2025_run.dir/callbacks.cpp.o.d -o CMakeFiles/rc2025_run.dir/callbacks.cpp.o -c /home/linux/rc2025_demo/go2_runner/callbacks.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/rc2025_run.dir/callbacks.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/callbacks.cpp.o -MF CMakeFiles/rc2025_run.dir/callbacks.cpp.o.d -o CMakeFiles/rc2025_run.dir/callbacks.cpp.o -c /home/linux/rc2025/go2_runner/callbacks.cpp
 
 CMakeFiles/rc2025_run.dir/callbacks.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/callbacks.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025_demo/go2_runner/callbacks.cpp > CMakeFiles/rc2025_run.dir/callbacks.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/callbacks.cpp > CMakeFiles/rc2025_run.dir/callbacks.cpp.i
 
 CMakeFiles/rc2025_run.dir/callbacks.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/callbacks.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025_demo/go2_runner/callbacks.cpp -o CMakeFiles/rc2025_run.dir/callbacks.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/callbacks.cpp -o CMakeFiles/rc2025_run.dir/callbacks.cpp.s
 
 CMakeFiles/rc2025_run.dir/utils.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/utils.cpp.o: ../utils.cpp
 CMakeFiles/rc2025_run.dir/utils.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/rc2025_run.dir/utils.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/utils.cpp.o -MF CMakeFiles/rc2025_run.dir/utils.cpp.o.d -o CMakeFiles/rc2025_run.dir/utils.cpp.o -c /home/linux/rc2025_demo/go2_runner/utils.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/rc2025_run.dir/utils.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/utils.cpp.o -MF CMakeFiles/rc2025_run.dir/utils.cpp.o.d -o CMakeFiles/rc2025_run.dir/utils.cpp.o -c /home/linux/rc2025/go2_runner/utils.cpp
 
 CMakeFiles/rc2025_run.dir/utils.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/utils.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025_demo/go2_runner/utils.cpp > CMakeFiles/rc2025_run.dir/utils.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/utils.cpp > CMakeFiles/rc2025_run.dir/utils.cpp.i
 
 CMakeFiles/rc2025_run.dir/utils.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/utils.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025_demo/go2_runner/utils.cpp -o CMakeFiles/rc2025_run.dir/utils.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/utils.cpp -o CMakeFiles/rc2025_run.dir/utils.cpp.s
 
 CMakeFiles/rc2025_run.dir/visualizer.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/visualizer.cpp.o: ../visualizer.cpp
 CMakeFiles/rc2025_run.dir/visualizer.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/rc2025_run.dir/visualizer.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/visualizer.cpp.o -MF CMakeFiles/rc2025_run.dir/visualizer.cpp.o.d -o CMakeFiles/rc2025_run.dir/visualizer.cpp.o -c /home/linux/rc2025_demo/go2_runner/visualizer.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/rc2025_run.dir/visualizer.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/visualizer.cpp.o -MF CMakeFiles/rc2025_run.dir/visualizer.cpp.o.d -o CMakeFiles/rc2025_run.dir/visualizer.cpp.o -c /home/linux/rc2025/go2_runner/visualizer.cpp
 
 CMakeFiles/rc2025_run.dir/visualizer.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/visualizer.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025_demo/go2_runner/visualizer.cpp > CMakeFiles/rc2025_run.dir/visualizer.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/visualizer.cpp > CMakeFiles/rc2025_run.dir/visualizer.cpp.i
 
 CMakeFiles/rc2025_run.dir/visualizer.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/visualizer.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025_demo/go2_runner/visualizer.cpp -o CMakeFiles/rc2025_run.dir/visualizer.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/visualizer.cpp -o CMakeFiles/rc2025_run.dir/visualizer.cpp.s
 
 CMakeFiles/rc2025_run.dir/aruco_server.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/aruco_server.cpp.o: ../aruco_server.cpp
 CMakeFiles/rc2025_run.dir/aruco_server.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/rc2025_run.dir/aruco_server.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/aruco_server.cpp.o -MF CMakeFiles/rc2025_run.dir/aruco_server.cpp.o.d -o CMakeFiles/rc2025_run.dir/aruco_server.cpp.o -c /home/linux/rc2025_demo/go2_runner/aruco_server.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/rc2025_run.dir/aruco_server.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/aruco_server.cpp.o -MF CMakeFiles/rc2025_run.dir/aruco_server.cpp.o.d -o CMakeFiles/rc2025_run.dir/aruco_server.cpp.o -c /home/linux/rc2025/go2_runner/aruco_server.cpp
 
 CMakeFiles/rc2025_run.dir/aruco_server.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/aruco_server.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025_demo/go2_runner/aruco_server.cpp > CMakeFiles/rc2025_run.dir/aruco_server.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/aruco_server.cpp > CMakeFiles/rc2025_run.dir/aruco_server.cpp.i
 
 CMakeFiles/rc2025_run.dir/aruco_server.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/aruco_server.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025_demo/go2_runner/aruco_server.cpp -o CMakeFiles/rc2025_run.dir/aruco_server.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/aruco_server.cpp -o CMakeFiles/rc2025_run.dir/aruco_server.cpp.s
 
 CMakeFiles/rc2025_run.dir/app_runtime.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/app_runtime.cpp.o: ../app_runtime.cpp
 CMakeFiles/rc2025_run.dir/app_runtime.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/rc2025_run.dir/app_runtime.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/app_runtime.cpp.o -MF CMakeFiles/rc2025_run.dir/app_runtime.cpp.o.d -o CMakeFiles/rc2025_run.dir/app_runtime.cpp.o -c /home/linux/rc2025_demo/go2_runner/app_runtime.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/rc2025_run.dir/app_runtime.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/app_runtime.cpp.o -MF CMakeFiles/rc2025_run.dir/app_runtime.cpp.o.d -o CMakeFiles/rc2025_run.dir/app_runtime.cpp.o -c /home/linux/rc2025/go2_runner/app_runtime.cpp
 
 CMakeFiles/rc2025_run.dir/app_runtime.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/app_runtime.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025_demo/go2_runner/app_runtime.cpp > CMakeFiles/rc2025_run.dir/app_runtime.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/app_runtime.cpp > CMakeFiles/rc2025_run.dir/app_runtime.cpp.i
 
 CMakeFiles/rc2025_run.dir/app_runtime.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/app_runtime.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025_demo/go2_runner/app_runtime.cpp -o CMakeFiles/rc2025_run.dir/app_runtime.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/app_runtime.cpp -o CMakeFiles/rc2025_run.dir/app_runtime.cpp.s
+
+CMakeFiles/rc2025_run.dir/line_follow.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
+CMakeFiles/rc2025_run.dir/line_follow.cpp.o: ../line_follow.cpp
+CMakeFiles/rc2025_run.dir/line_follow.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/rc2025_run.dir/line_follow.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/line_follow.cpp.o -MF CMakeFiles/rc2025_run.dir/line_follow.cpp.o.d -o CMakeFiles/rc2025_run.dir/line_follow.cpp.o -c /home/linux/rc2025/go2_runner/line_follow.cpp
+
+CMakeFiles/rc2025_run.dir/line_follow.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/line_follow.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/line_follow.cpp > CMakeFiles/rc2025_run.dir/line_follow.cpp.i
+
+CMakeFiles/rc2025_run.dir/line_follow.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/line_follow.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/line_follow.cpp -o CMakeFiles/rc2025_run.dir/line_follow.cpp.s
 
 CMakeFiles/rc2025_run.dir/cases/case0.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/cases/case0.cpp.o: ../cases/case0.cpp
 CMakeFiles/rc2025_run.dir/cases/case0.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/rc2025_run.dir/cases/case0.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/cases/case0.cpp.o -MF CMakeFiles/rc2025_run.dir/cases/case0.cpp.o.d -o CMakeFiles/rc2025_run.dir/cases/case0.cpp.o -c /home/linux/rc2025_demo/go2_runner/cases/case0.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/rc2025_run.dir/cases/case0.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/cases/case0.cpp.o -MF CMakeFiles/rc2025_run.dir/cases/case0.cpp.o.d -o CMakeFiles/rc2025_run.dir/cases/case0.cpp.o -c /home/linux/rc2025/go2_runner/cases/case0.cpp
 
 CMakeFiles/rc2025_run.dir/cases/case0.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/cases/case0.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025_demo/go2_runner/cases/case0.cpp > CMakeFiles/rc2025_run.dir/cases/case0.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/cases/case0.cpp > CMakeFiles/rc2025_run.dir/cases/case0.cpp.i
 
 CMakeFiles/rc2025_run.dir/cases/case0.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/cases/case0.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025_demo/go2_runner/cases/case0.cpp -o CMakeFiles/rc2025_run.dir/cases/case0.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/cases/case0.cpp -o CMakeFiles/rc2025_run.dir/cases/case0.cpp.s
 
 CMakeFiles/rc2025_run.dir/cases/case1.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/cases/case1.cpp.o: ../cases/case1.cpp
 CMakeFiles/rc2025_run.dir/cases/case1.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/rc2025_run.dir/cases/case1.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/cases/case1.cpp.o -MF CMakeFiles/rc2025_run.dir/cases/case1.cpp.o.d -o CMakeFiles/rc2025_run.dir/cases/case1.cpp.o -c /home/linux/rc2025_demo/go2_runner/cases/case1.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/rc2025_run.dir/cases/case1.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/cases/case1.cpp.o -MF CMakeFiles/rc2025_run.dir/cases/case1.cpp.o.d -o CMakeFiles/rc2025_run.dir/cases/case1.cpp.o -c /home/linux/rc2025/go2_runner/cases/case1.cpp
 
 CMakeFiles/rc2025_run.dir/cases/case1.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/cases/case1.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025_demo/go2_runner/cases/case1.cpp > CMakeFiles/rc2025_run.dir/cases/case1.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/cases/case1.cpp > CMakeFiles/rc2025_run.dir/cases/case1.cpp.i
 
 CMakeFiles/rc2025_run.dir/cases/case1.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/cases/case1.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025_demo/go2_runner/cases/case1.cpp -o CMakeFiles/rc2025_run.dir/cases/case1.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/cases/case1.cpp -o CMakeFiles/rc2025_run.dir/cases/case1.cpp.s
 
 CMakeFiles/rc2025_run.dir/cases/case2.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/cases/case2.cpp.o: ../cases/case2.cpp
 CMakeFiles/rc2025_run.dir/cases/case2.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/rc2025_run.dir/cases/case2.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/cases/case2.cpp.o -MF CMakeFiles/rc2025_run.dir/cases/case2.cpp.o.d -o CMakeFiles/rc2025_run.dir/cases/case2.cpp.o -c /home/linux/rc2025_demo/go2_runner/cases/case2.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/rc2025_run.dir/cases/case2.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/cases/case2.cpp.o -MF CMakeFiles/rc2025_run.dir/cases/case2.cpp.o.d -o CMakeFiles/rc2025_run.dir/cases/case2.cpp.o -c /home/linux/rc2025/go2_runner/cases/case2.cpp
 
 CMakeFiles/rc2025_run.dir/cases/case2.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/cases/case2.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025_demo/go2_runner/cases/case2.cpp > CMakeFiles/rc2025_run.dir/cases/case2.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/cases/case2.cpp > CMakeFiles/rc2025_run.dir/cases/case2.cpp.i
 
 CMakeFiles/rc2025_run.dir/cases/case2.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/cases/case2.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025_demo/go2_runner/cases/case2.cpp -o CMakeFiles/rc2025_run.dir/cases/case2.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/cases/case2.cpp -o CMakeFiles/rc2025_run.dir/cases/case2.cpp.s
 
 CMakeFiles/rc2025_run.dir/cases/case3.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/cases/case3.cpp.o: ../cases/case3.cpp
 CMakeFiles/rc2025_run.dir/cases/case3.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/rc2025_run.dir/cases/case3.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/cases/case3.cpp.o -MF CMakeFiles/rc2025_run.dir/cases/case3.cpp.o.d -o CMakeFiles/rc2025_run.dir/cases/case3.cpp.o -c /home/linux/rc2025_demo/go2_runner/cases/case3.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/rc2025_run.dir/cases/case3.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/cases/case3.cpp.o -MF CMakeFiles/rc2025_run.dir/cases/case3.cpp.o.d -o CMakeFiles/rc2025_run.dir/cases/case3.cpp.o -c /home/linux/rc2025/go2_runner/cases/case3.cpp
 
 CMakeFiles/rc2025_run.dir/cases/case3.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/cases/case3.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025_demo/go2_runner/cases/case3.cpp > CMakeFiles/rc2025_run.dir/cases/case3.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/cases/case3.cpp > CMakeFiles/rc2025_run.dir/cases/case3.cpp.i
 
 CMakeFiles/rc2025_run.dir/cases/case3.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/cases/case3.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025_demo/go2_runner/cases/case3.cpp -o CMakeFiles/rc2025_run.dir/cases/case3.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/cases/case3.cpp -o CMakeFiles/rc2025_run.dir/cases/case3.cpp.s
 
 CMakeFiles/rc2025_run.dir/cases/case4.cpp.o: CMakeFiles/rc2025_run.dir/flags.make
 CMakeFiles/rc2025_run.dir/cases/case4.cpp.o: ../cases/case4.cpp
 CMakeFiles/rc2025_run.dir/cases/case4.cpp.o: CMakeFiles/rc2025_run.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/rc2025_run.dir/cases/case4.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/cases/case4.cpp.o -MF CMakeFiles/rc2025_run.dir/cases/case4.cpp.o.d -o CMakeFiles/rc2025_run.dir/cases/case4.cpp.o -c /home/linux/rc2025_demo/go2_runner/cases/case4.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/rc2025_run.dir/cases/case4.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/rc2025_run.dir/cases/case4.cpp.o -MF CMakeFiles/rc2025_run.dir/cases/case4.cpp.o.d -o CMakeFiles/rc2025_run.dir/cases/case4.cpp.o -c /home/linux/rc2025/go2_runner/cases/case4.cpp
 
 CMakeFiles/rc2025_run.dir/cases/case4.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/rc2025_run.dir/cases/case4.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025_demo/go2_runner/cases/case4.cpp > CMakeFiles/rc2025_run.dir/cases/case4.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/linux/rc2025/go2_runner/cases/case4.cpp > CMakeFiles/rc2025_run.dir/cases/case4.cpp.i
 
 CMakeFiles/rc2025_run.dir/cases/case4.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/rc2025_run.dir/cases/case4.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025_demo/go2_runner/cases/case4.cpp -o CMakeFiles/rc2025_run.dir/cases/case4.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/linux/rc2025/go2_runner/cases/case4.cpp -o CMakeFiles/rc2025_run.dir/cases/case4.cpp.s
 
 # Object files for target rc2025_run
 rc2025_run_OBJECTS = \
@@ -246,6 +260,7 @@ rc2025_run_OBJECTS = \
 "CMakeFiles/rc2025_run.dir/visualizer.cpp.o" \
 "CMakeFiles/rc2025_run.dir/aruco_server.cpp.o" \
 "CMakeFiles/rc2025_run.dir/app_runtime.cpp.o" \
+"CMakeFiles/rc2025_run.dir/line_follow.cpp.o" \
 "CMakeFiles/rc2025_run.dir/cases/case0.cpp.o" \
 "CMakeFiles/rc2025_run.dir/cases/case1.cpp.o" \
 "CMakeFiles/rc2025_run.dir/cases/case2.cpp.o" \
@@ -262,6 +277,7 @@ rc2025_run: CMakeFiles/rc2025_run.dir/utils.cpp.o
 rc2025_run: CMakeFiles/rc2025_run.dir/visualizer.cpp.o
 rc2025_run: CMakeFiles/rc2025_run.dir/aruco_server.cpp.o
 rc2025_run: CMakeFiles/rc2025_run.dir/app_runtime.cpp.o
+rc2025_run: CMakeFiles/rc2025_run.dir/line_follow.cpp.o
 rc2025_run: CMakeFiles/rc2025_run.dir/cases/case0.cpp.o
 rc2025_run: CMakeFiles/rc2025_run.dir/cases/case1.cpp.o
 rc2025_run: CMakeFiles/rc2025_run.dir/cases/case2.cpp.o
@@ -323,7 +339,7 @@ rc2025_run: /usr/lib/x86_64-linux-gnu/libopencv_photo.so.4.5.4d
 rc2025_run: /usr/lib/x86_64-linux-gnu/libopencv_imgproc.so.4.5.4d
 rc2025_run: /usr/lib/x86_64-linux-gnu/libopencv_core.so.4.5.4d
 rc2025_run: CMakeFiles/rc2025_run.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/linux/rc2025_demo/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Linking CXX executable rc2025_run"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/linux/rc2025/go2_runner/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Linking CXX executable rc2025_run"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/rc2025_run.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -335,6 +351,6 @@ CMakeFiles/rc2025_run.dir/clean:
 .PHONY : CMakeFiles/rc2025_run.dir/clean
 
 CMakeFiles/rc2025_run.dir/depend:
-	cd /home/linux/rc2025_demo/go2_runner/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/linux/rc2025_demo/go2_runner /home/linux/rc2025_demo/go2_runner /home/linux/rc2025_demo/go2_runner/build /home/linux/rc2025_demo/go2_runner/build /home/linux/rc2025_demo/go2_runner/build/CMakeFiles/rc2025_run.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/linux/rc2025/go2_runner/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/linux/rc2025/go2_runner /home/linux/rc2025/go2_runner /home/linux/rc2025/go2_runner/build /home/linux/rc2025/go2_runner/build /home/linux/rc2025/go2_runner/build/CMakeFiles/rc2025_run.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/rc2025_run.dir/depend
 

@@ -17,6 +17,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/rc2025_run.dir/cases/case4.cpp.o.d"
   "CMakeFiles/rc2025_run.dir/globals.cpp.o"
   "CMakeFiles/rc2025_run.dir/globals.cpp.o.d"
+  "CMakeFiles/rc2025_run.dir/line_follow.cpp.o"
+  "CMakeFiles/rc2025_run.dir/line_follow.cpp.o.d"
   "CMakeFiles/rc2025_run.dir/main.cpp.o"
   "CMakeFiles/rc2025_run.dir/main.cpp.o.d"
   "CMakeFiles/rc2025_run.dir/utils.cpp.o"

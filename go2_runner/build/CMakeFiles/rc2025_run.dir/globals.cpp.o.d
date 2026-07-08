@@ -1,7 +1,7 @@
 CMakeFiles/rc2025_run.dir/globals.cpp.o: \
- /home/linux/rc2025_demo/go2_runner/globals.cpp \
- /usr/include/stdc-predef.h /home/linux/rc2025_demo/go2_runner/globals.h \
- /usr/include/c++/11/atomic /usr/include/c++/11/bits/atomic_base.h \
+ /home/linux/rc2025/go2_runner/globals.cpp /usr/include/stdc-predef.h \
+ /home/linux/rc2025/go2_runner/globals.h /usr/include/c++/11/atomic \
+ /usr/include/c++/11/bits/atomic_base.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \
  /usr/include/features.h /usr/include/features-time64.h \

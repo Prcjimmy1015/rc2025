@@ -35,9 +35,9 @@ def dh_transform(a, alpha_deg, d, theta_deg):
 
 def fk(joints_deg, offsets):
     """固定实测连杆长度，仅 offset 可变。offsets = [off0..off5]"""
-    a_list   = [0, 270, 40, 200, 0, 188]
+    a_list    = [0, 270, 40, 200, 0, 188]
     alpha_deg = [90, 0, -90, 0, -90, 0]
-    d_list   = [55, 0, 0, 0, 0, 0]
+    d_list    = [73.8, 0, 0, 0, 0, 0]   # d₀ 来自 URDF 官方值
     signs = DH_JOINT_SIGN
 
     T = np.eye(4)

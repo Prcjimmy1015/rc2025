@@ -6,7 +6,14 @@
 """
 
 import os
+import sys
 import time
+
+# ---- 确保直接运行时也能找到 arm_task 包 ----
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_PROJECT = os.path.dirname(os.path.dirname(_HERE))
+if _PROJECT not in sys.path:
+    sys.path.insert(0, _PROJECT)
 
 from arm_task.core.d1_bridge import D1RobotArmController
 from arm_task.core.config import (
@@ -182,6 +189,12 @@ def _log_ok(name, extra=""):
 # 独立测试
 # ======================================================================
 if __name__ == "__main__":
+    ctrl = ArmTaskController()
+
+    ctrl.go_navigation()
+    ctrl.go_photo()
+    
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="机械臂控制测试")
@@ -223,3 +236,4 @@ if __name__ == "__main__":
 
     except Exception as e:
         print(f"操作失败: {e}")
+    """

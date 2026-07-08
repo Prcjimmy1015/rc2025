@@ -1,5 +1,5 @@
 CMakeFiles/rc2025_run.dir/main.cpp.o: \
- /home/linux/rc2025_demo/go2_runner/main.cpp /usr/include/stdc-predef.h \
+ /home/linux/rc2025/go2_runner/main.cpp /usr/include/stdc-predef.h \
  /home/linux/unitree_sdk2/include/unitree/robot/go2/sport/sport_client.hpp \
  /home/linux/unitree_sdk2/include/unitree/robot/client/client.hpp \
  /home/linux/unitree_sdk2/include/unitree/robot/client/client_base.hpp \
@@ -24,7 +24,6 @@ CMakeFiles/rc2025_run.dir/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/confname.h \
  /usr/include/x86_64-linux-gnu/bits/getopt_posix.h \
  /usr/include/x86_64-linux-gnu/bits/getopt_core.h \
- /usr/include/x86_64-linux-gnu/bits/unistd.h \
  /usr/include/x86_64-linux-gnu/bits/unistd_ext.h \
  /usr/include/linux/close_range.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
@@ -39,9 +38,7 @@ CMakeFiles/rc2025_run.dir/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
  /usr/include/x86_64-linux-gnu/bits/floatn.h \
  /usr/include/x86_64-linux-gnu/bits/floatn-common.h \
- /usr/include/x86_64-linux-gnu/bits/stdio.h \
- /usr/include/x86_64-linux-gnu/bits/stdio2.h /usr/include/c++/11/stdlib.h \
- /usr/include/c++/11/cstdlib \
+ /usr/include/c++/11/stdlib.h /usr/include/c++/11/cstdlib \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/cpu_defines.h \
@@ -66,16 +63,13 @@ CMakeFiles/rc2025_run.dir/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h \
- /usr/include/x86_64-linux-gnu/bits/select2.h \
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
  /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h \
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h \
  /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
  /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h /usr/include/alloca.h \
- /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h \
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
- /usr/include/x86_64-linux-gnu/bits/stdlib.h \
  /usr/include/c++/11/bits/std_abs.h \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
@@ -116,11 +110,8 @@ CMakeFiles/rc2025_run.dir/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/types/struct_sigstack.h \
  /usr/include/x86_64-linux-gnu/bits/sigthread.h \
  /usr/include/x86_64-linux-gnu/bits/signal_ext.h /usr/include/string.h \
- /usr/include/strings.h \
- /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
- /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
- /usr/include/arpa/inet.h /usr/include/netinet/in.h \
- /usr/include/x86_64-linux-gnu/sys/socket.h \
+ /usr/include/strings.h /usr/include/arpa/inet.h \
+ /usr/include/netinet/in.h /usr/include/x86_64-linux-gnu/sys/socket.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_iovec.h \
  /usr/include/x86_64-linux-gnu/bits/socket.h \
  /usr/include/x86_64-linux-gnu/bits/socket_type.h \
@@ -136,7 +127,6 @@ CMakeFiles/rc2025_run.dir/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/asm/sockios.h \
  /usr/include/asm-generic/sockios.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
- /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h /usr/include/ifaddrs.h \
  /usr/include/x86_64-linux-gnu/sys/mman.h \
  /usr/include/x86_64-linux-gnu/bits/mman.h \
@@ -174,8 +164,7 @@ CMakeFiles/rc2025_run.dir/main.cpp.o: \
  /usr/include/netdb.h /usr/include/rpc/netdb.h \
  /usr/include/x86_64-linux-gnu/bits/netdb.h /usr/include/poll.h \
  /usr/include/x86_64-linux-gnu/sys/poll.h \
- /usr/include/x86_64-linux-gnu/bits/poll.h \
- /usr/include/x86_64-linux-gnu/bits/poll2.h /usr/include/pthread.h \
+ /usr/include/x86_64-linux-gnu/bits/poll.h /usr/include/pthread.h \
  /usr/include/x86_64-linux-gnu/bits/setjmp.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct___jmp_buf_tag.h \
  /usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h \
@@ -189,8 +178,8 @@ CMakeFiles/rc2025_run.dir/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/uio_lim.h /usr/include/fcntl.h \
  /usr/include/x86_64-linux-gnu/bits/fcntl.h \
  /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h \
- /usr/include/linux/falloc.h /usr/include/x86_64-linux-gnu/bits/fcntl2.h \
- /usr/include/dirent.h /usr/include/x86_64-linux-gnu/bits/dirent.h \
+ /usr/include/linux/falloc.h /usr/include/dirent.h \
+ /usr/include/x86_64-linux-gnu/bits/dirent.h \
  /usr/include/x86_64-linux-gnu/bits/dirent_ext.h /usr/include/utime.h \
  /usr/include/c++/11/atomic /usr/include/c++/11/bits/atomic_base.h \
  /usr/include/c++/11/bits/atomic_lockfree_defines.h \
@@ -213,8 +202,7 @@ CMakeFiles/rc2025_run.dir/main.cpp.o: \
  /usr/include/c++/11/bits/postypes.h /usr/include/c++/11/cwchar \
  /usr/include/wchar.h /usr/include/x86_64-linux-gnu/bits/types/wint_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/mbstate_t.h \
- /usr/include/x86_64-linux-gnu/bits/wchar2.h /usr/include/c++/11/cstdint \
- /usr/include/c++/11/bits/allocator.h \
+ /usr/include/c++/11/cstdint /usr/include/c++/11/bits/allocator.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++allocator.h \
  /usr/include/c++/11/ext/new_allocator.h \
  /usr/include/c++/11/bits/localefwd.h \
@@ -742,6 +730,7 @@ CMakeFiles/rc2025_run.dir/main.cpp.o: \
  /home/linux/unitree_sdk2/include/unitree/common/dds/dds_traits.hpp \
  /home/linux/unitree_sdk2/include/unitree/robot/channel/channel_namer.hpp \
  /home/linux/unitree_sdk2/include/unitree/robot/client/lease_client.hpp \
+ /home/linux/unitree_sdk2/include/unitree/robot/go2/obstacles_avoid/obstacles_avoid_client.hpp \
  /usr/include/opencv4/opencv2/opencv.hpp \
  /usr/include/opencv4/opencv2/opencv_modules.hpp \
  /usr/include/opencv4/opencv2/core.hpp \
@@ -877,25 +866,27 @@ CMakeFiles/rc2025_run.dir/main.cpp.o: \
  /usr/include/opencv4/opencv2/video/tracking.hpp \
  /usr/include/opencv4/opencv2/video/background_segm.hpp \
  /usr/include/c++/11/thread /usr/include/c++/11/bits/std_thread.h \
- /usr/include/c++/11/bits/this_thread_sleep.h \
- /home/linux/rc2025_demo/go2_runner/params.h \
- /home/linux/rc2025_demo/go2_runner/globals.h \
- /home/linux/rc2025_demo/go2_runner/utils.h \
+ /usr/include/c++/11/bits/this_thread_sleep.h /usr/include/c++/11/csignal \
+ /home/linux/rc2025/go2_runner/params.h \
+ /home/linux/rc2025/go2_runner/globals.h \
+ /home/linux/rc2025/go2_runner/utils.h \
  /home/linux/unitree_sdk2/include/unitree/idl/go2/SportModeState_.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/go2/IMUState_.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/go2/PathPoint_.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/go2/TimeSpec_.hpp \
- /home/linux/rc2025_demo/go2_runner/visualizer.h \
- /home/linux/rc2025_demo/go2_runner/aruco_server.h \
- /home/linux/rc2025_demo/go2_runner/app_runtime.h \
- /home/linux/rc2025_demo/go2_runner/callbacks.h \
+ /home/linux/rc2025/go2_runner/visualizer.h \
+ /home/linux/rc2025/go2_runner/aruco_server.h \
+ /home/linux/rc2025/go2_runner/app_runtime.h \
+ /home/linux/rc2025/go2_runner/callbacks.h \
  /home/linux/unitree_sdk2/include/unitree/robot/channel/channel_subscriber.hpp \
+ /home/linux/unitree_sdk2/include/unitree/robot/go2/vui/vui_client.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/ros2/PointStamped_.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/ros2/Point_.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/ros2/Header_.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/ros2/Time_.hpp \
- /home/linux/rc2025_demo/go2_runner/cases/case0.h \
- /home/linux/rc2025_demo/go2_runner/cases/case1.h \
- /home/linux/rc2025_demo/go2_runner/cases/case2.h \
- /home/linux/rc2025_demo/go2_runner/cases/case3.h \
- /home/linux/rc2025_demo/go2_runner/cases/case4.h
+ /home/linux/rc2025/go2_runner/cases/case0.h \
+ /home/linux/rc2025/go2_runner/cases/case1.h \
+ /home/linux/rc2025/go2_runner/cases/case2.h \
+ /home/linux/rc2025/go2_runner/cases/case3.h \
+ /home/linux/rc2025/go2_runner/cases/case4.h \
+ /home/linux/rc2025/go2_runner/../arm_task/arm_bridge.h

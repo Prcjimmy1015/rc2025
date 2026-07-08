@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/linux/rc2025_demo/go2_runner
+CMAKE_SOURCE_DIR = /home/linux/rc2025/go2_runner
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/linux/rc2025_demo/go2_runner/build
+CMAKE_BINARY_DIR = /home/linux/rc2025/go2_runner/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -97,9 +97,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/linux/rc2025_demo/go2_runner/build/CMakeFiles /home/linux/rc2025_demo/go2_runner/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/linux/rc2025/go2_runner/build/CMakeFiles /home/linux/rc2025/go2_runner/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/linux/rc2025_demo/go2_runner/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/linux/rc2025/go2_runner/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -381,6 +381,30 @@ globals.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/globals.cpp.s
 .PHONY : globals.cpp.s
 
+line_follow.o: line_follow.cpp.o
+.PHONY : line_follow.o
+
+# target to build an object file
+line_follow.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/line_follow.cpp.o
+.PHONY : line_follow.cpp.o
+
+line_follow.i: line_follow.cpp.i
+.PHONY : line_follow.i
+
+# target to preprocess a source file
+line_follow.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/line_follow.cpp.i
+.PHONY : line_follow.cpp.i
+
+line_follow.s: line_follow.cpp.s
+.PHONY : line_follow.s
+
+# target to generate assembly for a file
+line_follow.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/line_follow.cpp.s
+.PHONY : line_follow.cpp.s
+
 main.o: main.cpp.o
 .PHONY : main.o
 
@@ -492,6 +516,9 @@ help:
 	@echo "... globals.o"
 	@echo "... globals.i"
 	@echo "... globals.s"
+	@echo "... line_follow.o"
+	@echo "... line_follow.i"
+	@echo "... line_follow.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

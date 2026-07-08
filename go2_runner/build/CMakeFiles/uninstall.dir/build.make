@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/linux/rc2025_demo/go2_runner
+CMAKE_SOURCE_DIR = /home/linux/rc2025/go2_runner
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/linux/rc2025_demo/go2_runner/build
+CMAKE_BINARY_DIR = /home/linux/rc2025/go2_runner/build
 
 # Utility rule file for uninstall.
 
@@ -78,6 +78,6 @@ CMakeFiles/uninstall.dir/clean:
 .PHONY : CMakeFiles/uninstall.dir/clean
 
 CMakeFiles/uninstall.dir/depend:
-	cd /home/linux/rc2025_demo/go2_runner/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/linux/rc2025_demo/go2_runner /home/linux/rc2025_demo/go2_runner /home/linux/rc2025_demo/go2_runner/build /home/linux/rc2025_demo/go2_runner/build /home/linux/rc2025_demo/go2_runner/build/CMakeFiles/uninstall.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/linux/rc2025/go2_runner/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/linux/rc2025/go2_runner /home/linux/rc2025/go2_runner /home/linux/rc2025/go2_runner/build /home/linux/rc2025/go2_runner/build /home/linux/rc2025/go2_runner/build/CMakeFiles/uninstall.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/uninstall.dir/depend
 

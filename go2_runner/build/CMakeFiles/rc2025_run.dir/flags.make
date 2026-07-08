@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/linux/unitree_sdk2/include -I/home/linux/unitree_sdk2/thirdparty/include -I/home/linux/unitree_sdk2/thirdparty/include/ddscxx -isystem /usr/include/opencv4
+CXX_INCLUDES = -I/home/linux/unitree_sdk2/include -I/home/linux/unitree_sdk2/thirdparty/include -I/home/linux/unitree_sdk2/thirdparty/include/ddscxx -I/home/linux/rc2025/go2_runner/.. -isystem /usr/include/opencv4
 
-CXX_FLAGS = -O3 -DNDEBUG
+CXX_FLAGS = 
 
