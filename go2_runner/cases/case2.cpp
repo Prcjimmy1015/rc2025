@@ -283,7 +283,7 @@ bool case2_tick(go2::SportClient &sc,
 
         sc.ClassicWalk(true);
         sc.Move(0.25, roll_corr, s1_hdg);
-        double dpx = px - px_start, dpy = py - py_start;
+        double dpx = px - px_start, dpy = py - py_start;s
         double d2d = sqrt(dpx*dpx + dpy*dpy);
 
         if (obx_far_at == 0 && isfinite(ob_x) && ob_x > 1.5) obx_far_at = stair_cnt;
@@ -295,8 +295,8 @@ bool case2_tick(go2::SportClient &sc,
                  << " roll=" << roll << " rcorr=" << roll_corr
                  << " obx_far_at=" << obx_far_at << endl;
 
-        bool A = (d2d > 1.13);
-        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 158);
+        bool A = (d2d > 1.12);
+        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 156);
         bool C = (stair_cnt > 370);
 
         if (A || B || C){
