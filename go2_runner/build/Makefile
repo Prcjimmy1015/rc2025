@@ -333,30 +333,6 @@ cases/case3.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/cases/case3.cpp.s
 .PHONY : cases/case3.cpp.s
 
-cases/case4.o: cases/case4.cpp.o
-.PHONY : cases/case4.o
-
-# target to build an object file
-cases/case4.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/cases/case4.cpp.o
-.PHONY : cases/case4.cpp.o
-
-cases/case4.i: cases/case4.cpp.i
-.PHONY : cases/case4.i
-
-# target to preprocess a source file
-cases/case4.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/cases/case4.cpp.i
-.PHONY : cases/case4.cpp.i
-
-cases/case4.s: cases/case4.cpp.s
-.PHONY : cases/case4.s
-
-# target to generate assembly for a file
-cases/case4.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/cases/case4.cpp.s
-.PHONY : cases/case4.cpp.s
-
 globals.o: globals.cpp.o
 .PHONY : globals.o
 
@@ -510,9 +486,6 @@ help:
 	@echo "... cases/case3.o"
 	@echo "... cases/case3.i"
 	@echo "... cases/case3.s"
-	@echo "... cases/case4.o"
-	@echo "... cases/case4.i"
-	@echo "... cases/case4.s"
 	@echo "... globals.o"
 	@echo "... globals.i"
 	@echo "... globals.s"

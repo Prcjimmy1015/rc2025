@@ -15,7 +15,6 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/linux/rc2025/go2_runner/cases/case1.cpp" "CMakeFiles/rc2025_run.dir/cases/case1.cpp.o" "gcc" "CMakeFiles/rc2025_run.dir/cases/case1.cpp.o.d"
   "/home/linux/rc2025/go2_runner/cases/case2.cpp" "CMakeFiles/rc2025_run.dir/cases/case2.cpp.o" "gcc" "CMakeFiles/rc2025_run.dir/cases/case2.cpp.o.d"
   "/home/linux/rc2025/go2_runner/cases/case3.cpp" "CMakeFiles/rc2025_run.dir/cases/case3.cpp.o" "gcc" "CMakeFiles/rc2025_run.dir/cases/case3.cpp.o.d"
-  "/home/linux/rc2025/go2_runner/cases/case4.cpp" "CMakeFiles/rc2025_run.dir/cases/case4.cpp.o" "gcc" "CMakeFiles/rc2025_run.dir/cases/case4.cpp.o.d"
   "/home/linux/rc2025/go2_runner/globals.cpp" "CMakeFiles/rc2025_run.dir/globals.cpp.o" "gcc" "CMakeFiles/rc2025_run.dir/globals.cpp.o.d"
   "/home/linux/rc2025/go2_runner/line_follow.cpp" "CMakeFiles/rc2025_run.dir/line_follow.cpp.o" "gcc" "CMakeFiles/rc2025_run.dir/line_follow.cpp.o.d"
   "/home/linux/rc2025/go2_runner/main.cpp" "CMakeFiles/rc2025_run.dir/main.cpp.o" "gcc" "CMakeFiles/rc2025_run.dir/main.cpp.o.d"

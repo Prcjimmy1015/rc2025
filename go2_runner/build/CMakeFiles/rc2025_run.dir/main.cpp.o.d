@@ -874,7 +874,6 @@ CMakeFiles/rc2025_run.dir/main.cpp.o: \
  /home/linux/unitree_sdk2/include/unitree/idl/go2/IMUState_.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/go2/PathPoint_.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/go2/TimeSpec_.hpp \
- /home/linux/rc2025/go2_runner/visualizer.h \
  /home/linux/rc2025/go2_runner/aruco_server.h \
  /home/linux/rc2025/go2_runner/app_runtime.h \
  /home/linux/rc2025/go2_runner/callbacks.h \
@@ -887,6 +886,4 @@ CMakeFiles/rc2025_run.dir/main.cpp.o: \
  /home/linux/rc2025/go2_runner/cases/case0.h \
  /home/linux/rc2025/go2_runner/cases/case1.h \
  /home/linux/rc2025/go2_runner/cases/case2.h \
- /home/linux/rc2025/go2_runner/cases/case3.h \
- /home/linux/rc2025/go2_runner/cases/case4.h \
- /home/linux/rc2025/go2_runner/../arm_task/arm_bridge.h
+ /home/linux/rc2025/go2_runner/cases/case3.h
