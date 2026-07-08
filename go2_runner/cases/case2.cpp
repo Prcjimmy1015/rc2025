@@ -144,7 +144,7 @@ bool case2_tick(go2::SportClient &sc,
                          << " ob_x=" << ob_x
                          << " aruco=" << aruco_detected << endl;
 
-                if (stair_cnt > 50 || aruco_detected){
+                if (stair_cnt > 35 || aruco_detected){
                     sc.StopMove();
                     if (aruco_detected && fabs(aruco_angle) > 0.08){
                         s0_phase     = 1;
