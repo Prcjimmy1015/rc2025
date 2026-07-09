@@ -12,6 +12,8 @@
 #include <sstream>
 #include <regex>
 #include <cmath>
+#include <thread>
+#include <chrono>
 
 #include <unitree/robot/go2/sport/sport_client.hpp>
 #include <unitree/robot/go2/vui/vui_client.hpp>

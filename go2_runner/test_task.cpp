@@ -57,6 +57,7 @@ int main(int ac, char **av)
         else if (a == "--target" && i+1 < ac) target_platform = atoi(av[++i]);
         else if (a == "--Turn" && i+1 < ac) { mode = "Turn"; align_ratio = (string(av[++i])=="LEFT")?1:-1; }
         else if (a == "--Align" && i+1 < ac) { mode = "Align"; align_ratio = atof(av[++i]); }
+        else if (a == "--Observe") mode = "Observe";
         else if (a == "--Detect1") mode = "Detect1";
         else if (a == "--Detect2") mode = "Detect2";
         else { cerr << "Unknown: " << a << "\n"; return -1; }
@@ -67,8 +68,6 @@ int main(int ac, char **av)
 
     AppRuntime rt;
     if (!initAppRuntime(rt, eth)) { cerr << "Camera fail\n"; return -1; }
-    g_orig_px = px; g_orig_py = py; g_orig_yaw = yaw;
-    px0 = px; py0 = py; yaw0 = yaw;
 
     go2::SportClient &sc = rt.sc;
     go2::ObstaclesAvoidClient &avc = rt.avoid_client;
@@ -76,28 +75,36 @@ int main(int ac, char **av)
     go2::VuiClient vc;
     vc.SetTimeout(10.0f); vc.Init();
 
+    // 预热相机 pipeline
+    cv::Mat dummy; cap.read(dummy); cap.read(dummy);
+    cout << "[Test] 相机已就绪" << endl;
+
     // ============================ 执行所选测试 ============================
 
     if (task_num == 1) {
         cout << "[Test] 执行 Task 1 (marker=" << marker_id << ")\n";
-        dogTask1Execute(sc, cap, vc, marker_id, &yaw);
+        dogTask1Execute(sc, cap, vc, marker_id);
     }
     else if (task_num == 2) {
         cout << "[Test] 执行 Task 2\n";
-        dogTask2Execute(sc, cap, vc, &yaw);
+        dogTask2Execute(sc, cap, vc);
     }
     else if (task_num == 3) {
         cout << "[Test] 执行 Task 3 (target=" << target_platform << ")\n";
-        dogTask3Execute(sc, cap, vc, target_platform, &yaw);
+        dogTask3Execute(sc, cap, vc, target_platform);
     }
     else if (mode == "Turn") {
         int dir = (align_ratio >= 0) ? 1 : -1;
         cout << "[Test] 转弯 90° " << (dir>0?"LEFT":"RIGHT") << "\n";
-        dogTurn90Degrees(sc, dir, &yaw);
+        dogTurn90Degrees(sc, cap, dir);
+    }
+    else if (mode == "Observe") {
+        cout << "[Test] 观察模式 (不移动，ESC退出)\n";
+        dogAlignObserve(sc, cap);
     }
     else if (mode == "Align") {
         cout << "[Test] 比值对齐 target=" << align_ratio << "\n";
-        dogAlignToPlatform(sc, cap, align_ratio, &yaw);
+        dogAlignToPlatform(sc, cap, align_ratio);
     }
     else if (mode == "Detect1") {
         cout << "[Test] Stage 1 detect (marker=" << marker_id << ")\n";

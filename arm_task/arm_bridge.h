@@ -22,15 +22,14 @@
 static inline bool dogTask1Execute(unitree::robot::go2::SportClient &sc,
                                     cv::VideoCapture &cap,
                                     unitree::robot::go2::VuiClient &vc,
-                                    int marker_id,
-                                    const double *yaw_ptr)
+                                    int marker_id)
 {
     std::cout << "\n========================================" << std::endl;
     std::cout << "  Task 1 开始 — 抓取平台" << std::endl;
     std::cout << "========================================" << std::endl;
 
     // Step 1: 左转 90°
-    if (!dogTurn90Degrees(sc, +1, yaw_ptr))
+    if (!dogTurn90Degrees(sc, cap, +1))
     {
         std::cerr << "[Task1] 左转 90° 失败" << std::endl;
         return false;
@@ -54,7 +53,7 @@ static inline bool dogTask1Execute(unitree::robot::go2::SportClient &sc,
     }
 
     // Step 4: 机器狗比值对齐
-    if (!dogAlignToPlatform(sc, cap, ratio, yaw_ptr))
+    if (!dogAlignToPlatform(sc, cap, ratio))
     {
         std::cerr << "[Task1] 比值对齐失败" << std::endl;
     }
@@ -83,7 +82,7 @@ static inline bool dogTask1Execute(unitree::robot::go2::SportClient &sc,
     cv::destroyWindow("Arm D435");
 
     // Step 7: 右转 90° 回正
-    if (!dogTurn90Degrees(sc, -1, yaw_ptr))
+    if (!dogTurn90Degrees(sc, cap, -1))
     {
         std::cerr << "[Task1] 右转 90° 回正失败" << std::endl;
     }
@@ -97,15 +96,14 @@ static inline bool dogTask1Execute(unitree::robot::go2::SportClient &sc,
 // =============================================================================
 static inline bool dogTask2Execute(unitree::robot::go2::SportClient &sc,
                                     cv::VideoCapture &cap,
-                                    unitree::robot::go2::VuiClient &vc,
-                                    const double *yaw_ptr)
+                                    unitree::robot::go2::VuiClient &vc)
 {
     std::cout << "\n========================================" << std::endl;
     std::cout << "  Task 2 开始 — 中转平台" << std::endl;
     std::cout << "========================================" << std::endl;
 
     // Step 1: 右转 90°
-    if (!dogTurn90Degrees(sc, -1, yaw_ptr))
+    if (!dogTurn90Degrees(sc, cap, -1))
     {
         std::cerr << "[Task2] 右转 90° 失败" << std::endl;
         return false;
@@ -129,7 +127,7 @@ static inline bool dogTask2Execute(unitree::robot::go2::SportClient &sc,
     }
 
     // Step 4: 机器狗比值对齐
-    if (!dogAlignToPlatform(sc, cap, ratio, yaw_ptr))
+    if (!dogAlignToPlatform(sc, cap, ratio))
     {
         std::cerr << "[Task2] 比值对齐失败" << std::endl;
     }
@@ -145,7 +143,7 @@ static inline bool dogTask2Execute(unitree::robot::go2::SportClient &sc,
     cv::destroyWindow("Arm D435");
 
     // Step 6: 左转 90° 回正
-    if (!dogTurn90Degrees(sc, +1, yaw_ptr))
+    if (!dogTurn90Degrees(sc, cap, +1))
     {
         std::cerr << "[Task2] 左转 90° 回正失败" << std::endl;
     }
@@ -160,15 +158,14 @@ static inline bool dogTask2Execute(unitree::robot::go2::SportClient &sc,
 static inline bool dogTask3Execute(unitree::robot::go2::SportClient &sc,
                                     cv::VideoCapture &cap,
                                     unitree::robot::go2::VuiClient &vc,
-                                    int target_platform,
-                                    const double *yaw_ptr)
+                                    int target_platform)
 {
     std::cout << "\n========================================" << std::endl;
     std::cout << "  Task 3 开始 — 放置平台卸货 (平台" << target_platform << ")" << std::endl;
     std::cout << "========================================" << std::endl;
 
     // [TODO: 用户后期指定] 卸货前如果需要在放置平台前调整姿态，在此添加
-    // 例如: dogAlignToPlatform(sc, cap, ratio, yaw_ptr);
+    // 例如: dogAlignToPlatform(sc, cap, ratio);
 
     bool ok = armCallStage3(target_platform);
 
