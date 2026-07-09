@@ -1,6 +1,8 @@
 /home/linux/rc2025/go2_runner/build/CMakeFiles/uninstall.dir
 /home/linux/rc2025/go2_runner/build/CMakeFiles/rc2025_uninstall.dir
 /home/linux/rc2025/go2_runner/build/CMakeFiles/rc2025_run.dir
+/home/linux/rc2025/go2_runner/build/CMakeFiles/test_task.dir
+/home/linux/rc2025/go2_runner/build/CMakeFiles/action_test.dir
 /home/linux/rc2025/go2_runner/build/CMakeFiles/test.dir
 /home/linux/rc2025/go2_runner/build/CMakeFiles/edit_cache.dir
 /home/linux/rc2025/go2_runner/build/CMakeFiles/rebuild_cache.dir

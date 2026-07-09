@@ -12,33 +12,60 @@
 rc2025/
 ├── README.md
 ├── arm_task/
-│   ├── arm_bridge.h           # C++ 入口: dog_turn + dog_alerts + arm_utils
+│   ├── arm_bridge.h            # C++ 入口: dog_turn + dog_alerts + arm_utils
 │   ├── bridge/
-│   │   ├── params.h           # 常量 + 模型路径 + extern ob_x_f
-│   │   ├── arm_utils.h        # ONNX 推理 + dogDetectWarningMarker
-│   │   ├── dog_turn.h         # 机器狗 90° 原地转弯
-│   │   └── dog_alerts.h       # 警示动作 (stretch / wave_hello / flash_lights)
-│   ├── sign_model/            # ONNX 模型 (警告标志)
-│   │   ├── 2in1.onnx / .data  # 识别标志 (1号/2号标识)
-│   │   └── 3in1.onnx / .data  # 警示标志 (触电/强氧化物/辐射)
-│   └── _backup/               # 备份 (机械臂Python/C++/标定数据)
+│   │   ├── params.h            # 常量 + 模型路径 + extern ob_x_f
+│   │   ├── arm_utils.h         # popen → Python ONNX Runtime 推理
+│   │   ├── onnx_infer.py       # Python ONNX Runtime 推理脚本
+│   │   ├── dog_turn.h          # 机器狗 90° 原地转弯
+│   │   └── dog_alerts.h        # 警示动作 (stretch / wave_hello / flash_lights)
+│   ├── sign_model/             # ONNX 模型 (警告标志)
+│   │   ├── 2in1.onnx / .data   # 识别标志 (1号/2号标识)
+│   │   └── 3in1.onnx / .data   # 警示标志 (触电/强氧化物/辐射)
+│   └── _backup/                # 备份 (机械臂Python/C++/标定数据)
 │
-├── go2_runner/                # 机器狗导航与控制 (C++)
+├── go2_runner/                 # 机器狗导航与控制 (C++)
 │   ├── CMakeLists.txt
-│   ├── main.cpp               # 主入口: DDS初始化 → FSM 状态机
+│   ├── main.cpp                # 主入口: DDS初始化 → FSM 状态机
 │   ├── test_task.cpp           # 独立测试入口 (--Turn / --Warn)
-│   ├── app_runtime.h / .cpp   # 运行时初始化
-│   ├── params.h               # 相机内参 & 全局参数
-│   ├── globals.h / .cpp       # 全局变量
-│   ├── callbacks.h / .cpp     # DDS 回调
-│   └── cases/                 # 状态机 (case0~4)
+│   ├── action_test.cpp         # 单独动作测试 (stretch / wave / flash)
+│   ├── app_runtime.h / .cpp    # 运行时初始化
+│   ├── params.h                # 相机内参 & 全局参数
+│   ├── globals.h / .cpp        # 全局变量
+│   ├── callbacks.h / .cpp      # DDS 回调
+│   └── cases/                  # 状态机 (case0~4)
 │
-└── docs/                      # 竞赛文档
+└── docs/                       # 竞赛文档
 ```
 
 ---
 
 ## arm_task/ — 机器狗控制模块
+
+### ONNX 推理架构
+
+```
+C++ (test_task)                     Python (onnx_infer.py)
+───────────────                     ──────────────────────
+cv::imwrite → /tmp/onnx_frame_*.png  cv2.imread
+popen("python3 ...")                ort.InferenceSession
+fgets(buf) ← class_id               print(class_id)
+```
+
+> **为什么不用 OpenCV DNN?** C++ OpenCV 4.5.4 不支持 PyTorch 导出的 opset 25 ONNX 模型，
+> 改为通过 `popen` 调用 Python `onnxruntime`（已预装 onnxruntime 1.23.2）。
+
+### ONNX 模型降级 (opset 25 → 22)
+
+```bash
+pip3 install onnx onnxsim onnxruntime
+python3 -c "
+import onnx; from onnx import version_converter
+m = onnx.load('arm_task/sign_model/3in1.onnx')
+m2 = version_converter.convert_version(m, 22)
+onnx.save(m2, 'arm_task/sign_model/3in1.onnx')
+"
+```
 
 ### 可用函数 (C++)
 
@@ -48,7 +75,7 @@ rc2025/
 // 原地转弯 90° (+1=左, -1=右)
 dogTurn90Degrees(sc, cap, +1);
 
-// 识别警示标志 (0=触电, 1=强氧化物, 2=辐射)
+// 识别警示标志 (0=打招呼, 1=伸懒腰, 2=闪烁前灯)
 int wid = dogDetectWarningMarker(frame);
 
 // 执行对应警示动作
@@ -59,10 +86,19 @@ dogDoAlertAction(sc, vc, wid);
 
 | 文件 | 功能 |
 |------|------|
-| `params.h` | 常量定义、ONNX 模型路径 |
-| `arm_utils.h` | `onnxInfer` + `dogDetectWarningMarker` |
+| `params.h` | 常量定义、ONNX 模型路径 (CMake 注入 PROJECT_ROOT) |
+| `arm_utils.h` | `onnxInfer` (popen → Python) + `dogDetectWarningMarker` |
+| `onnx_infer.py` | Python ONNX Runtime 推理 (ImageNet 归一化) |
 | `dog_turn.h` | `dogTurn90Degrees` — 原地转弯 90° |
-| `dog_alerts.h` | 警示动作 (stretch / wave_hello / flash_lights) |
+| `dog_alerts.h` | 警示动作 — stretch / wave_hello / flash_lights |
+
+### 警示动作映射
+
+| class_id | ONNX 输出 | 动作 | API |
+|----------|----------|------|-----|
+| 0 | 标志 A | 打招呼 (WaveHello) | `sc.Hello()` |
+| 1 | 标志 B | 伸懒腰 (Stretch) | `sc.Stretch()` |
+| 2 | 标志 C | 闪烁前灯三次 (FlashLights) | `vc.SetBrightness()` |
 
 ---
 
@@ -80,10 +116,21 @@ dogDoAlertAction(sc, vc, wid);
 
 ---
 
-## test_task.cpp — 独立调试入口
+## 构建与运行
 
 ```bash
 cd go2_runner/build
+cmake .. && make -j$(nproc)
+
+# 主程序
+./rc2025_run eth0                  # 无 GUI
+./rc2025_run eth0 --gui            # 带 GUI 可视化窗口
+./rc2025_run eth0 --task 0         # 跳过跳跃，直接巡线（调试用）
+```
+
+### test_task — 调试入口
+
+```bash
 make test_task -j$(nproc)
 
 # 原地转弯测试
@@ -95,6 +142,18 @@ make test_task -j$(nproc)
 ```
 
 > 比赛前移除: `rm go2_runner/test_task.cpp`，并从 CMakeLists.txt 删除对应编译目标。
+
+### action_test — 单独动作测试
+
+```bash
+make action_test -j$(nproc)
+
+./action_test eth0 stretch    # 伸懒腰
+./action_test eth0 wave       # 打招呼
+./action_test eth0 flash      # 闪烁前灯
+```
+
+> 用于独立调试机器狗动作，不走 ONNX 推理。
 
 ---
 
@@ -108,15 +167,33 @@ make test_task -j$(nproc)
 |------|------|
 | Unitree SDK2 | Go2 DDS 通信、Sport 运动控制 |
 | Cyclone DDS (ddsc/ddscxx) | DDS 中间件 |
-| OpenCV 4.x | 图像处理、ONNX 推理 |
+| OpenCV 4.x | 图像处理 |
 | CMake ≥ 3.16, GCC ≥ 9 (C++17) | 编译构建 |
+
+### 软件 (Python)
+| 依赖 | 用途 |
+|------|------|
+| Python 3.10+ | ONNX Runtime 推理 |
+| onnxruntime 1.23.2 | ONNX 模型推理引擎 |
+| opencv-python | 图像预处理 |
+| numpy | 数组运算 |
+| onnx / onnxsim | 模型降级工具 |
 
 ---
 
-## 构建与运行
+## CMake 说明
 
-```bash
-cd go2_runner
-./run.sh eth0               # 无 GUI
-./run.sh eth0 --gui         # 带 GUI 可视化窗口
-./run.sh eth0 --task 0      # 跳过跳跃，直接巡线（调试用）
+### PROJECT_ROOT 宏
+
+`CMakeLists.txt` 中通过 `get_filename_component` 获取项目根目录绝对路径，
+并通过 `target_compile_definitions` 注入为 `PROJECT_ROOT` 宏，供 `params.h` 中 ONNX 模型路径使用。
+
+```cmake
+get_filename_component(PROJECT_ROOT "${CMAKE_SOURCE_DIR}/.." ABSOLUTE)
+target_compile_definitions(test_task PRIVATE PROJECT_ROOT="${PROJECT_ROOT}")
+```
+
+```cpp
+// params.h
+static const char* MODEL_3IN1_PATH   = PROJECT_ROOT "/arm_task/sign_model/3in1.onnx";
+static const char* MODEL_INFER_SCRIPT = PROJECT_ROOT "/arm_task/bridge/onnx_infer.py";

@@ -165,12 +165,64 @@ rc2025_run/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/build
 .PHONY : rc2025_run/fast
 
+#=============================================================================
+# Target rules for targets named test_task
+
+# Build rule for target.
+test_task: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_task
+.PHONY : test_task
+
+# fast build rule for target.
+test_task/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/build
+.PHONY : test_task/fast
+
+#=============================================================================
+# Target rules for targets named action_test
+
+# Build rule for target.
+action_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 action_test
+.PHONY : action_test
+
+# fast build rule for target.
+action_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/build
+.PHONY : action_test/fast
+
+action_test.o: action_test.cpp.o
+.PHONY : action_test.o
+
+# target to build an object file
+action_test.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/action_test.cpp.o
+.PHONY : action_test.cpp.o
+
+action_test.i: action_test.cpp.i
+.PHONY : action_test.i
+
+# target to preprocess a source file
+action_test.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/action_test.cpp.i
+.PHONY : action_test.cpp.i
+
+action_test.s: action_test.cpp.s
+.PHONY : action_test.s
+
+# target to generate assembly for a file
+action_test.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/action_test.cpp.s
+.PHONY : action_test.cpp.s
+
 app_runtime.o: app_runtime.cpp.o
 .PHONY : app_runtime.o
 
 # target to build an object file
 app_runtime.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/app_runtime.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/app_runtime.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/app_runtime.cpp.o
 .PHONY : app_runtime.cpp.o
 
 app_runtime.i: app_runtime.cpp.i
@@ -179,6 +231,8 @@ app_runtime.i: app_runtime.cpp.i
 # target to preprocess a source file
 app_runtime.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/app_runtime.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/app_runtime.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/app_runtime.cpp.i
 .PHONY : app_runtime.cpp.i
 
 app_runtime.s: app_runtime.cpp.s
@@ -187,6 +241,8 @@ app_runtime.s: app_runtime.cpp.s
 # target to generate assembly for a file
 app_runtime.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/app_runtime.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/app_runtime.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/app_runtime.cpp.s
 .PHONY : app_runtime.cpp.s
 
 aruco_server.o: aruco_server.cpp.o
@@ -195,6 +251,7 @@ aruco_server.o: aruco_server.cpp.o
 # target to build an object file
 aruco_server.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/aruco_server.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/aruco_server.cpp.o
 .PHONY : aruco_server.cpp.o
 
 aruco_server.i: aruco_server.cpp.i
@@ -203,6 +260,7 @@ aruco_server.i: aruco_server.cpp.i
 # target to preprocess a source file
 aruco_server.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/aruco_server.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/aruco_server.cpp.i
 .PHONY : aruco_server.cpp.i
 
 aruco_server.s: aruco_server.cpp.s
@@ -211,6 +269,7 @@ aruco_server.s: aruco_server.cpp.s
 # target to generate assembly for a file
 aruco_server.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/aruco_server.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/aruco_server.cpp.s
 .PHONY : aruco_server.cpp.s
 
 callbacks.o: callbacks.cpp.o
@@ -219,6 +278,8 @@ callbacks.o: callbacks.cpp.o
 # target to build an object file
 callbacks.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/callbacks.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/callbacks.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/callbacks.cpp.o
 .PHONY : callbacks.cpp.o
 
 callbacks.i: callbacks.cpp.i
@@ -227,6 +288,8 @@ callbacks.i: callbacks.cpp.i
 # target to preprocess a source file
 callbacks.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/callbacks.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/callbacks.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/callbacks.cpp.i
 .PHONY : callbacks.cpp.i
 
 callbacks.s: callbacks.cpp.s
@@ -235,6 +298,8 @@ callbacks.s: callbacks.cpp.s
 # target to generate assembly for a file
 callbacks.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/callbacks.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/callbacks.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/callbacks.cpp.s
 .PHONY : callbacks.cpp.s
 
 cases/case0.o: cases/case0.cpp.o
@@ -339,6 +404,8 @@ globals.o: globals.cpp.o
 # target to build an object file
 globals.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/globals.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/globals.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/globals.cpp.o
 .PHONY : globals.cpp.o
 
 globals.i: globals.cpp.i
@@ -347,6 +414,8 @@ globals.i: globals.cpp.i
 # target to preprocess a source file
 globals.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/globals.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/globals.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/globals.cpp.i
 .PHONY : globals.cpp.i
 
 globals.s: globals.cpp.s
@@ -355,6 +424,8 @@ globals.s: globals.cpp.s
 # target to generate assembly for a file
 globals.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/globals.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/globals.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/globals.cpp.s
 .PHONY : globals.cpp.s
 
 line_follow.o: line_follow.cpp.o
@@ -405,12 +476,38 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+test_task.o: test_task.cpp.o
+.PHONY : test_task.o
+
+# target to build an object file
+test_task.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/test_task.cpp.o
+.PHONY : test_task.cpp.o
+
+test_task.i: test_task.cpp.i
+.PHONY : test_task.i
+
+# target to preprocess a source file
+test_task.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/test_task.cpp.i
+.PHONY : test_task.cpp.i
+
+test_task.s: test_task.cpp.s
+.PHONY : test_task.s
+
+# target to generate assembly for a file
+test_task.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/test_task.cpp.s
+.PHONY : test_task.cpp.s
+
 utils.o: utils.cpp.o
 .PHONY : utils.o
 
 # target to build an object file
 utils.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/utils.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/utils.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/utils.cpp.o
 .PHONY : utils.cpp.o
 
 utils.i: utils.cpp.i
@@ -419,6 +516,8 @@ utils.i: utils.cpp.i
 # target to preprocess a source file
 utils.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/utils.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/utils.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/utils.cpp.i
 .PHONY : utils.cpp.i
 
 utils.s: utils.cpp.s
@@ -427,6 +526,8 @@ utils.s: utils.cpp.s
 # target to generate assembly for a file
 utils.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/utils.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/utils.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/utils.cpp.s
 .PHONY : utils.cpp.s
 
 visualizer.o: visualizer.cpp.o
@@ -464,7 +565,12 @@ help:
 	@echo "... test"
 	@echo "... rc2025_uninstall"
 	@echo "... uninstall"
+	@echo "... action_test"
 	@echo "... rc2025_run"
+	@echo "... test_task"
+	@echo "... action_test.o"
+	@echo "... action_test.i"
+	@echo "... action_test.s"
 	@echo "... app_runtime.o"
 	@echo "... app_runtime.i"
 	@echo "... app_runtime.s"
@@ -495,6 +601,9 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... test_task.o"
+	@echo "... test_task.i"
+	@echo "... test_task.s"
 	@echo "... utils.o"
 	@echo "... utils.i"
 	@echo "... utils.s"

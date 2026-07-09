@@ -69,6 +69,10 @@ target_link_libraries(rc2025_run
         pthread
 )
 
+# ─────────── 项目根目录 (rc2025/) 绝对路径，供 ONNX 模型加载 ──────────
+get_filename_component(PROJECT_ROOT "${CMAKE_SOURCE_DIR}/.." ABSOLUTE)
+message(STATUS "Project root: ${PROJECT_ROOT}")
+
 # ─────────── test_task (调试入口，比赛前移除) ──────────
 add_executable(test_task
     test_task.cpp
@@ -83,7 +87,35 @@ set_target_properties(test_task PROPERTIES
     INSTALL_RPATH "${UNITREE_SDK2_DIR}/thirdparty/lib/${UNITREE_ARCH};${UNITREE_SDK2_DIR}/lib/${UNITREE_ARCH}"
     LINK_FLAGS "-Wl,--disable-new-dtags"
 )
+target_compile_definitions(test_task PRIVATE
+    PROJECT_ROOT="${PROJECT_ROOT}"
+)
 target_link_libraries(test_task
+    PRIVATE
+        ${OpenCV_LIBS}
+        unitree_sdk2
+        ddscxx
+        ddsc
+        pthread
+)
+
+# ─────────── action_test (单独动作测试) ──────────
+add_executable(action_test
+    action_test.cpp
+    globals.cpp
+    callbacks.cpp
+    utils.cpp
+    app_runtime.cpp
+)
+target_compile_definitions(action_test PRIVATE
+    PROJECT_ROOT="${PROJECT_ROOT}"
+)
+set_target_properties(action_test PROPERTIES
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH "${UNITREE_SDK2_DIR}/thirdparty/lib/${UNITREE_ARCH};${UNITREE_SDK2_DIR}/lib/${UNITREE_ARCH}"
+    LINK_FLAGS "-Wl,--disable-new-dtags"
+)
+target_link_libraries(action_test
     PRIVATE
         ${OpenCV_LIBS}
         unitree_sdk2

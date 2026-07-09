@@ -5,9 +5,6 @@
 #include "params.h"
 using namespace unitree::robot;
 
-static constexpr float  kTurn90W        = 1.2f;   // 旋转角速度 (rad/s)
-static constexpr int    kTurn90Frames   = 25;      // 90° 所需帧数
-
 static inline bool dogTurn90Degrees(unitree::robot::go2::SportClient &sc,
                                      cv::VideoCapture &cap,
                                      int direction)

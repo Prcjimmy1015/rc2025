@@ -27,6 +27,7 @@ static inline void dogActionFlashLights(unitree::robot::go2::VuiClient &vc)
         usleep(400000);
         vc.SetBrightness(0);
         usleep(400000);
+        std::cout << '[' << i << ']' << std::endl;
     }
     vc.SetBrightness(0);
 }
@@ -37,9 +38,9 @@ static inline void dogDoAlertAction(unitree::robot::go2::SportClient &sc,
 {
     switch (warning_id)
     {
-    case 0: dogActionStretch(sc);      break;
-    case 1: dogActionWaveHello(sc);    break;
-    case 2: dogActionFlashLights(vc);  break;
+    case 0: dogActionWaveHello(sc);    break;  // 打招呼
+    case 1: dogActionStretch(sc);      break;  // 伸懒腰
+    case 2: dogActionFlashLights(vc);  break;  // 闪烁前灯
     default: std::cerr << "[DogAction] 未知警示标志ID: " << warning_id << std::endl; break;
     }
 }
