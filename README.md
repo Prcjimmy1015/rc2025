@@ -11,6 +11,9 @@
 ```
 rc2025/
 ├── README.md
+├── sport_test_project/
+│   └── sport_test.cpp          # 宇树官方示例 (Hello/Stretch/闪灯)
+│
 ├── arm_task/
 │   ├── arm_bridge.h            # C++ 入口: dog_turn + dog_alerts + arm_utils
 │   ├── bridge/
@@ -29,10 +32,10 @@ rc2025/
 │   ├── main.cpp                # 主入口: DDS初始化 → FSM 状态机
 │   ├── test_task.cpp           # 独立测试入口 (--Turn / --Warn)
 │   ├── action_test.cpp         # 单独动作测试 (stretch / wave / flash)
-│   ├── app_runtime.h / .cpp    # 运行时初始化
+│   ├── app_runtime.h / .cpp    # 运行时初始化 (DDS订阅 + 摄像头)
 │   ├── params.h                # 相机内参 & 全局参数
 │   ├── globals.h / .cpp        # 全局变量
-│   ├── callbacks.h / .cpp      # DDS 回调
+│   ├── callbacks.h / .cpp      # DDS 回调 (rangeCB + stateCB)
 │   └── cases/                  # 状态机 (case0~4)
 │
 └── docs/                       # 竞赛文档
@@ -94,11 +97,11 @@ dogDoAlertAction(sc, vc, wid);
 
 ### 警示动作映射
 
-| class_id | ONNX 输出 | 动作 | API |
-|----------|----------|------|-----|
-| 0 | 标志 A | 打招呼 (WaveHello) | `sc.Hello()` |
-| 1 | 标志 B | 伸懒腰 (Stretch) | `sc.Stretch()` |
-| 2 | 标志 C | 闪烁前灯三次 (FlashLights) | `vc.SetBrightness()` |
+| class_id | 动作 | API |
+|----------|------|-----|
+| 0 | 打招呼 (WaveHello) | `sc.Hello()` |
+| 1 | 伸懒腰 (Stretch) | `sc.Stretch()` |
+| 2 | 闪烁前灯 (FlashLights) | `vc.SetBrightness()` |
 
 ---
 
@@ -113,6 +116,26 @@ dogDoAlertAction(sc, vc, wid);
 | Case 2 | ArUco 检测 + 左转 |
 | Case 3 | 过台阶 + 终点前跳 |
 | Case 4 | 任务完成 |
+
+### test_task.cpp — 调试入口
+
+Warn 模式使用**干净环境**（无 DDS 订阅、无摄像头），仅保留 Sport + Vui + 临时摄像头：
+
+```cpp
+// 临时打开摄像头 → 拍摄一帧 → 立即释放
+cv::VideoCapture cap;
+cap.open(gst, cv::CAP_GSTREAMER);
+cv::Mat frame; cap.read(frame);
+cap.release();  // 释放后 DDS 通道空闲，确保 SetBrightness 可靠
+
+dogDoAlertAction(sc, vc, dogDetectWarningMarker(frame));
+```
+
+> 这与 `sport_test_project/sport_test.cpp` 的环境相同，确保闪烁可靠。
+
+### 已知问题
+
+- [ ] **ONNX 推理恒返回 class 1**：摄像头捕获帧可能无效（黑屏/固定噪声），需增加帧保存调试 (`cv::imwrite`)
 
 ---
 
@@ -141,7 +164,7 @@ make test_task -j$(nproc)
 ./test_task eth0 --Warn --gui
 ```
 
-> 比赛前移除: `rm go2_runner/test_task.cpp`，并从 CMakeLists.txt 删除对应编译目标。
+> 比赛前移除: 删除 `go2_runner/test_task.cpp`，并从 CMakeLists.txt 移除对应目标。
 
 ### action_test — 单独动作测试
 

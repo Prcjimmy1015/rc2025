@@ -21,13 +21,13 @@ static inline void dogActionWaveHello(unitree::robot::go2::SportClient &sc)
 static inline void dogActionFlashLights(unitree::robot::go2::VuiClient &vc)
 {
     std::cout << "[DogAction] 执行: 闪烁前灯三次 (flash_lights)" << std::endl;
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 4; i++)
     {
-        vc.SetBrightness(10);
-        usleep(400000);
-        vc.SetBrightness(0);
-        usleep(400000);
         std::cout << '[' << i << ']' << std::endl;
+        vc.SetBrightness(10);
+        usleep(500000);
+        vc.SetBrightness(0);
+        usleep(500000);
     }
     vc.SetBrightness(0);
 }
