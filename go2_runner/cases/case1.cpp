@@ -42,8 +42,8 @@ bool case1_tick(go2::SportClient &sc,
     double right_dist = ob_z_f;
 
     // 墙壁检测：原始值 < 0.6m → 触发转弯
-    bool front_wall_raw = (ob_x > 0.01 && ob_x <= 0.6);
-    bool front_too_close_raw = (ob_x <= 0.01 && front_dist < 0.6);
+    bool front_wall_raw = (ob_x > 0.01 && ob_x <= 0.57);
+    bool front_too_close_raw = (ob_x <= 0.01 && front_dist < 0.57);
     bool wall_detected = front_wall_raw || front_too_close_raw;
     bool wall_detected_straight = wall_detected;
 
