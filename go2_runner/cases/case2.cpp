@@ -72,9 +72,9 @@ bool case2_tick(go2::SportClient &sc,
     // ====== Aruco 方向修正 (分档增益) ======
     double yaw_corr = 0;
     if (aruco_detected && fabs(aruco_angle) > 0.05){
-        double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.30 : 0.15;
+        double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.20 : 0.08;
         yaw_corr = -k_yaw * aruco_angle;
-        yaw_corr = max(-0.40, min(0.40, yaw_corr));
+        yaw_corr = max(-0.35, min(0.35, yaw_corr));
     }
 
     // ====== IMU 航向锁定 (ArUco 丢失时兜底) ======
@@ -82,8 +82,8 @@ bool case2_tick(go2::SportClient &sc,
     double imu_yaw_err = yaw - s1_start_yaw;
     if (imu_yaw_err >  M_PI) imu_yaw_err -= 2.0 * M_PI;
     if (imu_yaw_err < -M_PI) imu_yaw_err += 2.0 * M_PI;
-    double imu_corr = -0.60 * imu_yaw_err;
-    imu_corr = max(-0.60, min(0.60, imu_corr));
+    double imu_corr = -0.45 * imu_yaw_err;
+    imu_corr = max(-0.50, min(0.50, imu_corr));
 
     double heading_corr = aruco_detected ? yaw_corr : imu_corr;
 
@@ -144,7 +144,7 @@ bool case2_tick(go2::SportClient &sc,
                          << " ob_x=" << ob_x
                          << " aruco=" << aruco_detected << endl;
 
-                if (stair_cnt > 35 || aruco_detected){
+                if (stair_cnt > 50 || aruco_detected){
                     sc.StopMove();
                     if (aruco_detected && fabs(aruco_angle) > 0.08){
                         s0_phase     = 1;
@@ -274,8 +274,6 @@ bool case2_tick(go2::SportClient &sc,
                 cout << "[S1] YAW RELOCK: " << s1_start_yaw << endl;
             }
         }
-        // 机械臂负重偏载, 爬台阶方向修正增益×1.9
-        s1_hdg = max(-0.85, min(0.85, s1_hdg * 1.9));
         // 左脚打滑检测: roll 变负(左倾) → 右移压回去
         double roll_corr = 0;
         if (s1_settle > 6 && fabs(roll) > 0.10){
@@ -283,10 +281,8 @@ bool case2_tick(go2::SportClient &sc,
             roll_corr = max(-0.18, min(0.18, roll_corr));
         }
 
-        // 机械臂偏载, 爬台阶vy偏置修正
-        double vy_arm = 0.04;
         sc.ClassicWalk(true);
-        sc.Move(0.25, vy_arm + roll_corr, s1_hdg);
+        sc.Move(0.15, roll_corr, s1_hdg);
         double dpx = px - px_start, dpy = py - py_start;
         double d2d = sqrt(dpx*dpx + dpy*dpy);
 
@@ -299,8 +295,8 @@ bool case2_tick(go2::SportClient &sc,
                  << " roll=" << roll << " rcorr=" << roll_corr
                  << " obx_far_at=" << obx_far_at << endl;
 
-        bool A = (d2d > 1.12);
-        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 157);
+        bool A = (d2d > 1.16);
+        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 165);
         bool C = (stair_cnt > 370);
 
         if (A || B || C){

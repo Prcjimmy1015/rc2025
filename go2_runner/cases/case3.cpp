@@ -19,7 +19,7 @@ struct Checkpoint {
 // T1/T2/T4 已去掉, T3=踏步, T5=跳跃, A2=回原点
 static Checkpoint cps[] = {
     {-1.11, 3.88,  0,  1, false, "T3"},
-    {-0.81, 0.98,  0,  2, false, "T5"},
+    {-1.19, 1.35,  0,  2, false, "T5"},
     {g_orig_px, g_orig_py, 0,  3, false, "A2"},
 };
 static const int N_CPS = sizeof(cps)/sizeof(cps[0]);
@@ -136,12 +136,11 @@ int case3_tick(go2::SportClient &sc,
             in_cp=false; cps[cp_idx].done=true; cp_idx++;
             printf("[CP] %s ARRIVED → FINISH\n",cps[cp_idx-1].name);
         }else if(cps[cp_idx].type==2){
-            // T5 跳跃: 前30帧等待跳跃完成
+            // T5 跳跃: 第1帧发命令, 之后不覆盖跳跃动作
             if(cp_timer==1){
                 sc.StopMove();
                 sc.FrontJump();
             }
-            sc.Move(0,0,0);
             if(cp_timer%10==0)printf("[CP] %s JUMP WAIT %d/30\n",cps[cp_idx].name,cp_timer);
             if(cp_timer>=30){
                 in_cp=false; cps[cp_idx].done=true; cp_idx++;
@@ -217,7 +216,7 @@ int case3_tick(go2::SportClient &sc,
     }else if(ok){
         double tg=e/1280.0*60.0*M_PI/180.0;
         double s=-tg*6.0;s=max(-1.0,min(1.0,s));
-        double vx=(abs(e)>300)?0.08:0.12;
+        double vx=(abs(e)>300)?0.17:0.2;
         double vy=e*0.0006;vy=max(-0.15,min(0.15,vy));
         sc.Move(vx,vy,s);
     }else{
