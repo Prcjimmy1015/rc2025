@@ -16,12 +16,9 @@ struct Checkpoint {
     const char* name;
 };
 
-// 四组实测平均值, yaw 不参与触发 (里程计漂移太大)
+// T1/T2/T4 已去掉, T3=踏步, T5=跳跃, A2=回原点
 static Checkpoint cps[] = {
-    {0.20,  1.16,  0,  1, false, "T1"},
-    {1.66,  3.83,  0,  1, false, "T2"},
-    {-0.88, 3.60,  0,  1, false, "T3"},
-    {-0.97, 1.91,  0,  1, false, "T4"},
+    {-1.11, 3.88,  0,  1, false, "T3"},
     {-0.81, 0.98,  0,  2, false, "T5"},
     {g_orig_px, g_orig_py, 0,  3, false, "A2"},
 };
@@ -38,7 +35,7 @@ static int burst_cooldown=0;
 static int cp_idx=0;
 static bool in_cp=false;
 static int cp_timer=0;
-static bool has_red = false;  // latch: 在 T2 之后看到红点就保持
+static bool has_red = false;  // latch: 看到红点就保持
 
 void case3_reset(){
     settled=false; n_st=0; cnt=0; last_pc=640;
@@ -100,8 +97,8 @@ int case3_tick(go2::SportClient &sc,
     if(ok)e=pc-640;
     if(ok&&ci>5000&&pk>80)last_pc=pc;
 
-    // 红点检测: 只在 T2 完成后 (cp_idx>=2) 才开门, 防止远处误检
-    if(!has_red && cp_idx>=2){
+    // 红点检测: 全程开启 latch
+    if(!has_red){
         Mat hsv, mask1, mask2;
         cvtColor(undist, hsv, COLOR_BGR2HSV);
         inRange(hsv, Scalar(0, 100, 100), Scalar(10, 255, 255), mask1);
@@ -123,13 +120,8 @@ int case3_tick(go2::SportClient &sc,
             double dx=lx-cps[cp_idx].lx, dy=ly-cps[cp_idx].ly;
             dist=sqrt(dx*dx+dy*dy);
         }
-        // 触发: T3 需要红点, 其余纯距离 <0.30
-        bool trigger = false;
-        if(strcmp(cps[cp_idx].name, "T3") == 0){
-            trigger = (dist < 0.30 && has_red);
-        }else{
-            trigger = (dist < 0.30);
-        }
+        // 纯距离 <0.35
+        bool trigger = (dist < 0.35);
         if(trigger){
             in_cp=true; cp_timer=0;
             sc.StopMove();
@@ -144,10 +136,17 @@ int case3_tick(go2::SportClient &sc,
             in_cp=false; cps[cp_idx].done=true; cp_idx++;
             printf("[CP] %s ARRIVED → FINISH\n",cps[cp_idx-1].name);
         }else if(cps[cp_idx].type==2){
-            sc.StopMove();
-            sc.FrontJump();
-            in_cp=false; cps[cp_idx].done=true; cp_idx++;
-            printf("[CP] %s JUMP\n",cps[cp_idx-1].name);
+            // T5 跳跃: 前30帧等待跳跃完成
+            if(cp_timer==1){
+                sc.StopMove();
+                sc.FrontJump();
+            }
+            sc.Move(0,0,0);
+            if(cp_timer%10==0)printf("[CP] %s JUMP WAIT %d/30\n",cps[cp_idx].name,cp_timer);
+            if(cp_timer>=30){
+                in_cp=false; cps[cp_idx].done=true; cp_idx++;
+                printf("[CP] %s JUMP DONE\n",cps[cp_idx-1].name);
+            }
         }else{
             sc.Move(0,0,0);
             if(cp_timer%15==0)printf("[CP] %s PAUSE %d/90\n",

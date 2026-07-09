@@ -27,11 +27,10 @@ static constexpr float kClearVyAbsMax = 0.38f;
 static constexpr float kClearVxRetreatMax = 0.28f;
 
 // --- 巡线 (case0) ---
-static constexpr double kPreJumpForward_m = 0.2;       // 跳跃前直行距离
+static constexpr double kPreJumpForward_m = 0.25;       // 跳跃前直行距离
 static constexpr double kLineJumpTrigger_m = 0.6;       // 线条跳变检测所需最小 lx
 static constexpr double kLineJumpThreshold = 130.0;     // 线条跳变像素阈值
-static constexpr double kLineObstacleTrigger_m = 0.5;  // 雷达触发避障所需 lx
-static constexpr double kLineObstacleFront_m = 1.65;     // 前方障碍触发避障距离
+static constexpr double kLineObstacleTrigger_m = 0.45;  // 雷达触发避障所需 lx
 static constexpr double kLinePID_Kp = 0.12;
 static constexpr double kLinePID_Ki = 0.002;
 static constexpr double kLinePID_Kd = 0.01;
