@@ -42,8 +42,8 @@ bool case1_tick(go2::SportClient &sc,
     double right_dist = ob_z_f;
 
     // 墙壁检测：原始值 < 0.6m → 触发转弯
-    bool front_wall_raw = (ob_x > 0.01 && ob_x <= 0.57);
-    bool front_too_close_raw = (ob_x <= 0.01 && front_dist < 0.57);
+    bool front_wall_raw = (ob_x > 0.01 && ob_x <= 0.55);
+    bool front_too_close_raw = (ob_x <= 0.01 && front_dist < 0.55);
     bool wall_detected = front_wall_raw || front_too_close_raw;
     bool wall_detected_straight = wall_detected;
 
@@ -149,7 +149,7 @@ bool case1_tick(go2::SportClient &sc,
             cout << "[OB] ✅ Phase " << prev << " DONE: Left turn 90° (yaw diff=" << yaw_diff*180/M_PI << "deg)" << endl;
         } else {
             float vx_turn = min(0.15f, vx_final);
-            sc.Move(vx_turn, vy_final, 0.8f);  // 左转弧线
+            sc.Move(vx_turn, vy_final, 0.77f);  // 左转弧线
         }
     }
     // ----- Phase 5/7: 向右弧线转 90° -----
@@ -165,12 +165,15 @@ bool case1_tick(go2::SportClient &sc,
             cout << "[OB] ✅ Phase " << prev << " DONE: Right turn 90° (yaw diff=" << yaw_diff*180/M_PI << "deg)" << endl;
         } else {
             float vx_turn = min(0.15f, vx_final);
-            sc.Move(vx_turn, vy_final, -0.8f);  // 右转弧线
+            sc.Move(vx_turn, vy_final, -0.77f);  // 右转弧线
         }
     }
     // ----- Phase 2/4/6/8/10: 直行 -----
     else if (phase == 2 || phase == 4 || phase == 6 || phase == 8 || phase == 10) {
-        if (wall_detected_straight) {
+        static int phase10_cnt = 0;
+        if(phase == 10) phase10_cnt++; else phase10_cnt = 0;
+        bool phase10_fallback = (phase == 10 && phase10_cnt > 150);
+        if (wall_detected_straight || phase10_fallback) {
             if (phase == 10) {
                 // Phase 10 → 完成 S 型序列，回到巡线
                 phase = 0;
