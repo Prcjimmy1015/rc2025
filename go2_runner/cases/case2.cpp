@@ -91,7 +91,6 @@ bool case2_tick(go2::SportClient &sc,
     static double px_start     = 0;
     static double py_start     = 0;
     static double peak_pitch   = 0;
-    static int    obx_far_at   = 0;
     static int    settle_cnt   = 0;
     static int    prev_step    = -1;
 
@@ -102,7 +101,6 @@ bool case2_tick(go2::SportClient &sc,
         px_start    = px;
         py_start    = py;
         peak_pitch  = 0;
-        obx_far_at  = 0;
         settle_cnt  = 0;
         prev_step   = stair_step;
         if (stair_step == 1){
@@ -286,23 +284,18 @@ bool case2_tick(go2::SportClient &sc,
         double dpx = px - px_start, dpy = py - py_start;
         double d2d = sqrt(dpx*dpx + dpy*dpy);
 
-        if (obx_far_at == 0 && isfinite(ob_x) && ob_x > 1.5) obx_far_at = stair_cnt;
-
         if (stair_cnt % 10 == 0)
             cout << "[S1] cnt=" << stair_cnt
                  << " d2d=" << d2d
                  << " ob_x=" << ob_x
-                 << " roll=" << roll << " rcorr=" << roll_corr
-                 << " obx_far_at=" << obx_far_at << endl;
+                 << " roll=" << roll << " rcorr=" << roll_corr << endl;
 
-        bool A = (d2d > 1.16);
-        bool B = (obx_far_at > 0 && stair_cnt > obx_far_at + 165);
+        bool A = (d2d > 1.13);
         bool C = (stair_cnt > 370);
 
-        if (A || B || C){
-            cout << "[S1→2] A=" << A << " B=" << B << " C=" << C
+        if (A || C){
+            cout << "[S1→2] A=" << A << " C=" << C
                  << " d2d=" << d2d
-                 << " obx_far_at=" << obx_far_at
                  << " cnt=" << stair_cnt
                  << " → BACKUP" << endl;
             stair_cnt = 0;
