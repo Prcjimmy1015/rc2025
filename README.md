@@ -1,6 +1,6 @@
-# RC2025 — 睿抗机器人开发者大赛 · 多模态巡检
+# RC2026 — 睿抗机器人开发者大赛 · 多模态巡检
 
-本项目为 **2025 睿抗机器人开发者大赛（RC2025）** 参赛代码，基于宇树（Unitree）Go2 四足机器人与 D1 七关节机械臂，实现**多模态自主巡检与抓取**任务。
+本项目为 **2026 睿抗机器人开发者大赛（RC2026）** 参赛代码，基于宇树（Unitree）Go2 四足机器人与 D1 七关节机械臂，实现**多模态自主巡检与抓取**任务。
 
 > 远程仓库: [https://github.com/Prcjimmy1015/rc2025](https://github.com/Prcjimmy1015/rc2025)
 
@@ -24,10 +24,17 @@ rc2025/
 ├── .gitignore                     # Git 忽略规则
 │
 ├── arm_task/                      # ★ 机械臂任务模块（统一目录）
-│   ├── task_planner.py            # 唯一入口：3个阶段函数接口
-│   ├── arm_bridge.h               # C++ ↔ Python 桥接头文件
+│   ├── task_planner.py            # 唯一入口：3个阶段函数 + detect/full 双模式 CLI
+│   ├── arm_bridge.h               # ★ 任务编排入口：Task 1/2/3 全流程编排函数
 │   ├── __init__.py
-│   ├── move_state.json            # 增量移动状态
+│   │
+│   ├── bridge/                    # ★ C++ 桥接子模块（从 arm_bridge.h 拆分）
+│   │   ├── params.h               #   共用常量、模型路径、控制参数
+│   │   ├── arm_utils.h            #   popen 辅助、stdout 解析、ONNX 推理、视觉识别
+│   │   ├── arm_calls.h            #   机械臂 Python 脚本桥接（Stage 1/2/3 + detect）
+│   │   ├── dog_turn.h             #   机器狗 90° 协调弧线转弯
+│   │   ├── dog_align.h            #   机器狗三自由度比值对齐（小步伐控制）
+│   │   └── dog_alerts.h           #   机器狗警示动作
 │   │
 │   ├── core/                      # 核心控制逻辑
 │   │   ├── config.py              # 集中配置（姿态/DH/抓手/偏移/类别映射）
@@ -38,6 +45,7 @@ rc2025/
 │   │   ├── camera.py              # D435 相机驱动
 │   │   ├── detector.py            # YOLO 几何体检测
 │   │   ├── calibration.py         # 像素→世界坐标转换
+│   │   ├── platform.py            # ★ 平台边缘检测 + 垂足比值计算 + 标注绘制
 │   │   └── model/best.onnx        # YOLO 几何体识别模型
 │   │
 │   ├── sign_model/                # 识别标志模型（C++ ONNX 推理）
@@ -48,14 +56,15 @@ rc2025/
 │   │   ├── d1_enable、d1_move_multiple 等
 │   │   └── d1_description.urdf / .csv
 │   │
-│   ├── d1_sdk/                    # D1 机械臂 C++ 源码
-│   │   ├── CMakeLists.txt
-│   │   └── src/ + msg/
-│   │
-│   └── tools/                     # 标定/验证工具
-│       ├── calibrate_affine.py    # 像素→世界坐标标定
-│       ├── move_incremental.py    # 增量移动标定
-│       └── verify_ik.py           # IK 纯数学验证
+│   └── _backup/                   # 备份（标定数据、SDK 源码、工具脚本）
+│       ├── d1_sdk/                # D1 机械臂 C++ SDK 源码
+│       ├── tools/                 # 标定/验证工具
+│       ├── dh_calib_data.json     # 原始标定采集数据
+│       ├── dh_offset_optimized.json
+│       ├── dh_optimized.json
+│       ├── tool_calib_data.json
+│       ├── tool_correction_optimized.json
+│       └── move_state.json
 │
 ├── go2_runner/                    # 机器狗导航与控制 (C++)
 │   ├── CMakeLists.txt
@@ -65,67 +74,122 @@ rc2025/
 │   ├── cases/case0~4.cpp          # 5个阶段的状态机逻辑
 │   └── ...
 │
-├── docs/                          # 竞赛文档与技术资料
-│   ├── 1-2026睿抗机器人开发者大赛-多模态巡检.pdf
-│   ├── calibration_guide.md       # 机械臂标定流程文档
-│   ├── TODO.md                    # 待办事项清单
-│   └── VMware-Ubuntu22.04-双网卡配置指南-2.0.md
-│
-└── build/                         # go2_runner 编译目录（被 gitignore）
+└── docs/                          # 竞赛文档与技术资料
+    ├── 1-2026睿抗机器人开发者大赛-多模态巡检.pdf
+    ├── calibration_guide.md       # 机械臂标定流程文档
+    ├── TODO.md                    # 待办事项清单
+    └── VMware-Ubuntu22.04-双网卡配置指南-2.0.md
 ```
 
 ---
 
 ## 模块一：机械臂任务模块（arm_task）
 
-整个机械臂相关代码（Python 控制、C++ SDK、ONNX 模型、标定工具、桥接头文件）全部集中在 `arm_task/` 下。
-
 ### 入口文件
 
 | 文件 | 说明 |
 |------|------|
-| `task_planner.py` | ★ 唯一入口，暴露 3 个阶段函数 + CLI 接口 |
-| `arm_bridge.h` | C++ 桥接头文件，供 `go2_runner` include |
+| `task_planner.py` | ★ 唯一入口，暴露 3 个阶段函数 + CLI（支持 `--mode detect` 仅检测模式） |
+| `arm_bridge.h` | ★ C++ 任务编排入口，暴露 `dogTask1Execute` / `dogTask2Execute` / `dogTask3Execute` |
 
-### 3个阶段函数接口
+### 3 个任务编排函数（C++ 端调用）
+
+```cpp
+#include "arm_task/arm_bridge.h"
+
+// Task 1: 抓取平台装货
+// 左转90 → 检测比值 → 显示D435标注 → 比值对齐 → 识别标志 → [抓取] → 右转回正
+dogTask1Execute(sc, cap, vc, marker_id, &yaw);
+
+// Task 2: 中转平台卸货+装货
+// 右转90 → 检测比值 → 显示D435标注 → 比值对齐 → [中转] → 左转回正
+dogTask2Execute(sc, cap, vc, &yaw);
+
+// Task 3: 放置平台卸货
+// [卸货前姿态调整] → armCallStage3
+dogTask3Execute(sc, cap, vc, target_platform, &yaw);
+```
+
+### 3 个阶段函数接口（Python 端）
 
 ```python
-from arm_task import stage1_pickup, stage2_transit, stage3_place
+from arm_task import stage1_detect, stage2_detect, stage3_place
 
-stage1_pickup(ctrl, vision, marker_id)   -> int    # 抓取平台装货
+# detect 模式：仅检测 + 比值计算（不抓取）
+stage1_detect(ctrl, vision, marker_id)    -> dict   # {ratio, class_id, world_x, world_z, depth_mm}
+stage2_detect(ctrl, vision)               -> dict   # 同上
+
+# full 模式：完整抓取流程
+stage1_pickup(ctrl, vision, marker_id)    -> int    # 抓取平台装货
 stage2_transit(ctrl, vision)              -> bool   # 中转平台卸货+装货
 stage3_place(ctrl, target_platform)       -> bool   # 放置平台卸货
 ```
 
-CLI 调用方式（与 `arm_bridge.h` 兼容）:
+CLI 调用方式:
 
 ```bash
+# detect 模式（仅检测 + 比值计算）
+sudo python3 arm_task/task_planner.py --stage 1 --mode detect --marker 1
+sudo python3 arm_task/task_planner.py --stage 2 --mode detect
+
+# full 模式（完整抓取流程）
 sudo python3 arm_task/task_planner.py --stage 1 --marker 1
 sudo python3 arm_task/task_planner.py --stage 2
 sudo python3 arm_task/task_planner.py --stage 3 --target 1
 ```
 
-### 阶段动作序列
+### 任务动作序列
 
-**阶段1 — 抓取平台装货**：
+**Task 1 — 抓取平台装货**：
 ```
-go_navigation → go_photo → detect → cartesian_approach → grasp_by_type → go_lift → go_carry_navigation
-```
-
-**阶段2 — 中转平台卸货 + 装货**（基于场地物资坐标的笛卡尔相对运动）：
-```
-1. go_photo → detect                     侦察场地物资坐标
-2. blinx_movel                            笛卡尔运动到物资正上方（抓手闭合载货）
-3. blinx_movel → 下降 → gripper_open      平移+下降后卸下起始物资
-4. blinx_movel                            上升+平移回物资正上方
-5. grasp_by_type                          下降 + 抓取场地物资
-6. go_lift → go_carry_navigation          抬升 + 载货行走
+1. 左转 90°（正对平台）
+2. D435 拍照检测几何体 + 平台边缘 → 垂足比值
+3. 显示 D435 标注图像
+4. 机器狗比值对齐（三自由度：w旋转 + vy平移 + vx距离）
+5. 机器狗前视摄像头识别平台标志（1号/2号）
+6. [TODO] 机械臂抓取动作
+7. 右转 90° 回正
 ```
 
-**阶段3 — 放置平台卸货**：
+**Task 2 — 中转平台卸货 + 装货**：
 ```
-go_place_platform → gripper_open → go_lift → go_navigation
+1. 右转 90°（正对中转平台）
+2. D435 拍照检测场地物资 + 平台边缘 → 垂足比值
+3. 显示 D435 标注图像
+4. 机器狗比值对齐（三自由度控制）
+5. [TODO] 中转平台卸货+抓取
+6. 左转 90° 回正
 ```
+
+**Task 3 — 放置平台卸货**：
+```
+1. [TODO] 卸货前姿态调整
+2. 机械臂执行放置平台卸货（go_place_platform → gripper_open → go_lift）
+```
+
+### 比值对齐机制
+
+D435 俯拍平台 → 检测几何体中心 → 向平台边缘做垂线 → 垂足比值（0.0~1.0）。
+机器狗转 90° 后使用前视摄像头观察平台侧面，通过三自由度小步伐控制使视觉中心比值趋近目标比值：
+
+| 自由度 | 传感器 | 控制目标 |
+|--------|--------|---------|
+| w (旋转) | 前视相机比值误差 | ratio_err → 0 |
+| vy (左右平移) | 同上 | 加速比值收敛 |
+| vx (前后) | 雷达 `ob_x_f` | 保持距平台 0.5m |
+
+控制精度 ±0.03，连续 5 帧稳定确认。
+
+### bridge/ — C++ 桥接子模块
+
+| 文件 | 职责 |
+|------|------|
+| `params.h` | 常量定义、模型路径、`extern ob_x_f` 声明 |
+| `arm_utils.h` | `popenRead`、`parseRatioFromOutput`、`parseGeometryFromOutput`、`onnxInfer`、`dogDetectPlatformMarker`、`dogDetectWarningMarker` |
+| `arm_calls.h` | `armCallStage1/2/3` + `armStage1Detect` / `armStage2Detect` |
+| `dog_turn.h` | `dogTurn90Degrees` — 协调弧线转弯 90° |
+| `dog_align.h` | `dogAlignToPlatform` — 三自由度比值对齐 |
+| `dog_alerts.h` | 警示动作（stretch / wave_hello / flash_lights） |
 
 ### core/ — 核心控制逻辑
 
@@ -151,9 +215,10 @@ go_place_platform → gripper_open → go_lift → go_navigation
 
 | 文件 | 功能 |
 |------|------|
-| `camera.py` | D435 相机驱动（内联 Camera 类，零外部 Python 依赖） |
+| `camera.py` | D435 相机驱动 |
 | `detector.py` | YOLO ONNX 几何体检测（4类：球/正方体/正三棱锥/直圆柱体） |
-| `calibration.py` | 像素→世界坐标仿射变换（自动加载 calib_matrix.json） |
+| `calibration.py` | 像素→世界坐标仿射变换 |
+| `platform.py` | **平台边缘检测**（深度跳变）+ **垂足比值计算** + 标注绘制 |
 
 ### sign_model/ — 标志识别模型
 
@@ -164,68 +229,6 @@ C++ 端通过 OpenCV DNN 加载 ONNX 模型推理（Python 端不参与）：
 | `2in1.onnx` + `.data` | 识别标志（1号/2号标识） |
 | `3in1.onnx` + `.data` | 警示标志（触电/强氧化物/辐射） |
 
-### C++ 端集成示例
-
-```cpp
-#include "arm_task/arm_bridge.h"
-
-static int g_marker_id = -1;
-
-// 阶段1: C++ 摄像头识别标志 → Python 机械臂抓取
-g_marker_id = dogDetectPlatformMarker(frame);
-armCallStage1(g_marker_id);
-
-// 阶段2: 中转平台卸货+装货
-armCallStage2();
-
-// 检测点: C++ 摄像头识别警示标志 → C++ 执行机器狗动作
-int wid = dogDetectWarningMarker(frame);
-dogDoAlertAction(sc, vc, wid);
-
-// 阶段3: 放置平台卸货
-armCallStage3(g_marker_id);
-```
-
-### tools/ — 标定/验证工具
-
-| 文件 | 功能 |
-|------|------|
-| `calibrate_affine.py` | 像素→世界坐标标定 |
-| `calibrate_dh.py` | DH 参数离线标定（Nelder-Mead 优化 offset） |
-| `calibrate_tool.py` | TOOL_CORRECTION 离线标定（夹爪指向测量） |
-| `move_incremental.py` | 增量移动标定（两步修正：位置IK + 姿态微调） |
-| `verify_ik.py` | IK 纯数学验证 |
-
-### DH 参数标定数据
-
-| 文件 | 功能 |
-|------|------|
-| `dh_calib_data.json` | 手动采集的标定数据（关节角度 + 实测 XYZ 坐标） |
-| `dh_offset_optimized.json` | Nelder-Mead 优化后的 offset 角度 |
-| `dh_optimized.json` | 优化后的完整 DH 参数（供参考） |
-
-**标定流程**：
-
-```bash
-# 1. 手动移动机械臂到不同姿态，记录关节角 + 实测坐标
-python3 arm_task/tools/calibrate_dh.py --list
-
-# 2. 运行优化（固定连杆长度，仅优化 offset 角度）
-python3 arm_task/tools/calibrate_dh.py --solve
-
-# 3. 将优化结果手动写入 arm_task/core/config.py
-```
-
-**当前标定结果**（基于 5 组实测数据）：
-
-| 关节 | 功能 | offset 优化前 | offset 优化后 |
-|------|------|:-----------:|:-----------:|
-| Joint 0 | 基座旋转 | 0° | 0° |
-| Joint 1 | 大臂俯仰 | 90° | **95°** |
-| Joint 2 | 小臂俯仰 | -90° | **-90°** |
-| Joint 3-5 | 腕部/末端 | 0° | 0° |
-
-
 ### 坐标系定义
 
 | 要素 | 定义 |
@@ -234,21 +237,6 @@ python3 arm_task/tools/calibrate_dh.py --solve
 | **X 轴** | 机械臂正前方（归零时小臂+夹爪指向） |
 | **Y 轴** | 机械臂右侧（右手定则：Z × X = Y） |
 | **Z 轴** | 竖直向上（基座旋转轴方向） |
-
-### 笛卡尔运动 IK 验证结果
-
-`move_incremental.py` 采用 3-DOF 位置 IK（6 关节 Jacobian + `_fk_full`），实机测试全部通过：
-
-| 测试 | 请求位移 | 实际位移 | 误差 | 工具Z轴偏差 |
-|------|:------:|:------:|:--:|:--:|
-| Z -5mm | -5.0 | -4.8 | 0.2mm | < 0.01 |
-| Z -50mm（10步分批） | -50.0 | -49.9 | 0.1mm | < 0.01 |
-| X +10mm | +10.0 | +9.6 | 0.4mm | < 0.01 |
-| X -10mm | -10.0 | -9.6 | 0.4mm | < 0.01 |
-| Y +10mm | +10.0 | +10.0 | 0.0mm | < 0.03 |
-| Y -10mm | -10.0 | -10.0 | 0.1mm | < 0.01 |
-
-> **姿态保持**：无 d_pitch/d_yaw 参数时 IK 使用 6 关节全自由度，自动保持末端朝向。
 
 ---
 
@@ -302,16 +290,7 @@ python3 arm_task/tools/calibrate_dh.py --solve
 cd go2_runner
 ./run.sh eth0               # 无 GUI
 ./run.sh eth0 --gui         # 带 GUI 可视化窗口
-```
-
-### D1 机械臂 C++ 程序
-
-```bash
-cd arm_task/d1_sdk
-mkdir -p build && cd build
-cmake ..
-make -j$(nproc)
-# 二进制输出到 arm_task/bin/
+./run.sh eth0 --task 0      # 跳过跳跃，直接巡线（调试用）
 ```
 
 ### 机械臂任务脚本（需 sudo）
@@ -320,16 +299,17 @@ make -j$(nproc)
 # 安装 Python 依赖
 pip install ultralytics numpy opencv-python pyrealsense2
 
-# 全流程测试（3阶段）
+# detect 模式（仅检测 + 比值计算）
+sudo python3 arm_task/task_planner.py --stage 1 --mode detect --marker 1
+sudo python3 arm_task/task_planner.py --stage 2 --mode detect
+
+# full 模式（完整抓取流程）
 sudo python3 arm_task/task_planner.py --stage 1 --marker 1
 sudo python3 arm_task/task_planner.py --stage 2
 sudo python3 arm_task/task_planner.py --stage 3 --target 1
 
 # 姿态单项测试
 python3 arm_task/core/controller.py --test pose --pose photo
-
-# 标定工具
-python3 arm_task/tools/calibrate_affine.py --collect
 ```
 
 ---
@@ -337,8 +317,8 @@ python3 arm_task/tools/calibrate_affine.py --collect
 ## 注意事项
 
 1. **抓手参数**：6号舵机控制，范围 0-50 度。0°=闭合，50°=张开，28°=球/正方体/直圆柱体抓取位。
-2. **标定**：所有姿态角度、DH 参数、笛卡尔偏移量集中在 `arm_task/core/config.py`，标定后只需修改此文件。
+2. **标定**：所有姿态角度、DH 参数、笛卡尔偏移量集中在 `arm_task/core/config.py`，标定后只需修改此文件。原始标定数据已备份到 `arm_task/_backup/`。
 3. **sudo 要求**：机械臂 DDS 通信需要 `sudo`，所有 `task_planner.py` 调用需加 `sudo`。
 4. **识别标志/警示标志**：由 C++ 端机器狗前视摄像头完成，使用 OpenCV DNN 加载 `arm_task/sign_model/` 下的 ONNX 模型推理。
-5. **机械臂姿态**：阶段1结束后至阶段3卸载前，机械臂始终保持抓取行走姿态（抓手28°载货）。
-6. **笛卡尔相对运动**：阶段2不再使用固定关节姿态（go_unload_transit），改为基于场地物资检测坐标的笛卡尔相对运动，卸载和抓取位移在任意物资位置下保持一致。
+5. **比值对齐**：D435 俯拍获取几何体在平台边缘的垂足比值（默认 0.5），机器狗转 90° 后用前视摄像头对齐同一比值。
+6. **抓取动作留空**：Task 1 Step 6 和 Task 2 Step 5 的抓取/卸货动作为 `[TODO]` 注释，由用户后期指定。`task_planner.py` 中的 `stage1_pickup` 和 `stage2_transit` 完整流程已保留。

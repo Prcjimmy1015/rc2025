@@ -2,12 +2,22 @@
 """
 机械臂任务入口 — 暴露 3 个阶段函数接口供 C++ 主程序调用
 
+支持两种模式:
+  --mode detect  : 仅拍照+检测几何体+检测平台边缘+计算垂足比值, 不做抓取
+  --mode full    : 完整抓取流程 (原有逻辑)
+
 3 个函数接口:
   stage1_pickup(ctrl, vision, marker_id) -> int   抓取平台装货
   stage2_transit(ctrl, vision) -> bool             中转平台卸货+装货
   stage3_place(ctrl, target_platform) -> bool      放置平台卸货
 
+新增 detect 接口:
+  stage1_detect(ctrl, vision, marker_id) -> dict   仅检测, 输出比值+坐标
+  stage2_detect(ctrl, vision) -> dict              仅检测, 输出比值+坐标
+
 CLI 用法 (与 arm_bridge.h 兼容):
+  sudo python3 arm_task/task_planner.py --stage 1 --mode detect --marker 1|2
+  sudo python3 arm_task/task_planner.py --stage 2 --mode detect
   sudo python3 arm_task/task_planner.py --stage 1 --marker 1|2
   sudo python3 arm_task/task_planner.py --stage 2
   sudo python3 arm_task/task_planner.py --stage 3 --target 1|2
@@ -31,7 +41,57 @@ from arm_task.vision import VisionSystem
 
 
 # ==========================================================================
-# 阶段1: 抓取平台 — 抓取起始物资
+# 阶段1: 抓取平台 — 仅检测模式 (新增)
+# ==========================================================================
+def stage1_detect(ctrl: ArmTaskController, vision: VisionSystem, marker_id: int = 1) -> dict:
+    """
+    仅检测模式：拍照 + 检测几何体 + 检测平台边缘 + 计算垂足比值。
+    不执行抓取动作。
+
+    Returns:
+        {"ratio": float, "class_id": int, "world_x": float, "world_z": float, "depth_mm": float}
+    """
+    print(f"\n{'='*60}\n  Stage 1 detect — 识别标志={marker_id}\n{'='*60}")
+
+    try:
+        ctrl.go_navigation()
+        ctrl.go_photo()
+
+        result = vision.detect_platform_and_ratio(timeout=10.0)
+        geometry = result["geometry"]
+        ratio = result["ratio"]
+        world_x, world_z = result["world_coord"]
+        depth_mm = result["depth_mm"]
+
+        print(f"  [Stage1 detect] 几何体: {geometry['class_name']}(ID={geometry['class_id']}), "
+              f"世界坐标 (X={world_x:.1f}, Z={world_z:.1f}), 深度={depth_mm:.1f}mm")
+        print(f"  [Stage1 detect] 垂足比值={ratio:.4f}")
+
+        # 保存标注图像
+        vision.save_annotated_image(result["annotated_image"])
+
+        # 输出供 C++ 解析
+        print(f"RATIO_RESULT={ratio:.4f}")
+        print(f"GEOMETRY={geometry['class_id']},{world_x:.1f},{world_z:.1f},{depth_mm:.1f}")
+        print(f"MARKER_ID={marker_id}")
+
+        print(f"\n  [Stage1 detect] ✅ 完成！")
+        return {
+            "ratio": ratio,
+            "class_id": geometry["class_id"],
+            "world_x": world_x,
+            "world_z": world_z,
+            "depth_mm": depth_mm,
+        }
+
+    except Exception as e:
+        print(f"\n  [Stage1 detect] ❌ 错误: {e}")
+        traceback.print_exc()
+        return {"ratio": 0.5, "class_id": -1, "world_x": 0, "world_z": 0, "depth_mm": 0}
+
+
+# ==========================================================================
+# 阶段1: 抓取平台 — 抓取起始物资 (原有逻辑保留)
 # ==========================================================================
 def stage1_pickup(ctrl: ArmTaskController, vision: VisionSystem, marker_id: int = 1) -> int:
     """
@@ -71,7 +131,55 @@ def stage1_pickup(ctrl: ArmTaskController, vision: VisionSystem, marker_id: int 
 
 
 # ==========================================================================
-# 阶段2: 中转平台 — 卸载起始物资 + 抓取场地物资
+# 阶段2: 中转平台 — 仅检测模式 (新增)
+# ==========================================================================
+def stage2_detect(ctrl: ArmTaskController, vision: VisionSystem) -> dict:
+    """
+    仅检测模式：拍照 + 检测场地物资 + 检测平台边缘 + 计算垂足比值。
+    不执行卸货/抓取动作。
+
+    Returns:
+        {"ratio": float, "class_id": int, "world_x": float, "world_z": float, "depth_mm": float}
+    """
+    print(f"\n{'='*60}\n  Stage 2 detect — 中转平台侦察\n{'='*60}")
+
+    try:
+        ctrl.go_photo()
+
+        result = vision.detect_platform_and_ratio(timeout=10.0)
+        geometry = result["geometry"]
+        ratio = result["ratio"]
+        world_x, world_z = result["world_coord"]
+        depth_mm = result["depth_mm"]
+
+        print(f"  [Stage2 detect] 场地物资: {geometry['class_name']}(ID={geometry['class_id']}), "
+              f"世界坐标 (X={world_x:.1f}, Z={world_z:.1f}), 深度={depth_mm:.1f}mm")
+        print(f"  [Stage2 detect] 垂足比值={ratio:.4f}")
+
+        # 保存标注图像
+        vision.save_annotated_image(result["annotated_image"])
+
+        # 输出供 C++ 解析
+        print(f"RATIO_RESULT={ratio:.4f}")
+        print(f"GEOMETRY={geometry['class_id']},{world_x:.1f},{world_z:.1f},{depth_mm:.1f}")
+
+        print(f"\n  [Stage2 detect] ✅ 完成！")
+        return {
+            "ratio": ratio,
+            "class_id": geometry["class_id"],
+            "world_x": world_x,
+            "world_z": world_z,
+            "depth_mm": depth_mm,
+        }
+
+    except Exception as e:
+        print(f"\n  [Stage2 detect] ❌ 错误: {e}")
+        traceback.print_exc()
+        return {"ratio": 0.5, "class_id": -1, "world_x": 0, "world_z": 0, "depth_mm": 0}
+
+
+# ==========================================================================
+# 阶段2: 中转平台 — 卸载起始物资 + 抓取场地物资 (原有逻辑保留)
 # ==========================================================================
 def stage2_transit(ctrl: ArmTaskController, vision: VisionSystem) -> bool:
     """
@@ -171,30 +279,37 @@ def stage3_place(ctrl: ArmTaskController, target_platform: int) -> bool:
 
 
 # ==========================================================================
-# CLI 入口（供 arm_bridge.h 通过 system() 调用）
+# CLI 入口（供 arm_bridge.h 通过 system()/popen() 调用）
 # ==========================================================================
 def main():
     parser = argparse.ArgumentParser(
-        description="机械臂任务规划器（3阶段）",
+        description="机械臂任务规划器（3阶段，支持 detect/full 模式）",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 阶段说明:
-  --stage 1 --marker 1|2   抓取平台装货
-  --stage 2                中转平台卸货 + 抓取场地物资
-  --stage 3 --target 1|2   放置平台卸货
+  --stage 1 --mode detect --marker 1|2  仅检测+比值, 不抓取
+  --stage 2 --mode detect              仅检测+比值, 不卸货不抓取
+  --stage 1 --marker 1|2               抓取平台装货 (full)
+  --stage 2                            中转平台卸货 + 抓取场地物资 (full)
+  --stage 3 --target 1|2               放置平台卸货
 
 示例:
+  sudo python3 arm_task/task_planner.py --stage 1 --mode detect --marker 1
+  sudo python3 arm_task/task_planner.py --stage 2 --mode detect
   sudo python3 arm_task/task_planner.py --stage 1 --marker 1
   sudo python3 arm_task/task_planner.py --stage 2
   sudo python3 arm_task/task_planner.py --stage 3 --target 1
         """,
     )
     parser.add_argument("--stage", type=int, required=True, choices=[1, 2, 3])
+    parser.add_argument("--mode", type=str, choices=["detect", "full"], default="full",
+                        help="detect=仅检测+比值, full=完整流程 (默认full)")
     parser.add_argument("--target", type=int, choices=[1, 2], default=1)
     parser.add_argument("--bin-path", type=str, default=None)
     parser.add_argument("--marker", type=int, default=1, choices=[1, 2])
     args = parser.parse_args()
 
+    print(f"[task_planner] 模式={args.mode}, 阶段={args.stage}")
     print("[task_planner] 初始化 ArmTaskController + VisionSystem...")
     ctrl = ArmTaskController(bin_path=args.bin_path)
     vision = VisionSystem()
@@ -204,11 +319,21 @@ def main():
 
     try:
         if args.stage == 1:
-            marker_id = stage1_pickup(ctrl, vision, args.marker)
-            success = marker_id > 0
+            if args.mode == "detect":
+                result = stage1_detect(ctrl, vision, args.marker)
+                success = result["class_id"] >= 0
+                if success:
+                    marker_id = args.marker
+            else:
+                marker_id = stage1_pickup(ctrl, vision, args.marker)
+                success = marker_id > 0
 
         elif args.stage == 2:
-            success = stage2_transit(ctrl, vision)
+            if args.mode == "detect":
+                result = stage2_detect(ctrl, vision)
+                success = result["class_id"] >= 0
+            else:
+                success = stage2_transit(ctrl, vision)
 
         elif args.stage == 3:
             success = stage3_place(ctrl, args.target)
@@ -222,12 +347,12 @@ def main():
         vision.close()
 
     if success:
-        print(f"\n[task_planner] ✅ 阶段{args.stage} 成功")
+        print(f"\n[task_planner] ✅ 阶段{args.stage} ({args.mode}) 成功")
         if args.stage == 1:
             print(f"MARKER_RESULT={marker_id}")
         sys.exit(0)
     else:
-        print(f"\n[task_planner] ❌ 阶段{args.stage} 失败")
+        print(f"\n[task_planner] ❌ 阶段{args.stage} ({args.mode}) 失败")
         sys.exit(1)
 
 

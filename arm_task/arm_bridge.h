@@ -1,214 +1,177 @@
 #pragma once
 /**
- * arm_bridge.h — C++ 调用 Python 机械臂任务脚本的桥接（3阶段）
+ * arm_bridge.h — 机械臂任务桥接入口
  *
- * 每个阶段函数通过 popen 执行 Python 脚本并等待返回。
- * 脚本路径：arm_task/task_planner.py
- *
- * 识别标志和警示标志的识别完全由 C++ 端机器狗前视摄像头完成，
- * 机械臂只负责抓取/卸载动作。
- * 阶段1结束后至阶段3前，机械臂始终保持抓取行走姿态（抓手28°载货）。
+ * 本文件只包含 3 个任务编排函数，每个函数内部调用 bridge/ 子文件中的模块。
+ * 子文件结构:
+ *   bridge/params.h       — 常量 + extern 声明
+ *   bridge/arm_utils.h    — popen、解析、ONNX推理、视觉识别
+ *   bridge/arm_calls.h    — armCallStage1/2/3 + armStage1Detect/armStage2Detect
+ *   bridge/dog_turn.h     — dogTurn90Degrees
+ *   bridge/dog_align.h    — dogAlignToPlatform
+ *   bridge/dog_alerts.h   — 警示动作
  */
-
-#include <string>
-#include <cstdio>
-#include <cstdlib>
-#include <iostream>
-#include <array>
-#include <memory>
-
-#include <unitree/robot/go2/sport/sport_client.hpp>
-#include <unitree/robot/go2/vui/vui_client.hpp>
-#include <opencv2/opencv.hpp>
-#include <opencv2/dnn.hpp>
+#include "bridge/arm_calls.h"
+#include "bridge/dog_turn.h"
+#include "bridge/dog_align.h"
+#include "bridge/dog_alerts.h"
 
 // =============================================================================
-// ONNX 模型路径（cv_Sign/Res18_5in2）
+// Task 1: 左转90→检测→比值对齐→识别标志→(抓取留空)→右转90回正
 // =============================================================================
-static const char* MODEL_2IN1_PATH = "arm_task/sign_model/2in1.onnx";  // 识别标志（1号/2号）
-static const char* MODEL_3IN1_PATH = "arm_task/sign_model/3in1.onnx";  // 警示标志（触电/强氧化物/辐射）
-
-// =============================================================================
-// ONNX 推理辅助函数
-// =============================================================================
-static inline int onnxInfer(const cv::Mat &frame, const char* modelPath)
+static inline bool dogTask1Execute(unitree::robot::go2::SportClient &sc,
+                                    cv::VideoCapture &cap,
+                                    unitree::robot::go2::VuiClient &vc,
+                                    int marker_id,
+                                    const double *yaw_ptr)
 {
-    // 加载 ONNX 模型（首次调用时加载，后续复用静态变量）
-    static std::map<std::string, cv::dnn::Net> netCache;
-    cv::dnn::Net net;
-    auto it = netCache.find(modelPath);
-    if (it == netCache.end())
+    std::cout << "\n========================================" << std::endl;
+    std::cout << "  Task 1 开始 — 抓取平台" << std::endl;
+    std::cout << "========================================" << std::endl;
+
+    // Step 1: 左转 90°
+    if (!dogTurn90Degrees(sc, +1, yaw_ptr))
     {
-        net = cv::dnn::readNetFromONNX(modelPath);
-        if (net.empty())
-        {
-            std::cerr << "[DogVision] 无法加载模型: " << modelPath << "，返回默认值" << std::endl;
-            return -1;
-        }
-        netCache[modelPath] = net;
-        std::cout << "[DogVision] 模型已加载: " << modelPath << std::endl;
+        std::cerr << "[Task1] 左转 90° 失败" << std::endl;
+        return false;
+    }
+
+    // Step 2: 机械臂拍照检测
+    int class_id;
+    float wx, wz, depth;
+    float ratio = armStage1Detect(marker_id, class_id, wx, wz, depth);
+
+    // Step 3: 显示机械臂 D435 标注图像
+    cv::Mat arm_view = cv::imread(ARM_ANNOTATED_IMAGE_PATH);
+    if (!arm_view.empty())
+    {
+        cv::imshow("Arm D435", arm_view);
+        cv::waitKey(1);
     }
     else
     {
-        net = it->second;
+        std::cerr << "[Task1] 无法加载机械臂标注图像: " << ARM_ANNOTATED_IMAGE_PATH << std::endl;
     }
 
-    // 预处理：RGB → resize 720x720 → 归一化 → blob
-    cv::Mat rgb;
-    cv::cvtColor(frame, rgb, cv::COLOR_BGR2RGB);
-    cv::Mat resized;
-    cv::resize(rgb, resized, cv::Size(720, 720));
-    cv::Mat blob = cv::dnn::blobFromImage(resized, 1.0/255.0, cv::Size(720, 720),
-                                           cv::Scalar(), true, false);
-
-    // 推理
-    net.setInput(blob);
-    cv::Mat output = net.forward();
-
-    // Softmax → class_id
-    double maxVal;
-    cv::Point maxLoc;
-    cv::minMaxLoc(output.reshape(1, 1), nullptr, &maxVal, nullptr, &maxLoc);
-    int classId = maxLoc.x;
-
-    std::cout << "[DogVision] 推理完成 model=" << modelPath
-              << " class_id=" << classId << " conf=" << maxVal << std::endl;
-    return classId;
-}
-
-// =============================================================================
-// 机器狗前视摄像头识别函数（C++ 实现，与机械臂无关）
-// =============================================================================
-
-/** 识别抓取平台正面的识别标志（1号标识或2号标识） */
-static inline int dogDetectPlatformMarker(cv::Mat &frame)
-{
-    int id = onnxInfer(frame, MODEL_2IN1_PATH);
-    if (id < 0) { std::cout << "[DogVision] 识别标志失败，返回默认值 1" << std::endl; return 1; }
-    // 2in1.onnx 输出: class 0 → 1号标识, class 1 → 2号标识
-    return id + 1;  // 映射到 1/2
-}
-
-/** 识别检测平台的警示标志类型（当心触电/强氧化物/辐射） */
-static inline int dogDetectWarningMarker(cv::Mat &frame)
-{
-    int id = onnxInfer(frame, MODEL_3IN1_PATH);
-    if (id < 0) { std::cout << "[DogVision] 警示标志失败，返回默认值 0" << std::endl; return 0; }
-    // 3in1.onnx 输出: class 0 → 当心触电, 1 → 当心强氧化物, 2 → 当心辐射
-    return id;
-}
-
-// =============================================================================
-// 阶段1: 抓取平台装货
-// =============================================================================
-static inline bool armCallStage1(int marker_id)
-{
-    std::cout << "\n[ArmBridge] ====== Stage 1: 抓取平台装货 (marker=" 
-              << marker_id << ") ======" << std::endl;
-    std::string cmd = "sudo python3 arm_task/task_planner.py --stage 1 --marker "
-                      + std::to_string(marker_id);
-    int ret = std::system(cmd.c_str());
-    if (ret == 0) { std::cout << "[ArmBridge] Stage 1 成功" << std::endl; return true; }
-    std::cerr << "[ArmBridge] Stage 1 失败 (exit=" << ret << ")" << std::endl;
-    return false;
-}
-
-// =============================================================================
-// 阶段2: 中转平台卸货 + 抓取场地物资
-// =============================================================================
-static inline bool armCallStage2()
-{
-    std::cout << "\n[ArmBridge] ====== Stage 2: 中转平台卸货+装货 ======" << std::endl;
-    int ret = std::system("sudo python3 arm_task/task_planner.py --stage 2");
-    if (ret == 0) { std::cout << "[ArmBridge] Stage 2 成功" << std::endl; return true; }
-    std::cerr << "[ArmBridge] Stage 2 失败 (exit=" << ret << ")" << std::endl;
-    return false;
-}
-
-// =============================================================================
-// 阶段3: 放置平台卸货
-// =============================================================================
-static inline bool armCallStage3(int target_platform)
-{
-    std::cout << "\n[ArmBridge] ====== Stage 3: 放置平台卸货 (平台" 
-              << target_platform << ") ======" << std::endl;
-    std::string cmd = "sudo python3 arm_task/task_planner.py --stage 3 --target "
-                      + std::to_string(target_platform);
-    int ret = std::system(cmd.c_str());
-    if (ret == 0) { std::cout << "[ArmBridge] Stage 3 成功" << std::endl; return true; }
-    std::cerr << "[ArmBridge] Stage 3 失败 (exit=" << ret << ")" << std::endl;
-    return false;
-}
-
-// =============================================================================
-// 机器狗警示动作（C++ 端执行，基于 sport/sport_test.cpp）
-// =============================================================================
-
-/** 伸懒腰 (warning_id=0, 当心触电) */
-static inline void dogActionStretch(unitree::robot::go2::SportClient &sc)
-{
-    std::cout << "[DogAction] 执行: 伸懒腰 (stretch)" << std::endl;
-    sc.Stretch();
-    sleep(4);
-}
-
-/** 打招呼 (warning_id=1, 当心强氧化物) */
-static inline void dogActionWaveHello(unitree::robot::go2::SportClient &sc)
-{
-    std::cout << "[DogAction] 执行: 打招呼 (wave_hello)" << std::endl;
-    sc.Hello();
-    sleep(4);
-}
-
-/** 闪烁前灯三次 (warning_id=2, 当心辐射) */
-static inline void dogActionFlashLights(unitree::robot::go2::VuiClient &vc)
-{
-    std::cout << "[DogAction] 执行: 闪烁前灯三次 (flash_lights)" << std::endl;
-    for (int i = 0; i < 3; i++)
+    // Step 4: 机器狗比值对齐
+    if (!dogAlignToPlatform(sc, cap, ratio, yaw_ptr))
     {
-        vc.SetBrightness(10);
-        usleep(400000);
-        vc.SetBrightness(0);
-        usleep(400000);
+        std::cerr << "[Task1] 比值对齐失败" << std::endl;
     }
-    vc.SetBrightness(0);
+
+    // Step 5: 识别平台正面标志 — 此时正对平台，识别最准确
+    cv::Mat mark_frame;
+    cap.read(mark_frame);
+    if (!mark_frame.empty())
+    {
+        marker_id = dogDetectPlatformMarker(mark_frame);
+        std::cout << "[Task1] 🔍 识别标志: " << marker_id << "号平台" << std::endl;
+    }
+    else
+    {
+        std::cerr << "[Task1] 识别标志时相机帧为空，使用传入 marker_id=" << marker_id << std::endl;
+    }
+
+    // Step 6: [TODO: 用户后期指定] 机械臂抓取动作
+    // ================================================================
+    // 示例:
+    //   armCallStage1(marker_id);
+    //   或分步:
+    //   armCallStage1Grasp(class_id, wx, wz, depth);
+    // ================================================================
+
+    cv::destroyWindow("Arm D435");
+
+    // Step 7: 右转 90° 回正
+    if (!dogTurn90Degrees(sc, -1, yaw_ptr))
+    {
+        std::cerr << "[Task1] 右转 90° 回正失败" << std::endl;
+    }
+
+    std::cout << "\n[Task1] ✅ 完成！" << std::endl;
+    return true;
 }
 
-/** 根据 warning_id 执行对应的机器狗警示动作 */
-static inline void dogDoAlertAction(unitree::robot::go2::SportClient &sc,
+// =============================================================================
+// Task 2: 右转90→检测→比值对齐→(中转留空)→左转90回正
+// =============================================================================
+static inline bool dogTask2Execute(unitree::robot::go2::SportClient &sc,
+                                    cv::VideoCapture &cap,
                                     unitree::robot::go2::VuiClient &vc,
-                                    int warning_id)
+                                    const double *yaw_ptr)
 {
-    switch (warning_id)
+    std::cout << "\n========================================" << std::endl;
+    std::cout << "  Task 2 开始 — 中转平台" << std::endl;
+    std::cout << "========================================" << std::endl;
+
+    // Step 1: 右转 90°
+    if (!dogTurn90Degrees(sc, -1, yaw_ptr))
     {
-    case 0: dogActionStretch(sc);      break;
-    case 1: dogActionWaveHello(sc);    break;
-    case 2: dogActionFlashLights(vc);  break;
-    default: std::cerr << "[DogAction] 未知警示标志ID: " << warning_id << std::endl; break;
+        std::cerr << "[Task2] 右转 90° 失败" << std::endl;
+        return false;
     }
+
+    // Step 2: 机械臂拍照检测
+    int class_id;
+    float wx, wz, depth;
+    float ratio = armStage2Detect(class_id, wx, wz, depth);
+
+    // Step 3: 显示机械臂 D435 标注图像
+    cv::Mat arm_view = cv::imread(ARM_ANNOTATED_IMAGE_PATH);
+    if (!arm_view.empty())
+    {
+        cv::imshow("Arm D435", arm_view);
+        cv::waitKey(1);
+    }
+    else
+    {
+        std::cerr << "[Task2] 无法加载机械臂标注图像: " << ARM_ANNOTATED_IMAGE_PATH << std::endl;
+    }
+
+    // Step 4: 机器狗比值对齐
+    if (!dogAlignToPlatform(sc, cap, ratio, yaw_ptr))
+    {
+        std::cerr << "[Task2] 比值对齐失败" << std::endl;
+    }
+
+    // Step 5: [TODO: 用户后期指定] 中转平台卸货+抓取
+    // ================================================================
+    // 示例:
+    //   armCallStage2();
+    //   或分步:
+    //   armCallStage2Transit(class_id, wx, wz, depth);
+    // ================================================================
+
+    cv::destroyWindow("Arm D435");
+
+    // Step 6: 左转 90° 回正
+    if (!dogTurn90Degrees(sc, +1, yaw_ptr))
+    {
+        std::cerr << "[Task2] 左转 90° 回正失败" << std::endl;
+    }
+
+    std::cout << "\n[Task2] ✅ 完成！" << std::endl;
+    return true;
 }
 
 // =============================================================================
-// 集成示例（在 main.cpp FSM 中插入）:
-//
-// // 需要在 AppRuntime 或 main 中初始化 VuiClient
-// unitree::robot::go2::VuiClient vui_client;
-// vui_client.SetTimeout(10.0f);
-// vui_client.Init();
-//
-// static int g_marker_id = -1;
-//
-// // 阶段1: 提前用机器狗摄像头识别 → 传入机械臂
-// g_marker_id = dogDetectPlatformMarker(frame);
-// if (armCallStage1(g_marker_id)) Flag_Task = NEXT;
-//
-// // 阶段2: 中转平台
-// if (armCallStage2()) Flag_Task = NEXT;
-//
-// // 检测点 (C++ 独立，无需 Python):
-// int wid = dogDetectWarningMarker(frame);
-// dogDoAlertAction(sc, vui_client, wid);
-//
-// // 阶段3: 放置平台
-// if (armCallStage3(g_marker_id)) Flag_Task = NEXT;
+// Task 3: 放置平台卸货 — (卸货前姿态留空)→放置平台卸货
 // =============================================================================
+static inline bool dogTask3Execute(unitree::robot::go2::SportClient &sc,
+                                    cv::VideoCapture &cap,
+                                    unitree::robot::go2::VuiClient &vc,
+                                    int target_platform,
+                                    const double *yaw_ptr)
+{
+    std::cout << "\n========================================" << std::endl;
+    std::cout << "  Task 3 开始 — 放置平台卸货 (平台" << target_platform << ")" << std::endl;
+    std::cout << "========================================" << std::endl;
+
+    // [TODO: 用户后期指定] 卸货前如果需要在放置平台前调整姿态，在此添加
+    // 例如: dogAlignToPlatform(sc, cap, ratio, yaw_ptr);
+
+    bool ok = armCallStage3(target_platform);
+
+    std::cout << "\n[Task3] " << (ok ? "✅ 完成！" : "❌ 失败") << std::endl;
+    return ok;
+}
