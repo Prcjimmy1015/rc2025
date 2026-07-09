@@ -149,7 +149,7 @@ bool case1_tick(go2::SportClient &sc,
             cout << "[OB] ✅ Phase " << prev << " DONE: Left turn 90° (yaw diff=" << yaw_diff*180/M_PI << "deg)" << endl;
         } else {
             float vx_turn = min(0.15f, vx_final);
-            sc.Move(vx_turn, vy_final, 0.77f);  // 左转弧线
+            sc.Move(vx_turn, vy_final, 0.76f);  // 左转弧线
         }
     }
     // ----- Phase 5/7: 向右弧线转 90° -----
@@ -165,7 +165,7 @@ bool case1_tick(go2::SportClient &sc,
             cout << "[OB] ✅ Phase " << prev << " DONE: Right turn 90° (yaw diff=" << yaw_diff*180/M_PI << "deg)" << endl;
         } else {
             float vx_turn = min(0.15f, vx_final);
-            sc.Move(vx_turn, vy_final, -0.77f);  // 右转弧线
+            sc.Move(vx_turn, vy_final, -0.76f);  // 右转弧线
         }
     }
     // ----- Phase 2/4/6/8/10: 直行 -----

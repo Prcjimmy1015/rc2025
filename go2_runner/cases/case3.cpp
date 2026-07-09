@@ -217,7 +217,7 @@ int case3_tick(go2::SportClient &sc,
     }else if(ok){
         double tg=e/1280.0*60.0*M_PI/180.0;
         double s=-tg*6.0;s=max(-1.0,min(1.0,s));
-        double vx=(abs(e)>300)?0.08:0.12;
+        double vx=(abs(e)>300)?0.17:0.2;
         double vy=e*0.0006;vy=max(-0.15,min(0.15,vy));
         sc.Move(vx,vy,s);
     }else{
