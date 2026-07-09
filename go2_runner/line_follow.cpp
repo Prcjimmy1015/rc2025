@@ -156,7 +156,7 @@ int pureLineFollow(go2::SportClient &sc,
     }
 
     // 第一段：雷达触发避障
-    if (!is_second_pass && lx > kLineObstacleTrigger_m && ob_x_f < kLineObstacleFront_m)
+    if (!is_second_pass && lx > kLineObstacleTrigger_m)
     {
         cout << "\033[32m[Line] Lidar obstacle → case1\033[0m" << endl;
         sc.StopMove();

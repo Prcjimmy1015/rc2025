@@ -18,7 +18,7 @@ struct Checkpoint {
 
 // T1/T2/T4 已去掉, T3=踏步, T5=跳跃, A2=回原点
 static Checkpoint cps[] = {
-    {-0.88, 3.60,  0,  1, false, "T3"},
+    {-1.11, 3.88,  0,  1, false, "T3"},
     {-0.81, 0.98,  0,  2, false, "T5"},
     {g_orig_px, g_orig_py, 0,  3, false, "A2"},
 };
@@ -120,13 +120,8 @@ int case3_tick(go2::SportClient &sc,
             double dx=lx-cps[cp_idx].lx, dy=ly-cps[cp_idx].ly;
             dist=sqrt(dx*dx+dy*dy);
         }
-        // T3 需要红点, 其余纯距离 <0.30
-        bool trigger = false;
-        if(strcmp(cps[cp_idx].name, "T3") == 0){
-            trigger = (dist < 0.30 && has_red);
-        }else{
-            trigger = (dist < 0.30);
-        }
+        // 纯距离 <0.35
+        bool trigger = (dist < 0.35);
         if(trigger){
             in_cp=true; cp_timer=0;
             sc.StopMove();
