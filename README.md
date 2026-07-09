@@ -322,3 +322,8 @@ python3 arm_task/core/controller.py --test pose --pose photo
 4. **识别标志/警示标志**：由 C++ 端机器狗前视摄像头完成，使用 OpenCV DNN 加载 `arm_task/sign_model/` 下的 ONNX 模型推理。
 5. **比值对齐**：D435 俯拍获取几何体在平台边缘的垂足比值（默认 0.5），机器狗转 90° 后用前视摄像头对齐同一比值。
 6. **抓取动作留空**：Task 1 Step 6 和 Task 2 Step 5 的抓取/卸货动作为 `[TODO]` 注释，由用户后期指定。`task_planner.py` 中的 `stage1_pickup` 和 `stage2_transit` 完整流程已保留。
+7. **调试/临时文件**：`go2_runner/test_task.cpp` 为独立调试入口，可直接测试单个子模块。比赛前移除:
+   ```bash
+   rm go2_runner/test_task.cpp
+   # 同时从 CMakeLists.txt 中删除 test_task 编译目标相关行 (文件末尾的 add_executable(test_task ... 到 ) 整段)
+   ```

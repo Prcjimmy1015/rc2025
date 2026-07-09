@@ -40,7 +40,7 @@ link_directories(
     ${UNITREE_SDK2_DIR}/thirdparty/lib/${UNITREE_ARCH}
 )
 
-# ─────────── Our executable ──────────────
+# ─────────── rc2025_run (主入口) ──────────────
 add_executable(rc2025_run
     main.cpp
     globals.cpp
@@ -55,23 +55,39 @@ add_executable(rc2025_run
     cases/case2.cpp
     cases/case3.cpp
 )
-
-# Ensure we load the SAME DDS libraries at run-time that we linked against.
-# Use RPATH (not RUNPATH) so it takes precedence over LD_LIBRARY_PATH.
 set_target_properties(rc2025_run PROPERTIES
     BUILD_WITH_INSTALL_RPATH TRUE
     INSTALL_RPATH "${UNITREE_SDK2_DIR}/thirdparty/lib/${UNITREE_ARCH};${UNITREE_SDK2_DIR}/lib/${UNITREE_ARCH}"
     LINK_FLAGS "-Wl,--disable-new-dtags"
 )
-
-# Link OpenCV, Unitree, DDS, pthread, and ROS2
-# Use target_link_libraries for ROS2 as well
-# (rclcpp_LIBRARIES and std_msgs_LIBRARIES are usually empty, so link by name)
 target_link_libraries(rc2025_run
     PRIVATE
         ${OpenCV_LIBS}
-        unitree_sdk2        # main SDK static lib
-        ddscxx              # Cyclone DDS C++ wrapper
-        ddsc                # Cyclone DDS C core
-        pthread             # Posix thread
+        unitree_sdk2
+        ddscxx
+        ddsc
+        pthread
+)
+
+# ─────────── test_task (调试入口，比赛前移除) ──────────
+add_executable(test_task
+    test_task.cpp
+    globals.cpp
+    callbacks.cpp
+    utils.cpp
+    aruco_server.cpp
+    app_runtime.cpp
+)
+set_target_properties(test_task PROPERTIES
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH "${UNITREE_SDK2_DIR}/thirdparty/lib/${UNITREE_ARCH};${UNITREE_SDK2_DIR}/lib/${UNITREE_ARCH}"
+    LINK_FLAGS "-Wl,--disable-new-dtags"
+)
+target_link_libraries(test_task
+    PRIVATE
+        ${OpenCV_LIBS}
+        unitree_sdk2
+        ddscxx
+        ddsc
+        pthread
 )
