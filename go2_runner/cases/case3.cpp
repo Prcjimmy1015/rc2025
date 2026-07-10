@@ -22,9 +22,9 @@ struct Checkpoint
 
 // T1/T2/T4 已去掉, T3=踏步, T5=跳跃, A2=回原点
 static Checkpoint cps[] = {
-    {-1.11, 3.88, 0, 1, false, "T3"},
-    {-1.19, 1.35, 0, 2, false, "T5"},
-    {g_orig_px, g_orig_py, 0, 3, false, "A2"},
+    {-1.35, 3.35, 0, 1, false, "T3"},
+    {-1.19, 1.15, 0, 2, false, "T5"},
+    {-1.35, 0, 0, 3, false, "A2"},
 };
 static const int N_CPS = sizeof(cps) / sizeof(cps[0]);
 
@@ -168,17 +168,8 @@ int case3_tick(go2::SportClient &sc, unitree::robot::go2::VuiClient &vui_client,
 
     if (!in_cp && cp_idx < N_CPS && !cps[cp_idx].done)
     {
-        double dist;
-        if (cp_idx == N_CPS - 1)
-        {
-            double wx = g_orig_px - px, wy = g_orig_py - py;
-            dist = sqrt(wx * wx + wy * wy);
-        }
-        else
-        {
-            double dx = lx - cps[cp_idx].lx, dy = ly - cps[cp_idx].ly;
-            dist = sqrt(dx * dx + dy * dy);
-        }
+        double dx = lx - cps[cp_idx].lx, dy = ly - cps[cp_idx].ly;
+        double dist = sqrt(dx * dx + dy * dy);
         // 纯距离 <0.3
         bool trigger = (dist < 0.3);
         if (trigger)
@@ -203,21 +194,27 @@ int case3_tick(go2::SportClient &sc, unitree::robot::go2::VuiClient &vui_client,
         }
         else if (cps[cp_idx].type == 2)
         {
-            // T5 跳跃: 第1帧发命令, 之后不覆盖跳跃动作
-            if (cp_timer == 1)
-            {
+            // T5 跳跃: 第1帧执行跳跃, 之后等待200帧跳完
+            if(cp_timer == 1){
                 sc.StopMove();
+                this_thread::sleep_for(chrono::milliseconds(1000));
+                sc.StaticWalk();
+                this_thread::sleep_for(chrono::milliseconds(1000));
                 sc.FrontJump();
             }
-            if (cp_timer % 10 == 0)
-                printf("[CP] %s JUMP WAIT %d/30\n", cps[cp_idx].name, cp_timer);
-            if (cp_timer >= 30)
-            {
+            if(cp_timer % 20 == 0)
+                printf("[CP] %s JUMP WAIT %d/200\n", cps[cp_idx].name, cp_timer);
+            if(cp_timer >= 200){
                 in_cp = false;
                 cps[cp_idx].done = true;
                 cp_idx++;
-                printf("[CP] %s JUMP DONE\n", cps[cp_idx - 1].name);
+                settled = false; n_st = 0; last_pc = 640;
+                printf("[CP] %s JUMP DONE\n", cps[cp_idx-1].name);
             }
+        } 
+        else if(cps[cp_idx - 1].type == 3)
+        {
+            return 1;
         }
         else{
            // 完成相应动作（type==1 的 else 分支：调用 dogFullTaskManual）
@@ -239,16 +236,14 @@ int case3_tick(go2::SportClient &sc, unitree::robot::go2::VuiClient &vui_client,
                printf("[CP] %s ACTION DONE\n", cps[cp_idx - 1].name);
            }
         }
-        if (cps[cp_idx - 1].type == 3)
-            return 1;
         return 0;
     }
 
     if (cp_idx == N_CPS - 1 && !in_cp)
     {
-        double wx = g_orig_px - px, wy = g_orig_py - py;
-        double wdist = sqrt(wx * wx + wy * wy);
-        double target_angle = atan2(wy, wx);
+        double dx = cps[cp_idx].lx - lx, dy = cps[cp_idx].ly - ly;
+        double wdist = sqrt(dx * dx + dy * dy);
+        double target_angle = atan2(dy, dx);
         double heading_err = target_angle - yaw;
         if (heading_err > M_PI)
             heading_err -= 2 * M_PI;
@@ -257,11 +252,11 @@ int case3_tick(go2::SportClient &sc, unitree::robot::go2::VuiClient &vui_client,
         double steer = heading_err * 1.5;
         steer = max(-0.3, min(0.3, steer));
         if (cnt % 15 == 0)
-            printf("[A2] dist=%.2f hdg=%.1fdeg steer=%.2f\n",
-                   wdist, heading_err * 180 / M_PI, steer);
+            printf("[A2] dist=%.2f hdg=%.1fdeg steer=%.2f lx=%.2f ly=%.2f\n",
+                   wdist, heading_err * 180 / M_PI, steer, lx, ly);
         sc.StaticWalk();
         sc.Euler(0, 0, 0);
-        sc.Move(0.15, 0, steer);
+        sc.Move(0.15, 0, 0);
         return 0;
     }
 

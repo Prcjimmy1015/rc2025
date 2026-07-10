@@ -338,7 +338,7 @@ bool case2_tick(go2::SportClient &sc,
                  << " ob_x=" << ob_x
                  << " roll=" << roll << " rcorr=" << roll_corr << endl;
 
-        bool A = (d2d > 0.78);
+        bool A = (d2d > 0.80);
         bool C = (stair_cnt > 370);
         // bool D = (flat_frames > 8);
 
@@ -361,7 +361,7 @@ bool case2_tick(go2::SportClient &sc,
         else
         {
             sc.ClassicWalk(true);
-            sc.Move(-0.08, 0.08, heading_corr);
+            sc.Move(-0.10, 0.10, heading_corr);
         }
 
         if (stair_cnt % 10 == 0)
