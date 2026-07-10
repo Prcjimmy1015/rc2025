@@ -284,17 +284,27 @@ bool case2_tick(go2::SportClient &sc,
         double dpx = px - px_start, dpy = py - py_start;
         double d2d = sqrt(dpx*dpx + dpy*dpy);
 
+        // 身体放平检测: 到达顶层台阶面 pitch 回平
+        static int flat_frames = 0;
+        if (stair_cnt > 30 && fabs(pitch) < 0.12)
+            flat_frames++;
+        else
+            flat_frames = 0;
+
         if (stair_cnt % 10 == 0)
             cout << "[S1] cnt=" << stair_cnt
                  << " d2d=" << d2d
                  << " ob_x=" << ob_x
+                 << " pitch=" << pitch
+                 << " flat=" << flat_frames
                  << " roll=" << roll << " rcorr=" << roll_corr << endl;
 
-        bool A = (d2d > 1.13);
+        bool A = (d2d > 0.8);
         bool C = (stair_cnt > 370);
+        bool D = (flat_frames > 12);
 
-        if (A || C){
-            cout << "[S1→2] A=" << A << " C=" << C
+        if (A || C || D){
+            cout << "[S1→2] A=" << A << " C=" << C << " D=" << D
                  << " d2d=" << d2d
                  << " cnt=" << stair_cnt
                  << " → BACKUP" << endl;
