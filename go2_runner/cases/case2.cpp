@@ -322,8 +322,6 @@ bool case2_tick(go2::SportClient &sc,
         double vy_bias = (d2d > 0.5) ? 0.01 : 0.0;
 
         sc.Move(0.15, vy_bias + roll_corr, s1_hdg);
-        double dpx = px - px_start, dpy = py - py_start;
-        double d2d = sqrt(dpx * dpx + dpy * dpy);
 
         // // 身体放平检测: 先确认爬过(pitch>0.18 latch), 再等顶层放平
         // static bool climbed = false;
