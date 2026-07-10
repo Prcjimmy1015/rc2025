@@ -80,7 +80,7 @@ bool case2_tick(go2::SportClient &sc,
     {
         double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.20 : 0.08;
         yaw_corr = -k_yaw * aruco_angle;
-        yaw_corr = max(-0.35, min(0.35, yaw_corr));
+        yaw_corr = max(-0.40, min(0.40, yaw_corr));
     }
 
     // ====== IMU 航向锁定 (ArUco 丢失时兜底) ======
@@ -314,11 +314,22 @@ bool case2_tick(go2::SportClient &sc,
             roll_corr = 0.15 * roll;
             roll_corr = max(-0.18, min(0.18, roll_corr));
         }
+        // 后期左向微偏置, 对抗右漂 (d2d>0.5后生效)
+        double vy_bias = (d2d > 0.5) ? 0.01 : 0.0;
 
         sc.ClassicWalk(true);
-        sc.Move(0.15, roll_corr, s1_hdg);
+        sc.Move(0.15, vy_bias + roll_corr, s1_hdg);
         double dpx = px - px_start, dpy = py - py_start;
         double d2d = sqrt(dpx * dpx + dpy * dpy);
+
+        // // 身体放平检测: 先确认爬过(pitch>0.18 latch), 再等顶层放平
+        // static bool climbed = false;
+        // if (fabs(pitch) > 0.18) climbed = true;
+        // static int flat_frames = 0;
+        // if (climbed && fabs(pitch) < 0.12)
+        //     flat_frames++;
+        // else
+        //     flat_frames = 0;
 
         if (stair_cnt % 10 == 0)
             cout << "[S1] cnt=" << stair_cnt
@@ -326,8 +337,9 @@ bool case2_tick(go2::SportClient &sc,
                  << " ob_x=" << ob_x
                  << " roll=" << roll << " rcorr=" << roll_corr << endl;
 
-        bool A = (d2d > 1.13);
+        bool A = (d2d > 0.78);
         bool C = (stair_cnt > 370);
+        // bool D = (flat_frames > 8);
 
         if (A || C)
         {
