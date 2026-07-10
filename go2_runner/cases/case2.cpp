@@ -72,9 +72,9 @@ bool case2_tick(go2::SportClient &sc,
     // ====== Aruco 方向修正 (分档增益) ======
     double yaw_corr = 0;
     if (aruco_detected && fabs(aruco_angle) > 0.05){
-        double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.20 : 0.08;
+        double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.25 : 0.12;
         yaw_corr = -k_yaw * aruco_angle;
-        yaw_corr = max(-0.35, min(0.35, yaw_corr));
+        yaw_corr = max(-0.40, min(0.40, yaw_corr));
     }
 
     // ====== IMU 航向锁定 (ArUco 丢失时兜底) ======
@@ -82,8 +82,8 @@ bool case2_tick(go2::SportClient &sc,
     double imu_yaw_err = yaw - s1_start_yaw;
     if (imu_yaw_err >  M_PI) imu_yaw_err -= 2.0 * M_PI;
     if (imu_yaw_err < -M_PI) imu_yaw_err += 2.0 * M_PI;
-    double imu_corr = -0.45 * imu_yaw_err;
-    imu_corr = max(-0.50, min(0.50, imu_corr));
+    double imu_corr = -0.55 * imu_yaw_err;
+    imu_corr = max(-0.55, min(0.55, imu_corr));
 
     double heading_corr = aruco_detected ? yaw_corr : imu_corr;
 
@@ -275,8 +275,8 @@ bool case2_tick(go2::SportClient &sc,
         // 左脚打滑检测: roll 变负(左倾) → 右移压回去
         double roll_corr = 0;
         if (s1_settle > 6 && fabs(roll) > 0.10){
-            roll_corr = 0.15 * roll;
-            roll_corr = max(-0.18, min(0.18, roll_corr));
+            roll_corr = 0.20 * roll;
+            roll_corr = max(-0.22, min(0.22, roll_corr));
         }
 
         sc.ClassicWalk(true);
@@ -284,9 +284,11 @@ bool case2_tick(go2::SportClient &sc,
         double dpx = px - px_start, dpy = py - py_start;
         double d2d = sqrt(dpx*dpx + dpy*dpy);
 
-        // // 身体放平检测: 到达顶层台阶面 pitch 回平
+        // // 身体放平检测: 先确认爬过(pitch>0.18 latch), 再等顶层放平
+        // static bool climbed = false;
+        // if (fabs(pitch) > 0.18) climbed = true;
         // static int flat_frames = 0;
-        // if (stair_cnt > 30 && fabs(pitch) < 0.12)
+        // if (climbed && fabs(pitch) < 0.12)
         //     flat_frames++;
         // else
         //     flat_frames = 0;
@@ -299,7 +301,7 @@ bool case2_tick(go2::SportClient &sc,
 
         bool A = (d2d > 0.78);
         bool C = (stair_cnt > 370);
-        // bool D = (flat_frames > 12);
+        // bool D = (flat_frames > 8);
 
         if (A || C){
             cout << "[S1→2] A=" << A << " C=" << C
