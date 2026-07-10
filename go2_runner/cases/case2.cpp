@@ -299,7 +299,7 @@ bool case2_tick(go2::SportClient &sc,
                  << " flat=" << flat_frames
                  << " roll=" << roll << " rcorr=" << roll_corr << endl;
 
-        bool A = (d2d > 0.8);
+        bool A = (d2d > 0.78);
         bool C = (stair_cnt > 370);
         bool D = (flat_frames > 12);
 
