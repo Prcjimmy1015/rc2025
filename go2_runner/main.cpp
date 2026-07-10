@@ -244,6 +244,7 @@ int main(int ac, char **av)
     t.detach();
     cout << (g_enable_gui ? "GUI\n" : "Headless\n") << flush;
     go2::SportClient &sc = rt.sc;
+    go2::VuiClient &vui_client = rt.vui_client;
     go2::ObstaclesAvoidClient &avc = rt.avoid_client;
     VideoCapture &cap = rt.cap;
     Mat frame, undist;
@@ -318,7 +319,7 @@ int main(int ac, char **av)
             break;
         case 3:
         {
-            int ret = case3_tick(sc, undist, lx, ly);
+            int ret = case3_tick(sc, vui_client, undist, lx, ly);
             if (ret == 1)
                 Flag_Task = 9;
         }

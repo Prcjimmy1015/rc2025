@@ -217,19 +217,9 @@ int case3_tick(go2::SportClient &sc,
                 printf("[CP] %s JUMP DONE\n", cps[cp_idx - 1].name);
             }
         }
-        else
-        {
-            sc.Move(0, 0, 0);
-            if (cp_timer % 15 == 0)
-                printf("[CP] %s PAUSE %d/90\n",
-                       cps[cp_idx].name, cp_timer);
-            if (cp_timer >= 90)
-            {
-                in_cp = false;
-                cps[cp_idx].done = true;
-                cp_idx++;
-                printf("[CP] %s DONE\n", cps[cp_idx - 1].name);
-            }
+        else{
+           // 完成相应动作
+           
         }
         if (cps[cp_idx - 1].type == 3)
             return 1;

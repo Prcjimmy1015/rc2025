@@ -4,6 +4,7 @@
 #include "callbacks.h"
 
 #include <unitree/robot/go2/sport/sport_client.hpp>
+#include <unitree/robot/go2/vui/vui_client.hpp>
 #include <unitree/robot/go2/obstacles_avoid/obstacles_avoid_client.hpp>
 #include <unitree/robot/go2/vui/vui_client.hpp>
 #include <unitree/robot/channel/channel_subscriber.hpp>
@@ -21,6 +22,7 @@ struct AppRuntime
     StateCB stateCB;
     unitree::robot::ChannelSubscriber<unitree_go::msg::dds_::SportModeState_> sub_state;
     unitree::robot::go2::SportClient sc;
+     unitree::robot::go2::VuiClient vui_client;       // 创建灯光控制客户端实例
     unitree::robot::go2::ObstaclesAvoidClient avoid_client;
     cv::VideoCapture cap;
 
