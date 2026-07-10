@@ -16,7 +16,7 @@
 #include <string>
 #include <thread>
 #include <csignal>
-#include "../arm_task/arm_bridge.h"
+#include "arm_task/arm_bridge.h"
 
 using namespace unitree::robot;
 using namespace std;

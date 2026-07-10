@@ -60,6 +60,9 @@ set_target_properties(rc2025_run PROPERTIES
     INSTALL_RPATH "${UNITREE_SDK2_DIR}/thirdparty/lib/${UNITREE_ARCH};${UNITREE_SDK2_DIR}/lib/${UNITREE_ARCH}"
     LINK_FLAGS "-Wl,--disable-new-dtags"
 )
+target_compile_definitions(rc2025_run PRIVATE
+    PROJECT_ROOT="${PROJECT_ROOT}"
+)
 target_link_libraries(rc2025_run
     PRIVATE
         ${OpenCV_LIBS}
@@ -82,7 +85,10 @@ set_target_properties(test_task PROPERTIES
     INSTALL_RPATH "${UNITREE_SDK2_DIR}/thirdparty/lib/${UNITREE_ARCH};${UNITREE_SDK2_DIR}/lib/${UNITREE_ARCH}"
     LINK_FLAGS "-Wl,--disable-new-dtags"
 )
-target_include_directories(test_task PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_include_directories(test_task PRIVATE
+    ${OpenCV_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
 target_compile_definitions(test_task PRIVATE
     PROJECT_ROOT="${PROJECT_ROOT}"
 )
@@ -101,6 +107,9 @@ add_executable(action_test
     callbacks.cpp
     utils.cpp
     app_runtime.cpp
+)
+target_include_directories(action_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 target_compile_definitions(action_test PRIVATE
     PROJECT_ROOT="${PROJECT_ROOT}"

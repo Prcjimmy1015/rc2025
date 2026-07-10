@@ -24,5 +24,8 @@ bool g_case0_skip_init = false;
 // ArUco
 std::atomic<int> g_last_aruco_id(-1);
 
+// case3 动作 ID
+int g_case3_action_id = 0;
+
 // GUI
 bool g_enable_gui = false;

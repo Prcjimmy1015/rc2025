@@ -1,6 +1,7 @@
 #include "case3.h"
 #include "../globals.h"
 #include "../utils.h"
+#include "../arm_task/arm_bridge.h"
 #include <opencv2/opencv.hpp>
 #include <cmath>
 #include <chrono>
@@ -56,10 +57,11 @@ void case3_reset()
         cps[i].done = false;
 }
 
-int case3_tick(go2::SportClient &sc,
+int case3_tick(go2::SportClient &sc, unitree::robot::go2::VuiClient &vui_client,
                cv::Mat &undist,
                double lx,
-               double ly)
+               double ly,
+               int action_id)
 {
     static bool once = false;
     if (!once)
@@ -177,8 +179,8 @@ int case3_tick(go2::SportClient &sc,
             double dx = lx - cps[cp_idx].lx, dy = ly - cps[cp_idx].ly;
             dist = sqrt(dx * dx + dy * dy);
         }
-        // 纯距离 <0.35
-        bool trigger = (dist < 0.35);
+        // 纯距离 <0.3
+        bool trigger = (dist < 0.3);
         if (trigger)
         {
             in_cp = true;
@@ -218,8 +220,24 @@ int case3_tick(go2::SportClient &sc,
             }
         }
         else{
-           // 完成相应动作
-           
+           // 完成相应动作（type==1 的 else 分支：调用 dogFullTaskManual）
+           if (cp_timer == 1)
+           {
+               printf("[CP] %s EXEC dogFullTaskManual action_id=%d\n", cps[cp_idx].name, action_id);
+               dogFullTaskManual(sc, vui_client, action_id);
+           }
+           if (cp_timer % 10 == 0)
+               printf("[CP] %s ACTION WAIT %d/50\n", cps[cp_idx].name, cp_timer);
+           if (cp_timer >= 50)
+           {
+               in_cp = false;
+               cps[cp_idx].done = true;
+               cp_idx++;
+               settled = false;
+               n_st = 0;
+               last_pc = 640;
+               printf("[CP] %s ACTION DONE\n", cps[cp_idx - 1].name);
+           }
         }
         if (cps[cp_idx - 1].type == 3)
             return 1;

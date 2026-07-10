@@ -219,6 +219,11 @@ int main(int ac, char **av)
             }
             cout << "[Config] task:" << g_force_task << endl;
         }
+        else if (a == "--action" && i + 1 < ac)
+        {
+            g_case3_action_id = atoi(av[++i]);
+            cout << "[Config] case3_action:" << g_case3_action_id << endl;
+        }
         else
         {
             cerr << "Unknown: " << a << "\n";
@@ -319,7 +324,7 @@ int main(int ac, char **av)
             break;
         case 3:
         {
-            int ret = case3_tick(sc, vui_client, undist, lx, ly);
+            int ret = case3_tick(sc, vui_client, undist, lx, ly, g_case3_action_id);
             if (ret == 1)
                 Flag_Task = 9;
         }

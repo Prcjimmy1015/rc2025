@@ -15,6 +15,9 @@ bool initAppRuntime(AppRuntime &rt, const char *eth_if)
     rt.sc.Init();
     rt.sc.BalanceStand();
 
+    rt.vui_client.SetTimeout(3.0f);
+    rt.vui_client.Init();
+
     /* Obstacles avoid client - enable remote command mode, disable built-in avoidance */
     rt.avoid_client.Init();
     rt.avoid_client.UseRemoteCommandFromApi(true);
