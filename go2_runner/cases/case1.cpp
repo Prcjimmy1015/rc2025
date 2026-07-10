@@ -43,8 +43,8 @@ bool case1_tick(go2::SportClient &sc,
     double right_dist = ob_z_f;
 
     // 墙壁检测：原始值 < 0.6m → 触发转弯
-    bool front_wall_raw = (ob_x > 0.01 && ob_x <= 0.56);
-    bool front_too_close_raw = (ob_x <= 0.01 && front_dist < 0.56);
+    bool front_wall_raw = (ob_x > 0.01 && ob_x <= 0.57);
+    bool front_too_close_raw = (ob_x <= 0.01 && front_dist < 0.57);
     bool wall_detected = front_wall_raw || front_too_close_raw;
     bool wall_detected_straight = wall_detected;
 
@@ -170,7 +170,7 @@ bool case1_tick(go2::SportClient &sc,
         else
         {
             float vx_turn = min(0.15f, vx_final);
-            sc.Move(vx_turn, vy_final, 0.75f); // 左转弧线
+            sc.Move(vx_turn, vy_final, 0.74f); // 左转弧线
         }
     }
     // ----- Phase 5/7: 向右弧线转 90° -----
@@ -192,7 +192,7 @@ bool case1_tick(go2::SportClient &sc,
         else
         {
             float vx_turn = min(0.15f, vx_final);
-            sc.Move(vx_turn, vy_final, -0.75f); // 右转弧线
+            sc.Move(vx_turn, vy_final, -0.74f); // 右转弧线
         }
     }
     // ----- Phase 2/4/6/8/10: 直行 -----

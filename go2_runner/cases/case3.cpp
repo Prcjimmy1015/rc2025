@@ -22,8 +22,8 @@ struct Checkpoint
 
 // T1/T2/T4 已去掉, T3=踏步, T5=跳跃, A2=回原点
 static Checkpoint cps[] = {
-    {-1.35, 3.35, 0, 1, false, "T3"},
-    {-1.19, 1.15, 0, 2, false, "T5"},
+    {-1.35, 3.45, 0, 1, false, "T3"},
+    {-1.19, 1.35, 0, 2, false, "T5"},
     {-1.35, 0, 0, 3, false, "A2"},
 };
 static const int N_CPS = sizeof(cps) / sizeof(cps[0]);
@@ -241,22 +241,41 @@ int case3_tick(go2::SportClient &sc, unitree::robot::go2::VuiClient &vui_client,
 
     if (cp_idx == N_CPS - 1 && !in_cp)
     {
-        double dx = cps[cp_idx].lx - lx, dy = cps[cp_idx].ly - ly;
-        double wdist = sqrt(dx * dx + dy * dy);
-        double target_angle = atan2(dy, dx);
-        double heading_err = target_angle - yaw;
-        if (heading_err > M_PI)
-            heading_err -= 2 * M_PI;
-        if (heading_err < -M_PI)
-            heading_err += 2 * M_PI;
-        double steer = heading_err * 1.5;
-        steer = max(-0.3, min(0.3, steer));
-        if (cnt % 15 == 0)
-            printf("[A2] dist=%.2f hdg=%.1fdeg steer=%.2f lx=%.2f ly=%.2f\n",
-                   wdist, heading_err * 180 / M_PI, steer, lx, ly);
-        sc.StaticWalk();
-        sc.Euler(0, 0, 0);
-        sc.Move(0.15, 0, 0);
+        // A2: 前进 0.65m, 再左转 90°
+        static int a2_phase = 0;  // 0=前进, 1=左转
+        static int a2_cnt = 0;
+        a2_cnt++;
+
+        if (a2_phase == 0)
+        {
+            double dx = lx - cps[cp_idx-1].lx, dy = ly - cps[cp_idx-1].ly;
+            double dist = sqrt(dx*dx + dy*dy);
+            if (dist > 0.65 || a2_cnt > 150)  // 前进超过 0.65m 或超时 150 帧
+            {
+                a2_phase = 1;
+                a2_cnt = 0;
+                printf("[A2] FORWARD DONE (%.2fm), now LEFT TURN\n", dist);
+            }
+            else
+            {
+                sc.StaticWalk(); sc.Euler(0, 0, 0); sc.Move(0.15, 0, 0);
+                if (cnt % 15 == 0) printf("[A2] FWD %.2fm cnt=%d/150\n", dist, a2_cnt);
+            }
+        }
+        else
+        {
+            // 左转 90°
+            sc.StaticWalk(); sc.Euler(0, 0, 0); sc.Move(0, 0, 0.5);
+            if (a2_cnt % 15 == 0) printf("[A2] TURN L cnt=%d\n", a2_cnt);
+            if (a2_cnt > 50)  // 转 50 帧 (~1s)
+            {
+                sc.StopMove();
+                printf("[A2] TURN DONE → FINISH\n");
+                cps[cp_idx].done = true;
+                in_cp = true; cp_timer = 0;
+                return 1;  // → Flag_Task=9
+            }
+        }
         return 0;
     }
 
