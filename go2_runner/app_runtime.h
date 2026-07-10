@@ -25,9 +25,9 @@ struct AppRuntime
     cv::VideoCapture cap;
 
     AppRuntime()
-        : sub_range(TOPIC_RANGE_INFO)
-        , sub_state(TOPIC_HIGHSTATE)
-    {}
+        : sub_range(TOPIC_RANGE_INFO), sub_state(TOPIC_HIGHSTATE)
+    {
+    }
 };
 
 /** Sport、订阅、Avoid、初始位姿、GStreamer 前视相机 */

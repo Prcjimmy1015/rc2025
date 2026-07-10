@@ -221,7 +221,6 @@ app_runtime.o: app_runtime.cpp.o
 # target to build an object file
 app_runtime.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/app_runtime.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/app_runtime.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/app_runtime.cpp.o
 .PHONY : app_runtime.cpp.o
 
@@ -231,7 +230,6 @@ app_runtime.i: app_runtime.cpp.i
 # target to preprocess a source file
 app_runtime.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/app_runtime.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/app_runtime.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/app_runtime.cpp.i
 .PHONY : app_runtime.cpp.i
 
@@ -241,7 +239,6 @@ app_runtime.s: app_runtime.cpp.s
 # target to generate assembly for a file
 app_runtime.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/app_runtime.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/app_runtime.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/app_runtime.cpp.s
 .PHONY : app_runtime.cpp.s
 
@@ -251,7 +248,6 @@ aruco_server.o: aruco_server.cpp.o
 # target to build an object file
 aruco_server.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/aruco_server.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/aruco_server.cpp.o
 .PHONY : aruco_server.cpp.o
 
 aruco_server.i: aruco_server.cpp.i
@@ -260,7 +256,6 @@ aruco_server.i: aruco_server.cpp.i
 # target to preprocess a source file
 aruco_server.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/aruco_server.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/aruco_server.cpp.i
 .PHONY : aruco_server.cpp.i
 
 aruco_server.s: aruco_server.cpp.s
@@ -269,7 +264,6 @@ aruco_server.s: aruco_server.cpp.s
 # target to generate assembly for a file
 aruco_server.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/aruco_server.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/aruco_server.cpp.s
 .PHONY : aruco_server.cpp.s
 
 callbacks.o: callbacks.cpp.o
@@ -278,7 +272,6 @@ callbacks.o: callbacks.cpp.o
 # target to build an object file
 callbacks.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/callbacks.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/callbacks.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/callbacks.cpp.o
 .PHONY : callbacks.cpp.o
 
@@ -288,7 +281,6 @@ callbacks.i: callbacks.cpp.i
 # target to preprocess a source file
 callbacks.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/callbacks.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/callbacks.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/callbacks.cpp.i
 .PHONY : callbacks.cpp.i
 
@@ -298,7 +290,6 @@ callbacks.s: callbacks.cpp.s
 # target to generate assembly for a file
 callbacks.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/callbacks.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/callbacks.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/callbacks.cpp.s
 .PHONY : callbacks.cpp.s
 
@@ -404,7 +395,6 @@ globals.o: globals.cpp.o
 # target to build an object file
 globals.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/globals.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/globals.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/globals.cpp.o
 .PHONY : globals.cpp.o
 
@@ -414,7 +404,6 @@ globals.i: globals.cpp.i
 # target to preprocess a source file
 globals.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/globals.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/globals.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/globals.cpp.i
 .PHONY : globals.cpp.i
 
@@ -424,7 +413,6 @@ globals.s: globals.cpp.s
 # target to generate assembly for a file
 globals.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/globals.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/globals.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/globals.cpp.s
 .PHONY : globals.cpp.s
 
@@ -506,7 +494,6 @@ utils.o: utils.cpp.o
 # target to build an object file
 utils.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/utils.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/utils.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/utils.cpp.o
 .PHONY : utils.cpp.o
 
@@ -516,7 +503,6 @@ utils.i: utils.cpp.i
 # target to preprocess a source file
 utils.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/utils.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/utils.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/utils.cpp.i
 .PHONY : utils.cpp.i
 
@@ -526,7 +512,6 @@ utils.s: utils.cpp.s
 # target to generate assembly for a file
 utils.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rc2025_run.dir/build.make CMakeFiles/rc2025_run.dir/utils.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_task.dir/build.make CMakeFiles/test_task.dir/utils.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/action_test.dir/build.make CMakeFiles/action_test.dir/utils.cpp.s
 .PHONY : utils.cpp.s
 

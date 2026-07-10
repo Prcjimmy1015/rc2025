@@ -73,26 +73,21 @@ target_link_libraries(rc2025_run
 get_filename_component(PROJECT_ROOT "${CMAKE_SOURCE_DIR}/.." ABSOLUTE)
 message(STATUS "Project root: ${PROJECT_ROOT}")
 
-# ─────────── test_task (调试入口，比赛前移除) ──────────
+# ─────────── test_task (调试入口，无摄像头依赖) ──────────
 add_executable(test_task
     test_task.cpp
-    globals.cpp
-    callbacks.cpp
-    utils.cpp
-    aruco_server.cpp
-    app_runtime.cpp
 )
 set_target_properties(test_task PROPERTIES
     BUILD_WITH_INSTALL_RPATH TRUE
     INSTALL_RPATH "${UNITREE_SDK2_DIR}/thirdparty/lib/${UNITREE_ARCH};${UNITREE_SDK2_DIR}/lib/${UNITREE_ARCH}"
     LINK_FLAGS "-Wl,--disable-new-dtags"
 )
+target_include_directories(test_task PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_compile_definitions(test_task PRIVATE
     PROJECT_ROOT="${PROJECT_ROOT}"
 )
 target_link_libraries(test_task
     PRIVATE
-        ${OpenCV_LIBS}
         unitree_sdk2
         ddscxx
         ddsc

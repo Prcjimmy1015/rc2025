@@ -19,7 +19,11 @@
 using namespace unitree::robot;
 using namespace std;
 
-void sig_handler(int s) { if (s == SIGINT) exit(0); }
+void sig_handler(int s)
+{
+    if (s == SIGINT)
+        exit(0);
+}
 
 int main(int ac, char **av)
 {
@@ -35,10 +39,12 @@ int main(int ac, char **av)
     ChannelFactory::Instance()->Init(0, eth);
 
     go2::SportClient sc;
-    sc.SetTimeout(10.0f); sc.Init();
+    sc.SetTimeout(10.0f);
+    sc.Init();
 
     go2::VuiClient vc;
-    vc.SetTimeout(10.0f); vc.Init();
+    vc.SetTimeout(10.0f);
+    vc.Init();
 
     cout << "[ActionTest] 就绪, 动作: " << action << endl;
 
@@ -77,8 +83,10 @@ int main(int ac, char **av)
     }
 
     sc.StopMove();
-    sc.SwitchJoystick(true); sc.RecoveryStand();
-    this_thread::sleep_for(chrono::milliseconds(500)); sc.BalanceStand();
+    sc.SwitchJoystick(true);
+    sc.RecoveryStand();
+    this_thread::sleep_for(chrono::milliseconds(500));
+    sc.BalanceStand();
     cout << "[ActionTest] 退出。" << endl;
     return 0;
 }

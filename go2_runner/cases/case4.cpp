@@ -24,13 +24,13 @@ bool case4_tick(go2::SportClient &sc,
     avoid_client.SwitchSet(false);
     avoid_client.Move(0, 0, 0);
     this_thread::sleep_for(chrono::milliseconds(200));
-    sc.SwitchJoystick(true);   // 重新启用摇杆
-    sc.RecoveryStand();         // 恢复站立，释放 API 控制
+    sc.SwitchJoystick(true); // 重新启用摇杆
+    sc.RecoveryStand();      // 恢复站立，释放 API 控制
     this_thread::sleep_for(chrono::milliseconds(500));
     sc.BalanceStand();
 
     cout << "\033[32mMission complete! Remote control restored.\033[0m" << endl;
 
     done = true;
-    return true;  // → 主循环退出
+    return true; // → 主循环退出
 }

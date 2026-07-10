@@ -27,4 +27,4 @@ extern float ob_x_f;
 
 // dogTurn90Degrees 原地转弯参数
 static constexpr float  kTurn90W        = 1.2f;
-static constexpr int    kTurn90Frames   = 24;
+static constexpr int    kTurn90Frames   = 48;

@@ -15,12 +15,12 @@ rc2025/
 │   └── sport_test.cpp          # 宇树官方示例 (Hello/Stretch/闪灯)
 │
 ├── arm_task/
-│   ├── arm_bridge.h            # C++ 入口: dog_turn + dog_alerts + arm_utils
+│   ├── arm_bridge.h            # C++ 入口: dog_turn + dog_alerts + full_task
 │   ├── bridge/
 │   │   ├── params.h            # 常量 + 模型路径 + extern ob_x_f
 │   │   ├── arm_utils.h         # popen → Python ONNX Runtime 推理
 │   │   ├── onnx_infer.py       # Python ONNX Runtime 推理脚本
-│   │   ├── dog_turn.h          # 机器狗 90° 原地转弯
+│   │   ├── dog_turn.h          # 原地转弯 90° (含无摄像头版本)
 │   │   └── dog_alerts.h        # 警示动作 (stretch / wave_hello / flash_lights)
 │   ├── sign_model/             # ONNX 模型 (警告标志)
 │   │   ├── 2in1.onnx / .data   # 识别标志 (1号/2号标识)
@@ -30,7 +30,7 @@ rc2025/
 ├── go2_runner/                 # 机器狗导航与控制 (C++)
 │   ├── CMakeLists.txt
 │   ├── main.cpp                # 主入口: DDS初始化 → FSM 状态机
-│   ├── test_task.cpp           # 独立测试入口 (--Turn / --Warn)
+│   ├── test_task.cpp           # 独立测试入口 (--Turn / --Full)
 │   ├── action_test.cpp         # 单独动作测试 (stretch / wave / flash)
 │   ├── app_runtime.h / .cpp    # 运行时初始化 (DDS订阅 + 摄像头)
 │   ├── params.h                # 相机内参 & 全局参数
@@ -45,20 +45,49 @@ rc2025/
 
 ## arm_task/ — 机器狗控制模块
 
+### 可用函数 (C++)
+
+```cpp
+#include "arm_task/arm_bridge.h"
+
+// ─── 单独转弯 ───
+dogTurn90Degrees(sc, cap, +1);       // 左转 90° (需要摄像头)
+dogTurn90DegreesNoCam(sc, +1);       // 左转 90° (无摄像头, usleep 定时)
+
+// ─── 单独动作 ───
+dogDoAlertAction(sc, vc, wid);       // wid: 0=打招呼, 1=伸懒腰, 2=闪烁前灯
+
+// ─── 完整任务流程 ───
+dogFullTaskManual(sc, vc, 0);        // 左转 → 伸懒腰 → 后退 → 右转
+dogFullTaskManual(sc, vc, 1);        // 左转 → 打招呼 → 右转
+dogFullTaskManual(sc, vc, 2);        // 左转 → 闪烁前灯 → 右转
+```
+
+> `dogFullTaskManual` 无摄像头依赖，可直接集成到 `case3.cpp`。
+
+### bridge/ 子模块
+
+| 文件 | 功能 |
+|------|------|
+| `params.h` | 常量定义、ONNX 模型路径 (CMake 注入 PROJECT_ROOT) |
+| `arm_utils.h` | `onnxInfer` (popen → Python) + `dogDetectWarningMarker` |
+| `onnx_infer.py` | Python ONNX Runtime 推理 (ImageNet 归一化) |
+| `dog_turn.h` | `dogTurn90Degrees` + `dogTurn90DegreesNoCam` |
+| `dog_alerts.h` | 警示动作 — stretch / wave_hello / flash_lights |
+
 ### ONNX 推理架构
 
 ```
-C++ (test_task)                     Python (onnx_infer.py)
-───────────────                     ──────────────────────
+C++ (popen)                         Python (onnx_infer.py)
+───────────                         ──────────────────────
 cv::imwrite → /tmp/onnx_frame_*.png  cv2.imread
 popen("python3 ...")                ort.InferenceSession
 fgets(buf) ← class_id               print(class_id)
 ```
 
-> **为什么不用 OpenCV DNN?** C++ OpenCV 4.5.4 不支持 PyTorch 导出的 opset 25 ONNX 模型，
-> 改为通过 `popen` 调用 Python `onnxruntime`（已预装 onnxruntime 1.23.2）。
+> C++ OpenCV 4.5.4 不支持 PyTorch 导出的 opset 25 ONNX 模型，改用 `popen` 调用 Python `onnxruntime`。
 
-### ONNX 模型降级 (opset 25 → 22)
+### 模型降级 (opset 25 → 22)
 
 ```bash
 pip3 install onnx onnxsim onnxruntime
@@ -69,39 +98,6 @@ m2 = version_converter.convert_version(m, 22)
 onnx.save(m2, 'arm_task/sign_model/3in1.onnx')
 "
 ```
-
-### 可用函数 (C++)
-
-```cpp
-#include "arm_task/arm_bridge.h"
-
-// 原地转弯 90° (+1=左, -1=右)
-dogTurn90Degrees(sc, cap, +1);
-
-// 识别警示标志 (0=打招呼, 1=伸懒腰, 2=闪烁前灯)
-int wid = dogDetectWarningMarker(frame);
-
-// 执行对应警示动作
-dogDoAlertAction(sc, vc, wid);
-```
-
-### bridge/ 子模块
-
-| 文件 | 功能 |
-|------|------|
-| `params.h` | 常量定义、ONNX 模型路径 (CMake 注入 PROJECT_ROOT) |
-| `arm_utils.h` | `onnxInfer` (popen → Python) + `dogDetectWarningMarker` |
-| `onnx_infer.py` | Python ONNX Runtime 推理 (ImageNet 归一化) |
-| `dog_turn.h` | `dogTurn90Degrees` — 原地转弯 90° |
-| `dog_alerts.h` | 警示动作 — stretch / wave_hello / flash_lights |
-
-### 警示动作映射
-
-| class_id | 动作 | API |
-|----------|------|-----|
-| 0 | 打招呼 (WaveHello) | `sc.Hello()` |
-| 1 | 伸懒腰 (Stretch) | `sc.Stretch()` |
-| 2 | 闪烁前灯 (FlashLights) | `vc.SetBrightness()` |
 
 ---
 
@@ -117,26 +113,6 @@ dogDoAlertAction(sc, vc, wid);
 | Case 3 | 过台阶 + 终点前跳 |
 | Case 4 | 任务完成 |
 
-### test_task.cpp — 调试入口
-
-Warn 模式使用**干净环境**（无 DDS 订阅、无摄像头），仅保留 Sport + Vui + 临时摄像头：
-
-```cpp
-// 临时打开摄像头 → 拍摄一帧 → 立即释放
-cv::VideoCapture cap;
-cap.open(gst, cv::CAP_GSTREAMER);
-cv::Mat frame; cap.read(frame);
-cap.release();  // 释放后 DDS 通道空闲，确保 SetBrightness 可靠
-
-dogDoAlertAction(sc, vc, dogDetectWarningMarker(frame));
-```
-
-> 这与 `sport_test_project/sport_test.cpp` 的环境相同，确保闪烁可靠。
-
-### 已知问题
-
-- [ ] **ONNX 推理恒返回 class 1**：摄像头捕获帧可能无效（黑屏/固定噪声），需增加帧保存调试 (`cv::imwrite`)
-
 ---
 
 ## 构建与运行
@@ -151,17 +127,19 @@ cmake .. && make -j$(nproc)
 ./rc2025_run eth0 --task 0         # 跳过跳跃，直接巡线（调试用）
 ```
 
-### test_task — 调试入口
+### test_task — 调试入口（无摄像头/无 DDS 订阅）
 
 ```bash
 make test_task -j$(nproc)
 
-# 原地转弯测试
-./test_task eth0 --Turn LEFT --gui
-./test_task eth0 --Turn RIGHT --gui
+# 原地转弯
+./test_task eth0 --Turn LEFT
+./test_task eth0 --Turn RIGHT
 
-# 警告标志识别 + 动作
-./test_task eth0 --Warn --gui
+# 完整任务流程
+./test_task eth0 --Full 0          # 左转 → 伸懒腰 → 后退 → 右转
+./test_task eth0 --Full 1          # 左转 → 打招呼 → 右转
+./test_task eth0 --Full 2          # 左转 → 闪烁前灯 → 右转
 ```
 
 > 比赛前移除: 删除 `go2_runner/test_task.cpp`，并从 CMakeLists.txt 移除对应目标。
