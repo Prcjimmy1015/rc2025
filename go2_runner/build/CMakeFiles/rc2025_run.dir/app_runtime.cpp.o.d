@@ -871,8 +871,8 @@ CMakeFiles/rc2025_run.dir/app_runtime.cpp.o: \
  /home/linux/unitree_sdk2/include/unitree/robot/channel/channel_labor.hpp \
  /home/linux/unitree_sdk2/include/unitree/robot/channel/channel_namer.hpp \
  /home/linux/unitree_sdk2/include/unitree/robot/client/lease_client.hpp \
- /home/linux/unitree_sdk2/include/unitree/robot/go2/obstacles_avoid/obstacles_avoid_client.hpp \
  /home/linux/unitree_sdk2/include/unitree/robot/go2/vui/vui_client.hpp \
+ /home/linux/unitree_sdk2/include/unitree/robot/go2/obstacles_avoid/obstacles_avoid_client.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/ros2/PointStamped_.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/ros2/Point_.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/ros2/Header_.hpp \

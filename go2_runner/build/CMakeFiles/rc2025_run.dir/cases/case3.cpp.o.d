@@ -731,6 +731,7 @@ CMakeFiles/rc2025_run.dir/cases/case3.cpp.o: \
  /home/linux/unitree_sdk2/include/unitree/common/dds/dds_traits.hpp \
  /home/linux/unitree_sdk2/include/unitree/robot/channel/channel_namer.hpp \
  /home/linux/unitree_sdk2/include/unitree/robot/client/lease_client.hpp \
+ /home/linux/unitree_sdk2/include/unitree/robot/go2/vui/vui_client.hpp \
  /usr/include/opencv4/opencv2/opencv.hpp \
  /usr/include/opencv4/opencv2/opencv_modules.hpp \
  /usr/include/opencv4/opencv2/core.hpp \
@@ -870,4 +871,11 @@ CMakeFiles/rc2025_run.dir/cases/case3.cpp.o: \
  /home/linux/unitree_sdk2/include/unitree/idl/go2/SportModeState_.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/go2/IMUState_.hpp \
  /home/linux/unitree_sdk2/include/unitree/idl/go2/PathPoint_.hpp \
- /home/linux/unitree_sdk2/include/unitree/idl/go2/TimeSpec_.hpp
+ /home/linux/unitree_sdk2/include/unitree/idl/go2/TimeSpec_.hpp \
+ /home/linux/rc2025/go2_runner/cases/../arm_task/arm_bridge.h \
+ /home/linux/rc2025/go2_runner/cases/../arm_task/bridge/dog_turn.h \
+ /home/linux/rc2025/go2_runner/cases/../arm_task/bridge/params.h \
+ /usr/include/c++/11/thread /usr/include/c++/11/bits/std_thread.h \
+ /usr/include/c++/11/bits/this_thread_sleep.h \
+ /home/linux/rc2025/go2_runner/cases/../arm_task/bridge/dog_alerts.h \
+ /home/linux/rc2025/go2_runner/cases/../arm_task/bridge/arm_utils.h
