@@ -78,7 +78,7 @@ bool case2_tick(go2::SportClient &sc,
     double yaw_corr = 0;
     if (aruco_detected && fabs(aruco_angle) > 0.05)
     {
-        double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.20 : 0.08;
+        double k_yaw = (fabs(aruco_angle) > 0.15) ? 0.25 : 0.12;
         yaw_corr = -k_yaw * aruco_angle;
         yaw_corr = max(-0.40, min(0.40, yaw_corr));
     }
@@ -90,8 +90,8 @@ bool case2_tick(go2::SportClient &sc,
         imu_yaw_err -= 2.0 * M_PI;
     if (imu_yaw_err < -M_PI)
         imu_yaw_err += 2.0 * M_PI;
-    double imu_corr = -0.45 * imu_yaw_err;
-    imu_corr = max(-0.50, min(0.50, imu_corr));
+    double imu_corr = -0.55 * imu_yaw_err;
+    imu_corr = max(-0.55, min(0.55, imu_corr));
 
     double heading_corr = aruco_detected ? yaw_corr : imu_corr;
 
@@ -311,8 +311,8 @@ bool case2_tick(go2::SportClient &sc,
         double roll_corr = 0;
         if (s1_settle > 6 && fabs(roll) > 0.10)
         {
-            roll_corr = 0.15 * roll;
-            roll_corr = max(-0.18, min(0.18, roll_corr));
+            roll_corr = 0.20 * roll;
+            roll_corr = max(-0.22, min(0.22, roll_corr));
         }
         sc.ClassicWalk(true);
         double dpx = px - px_start, dpy = py - py_start;
