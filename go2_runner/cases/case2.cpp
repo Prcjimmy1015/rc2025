@@ -278,9 +278,11 @@ bool case2_tick(go2::SportClient &sc,
             roll_corr = 0.20 * roll;
             roll_corr = max(-0.22, min(0.22, roll_corr));
         }
+        // 后期左向微偏置, 对抗右漂 (d2d>0.5后生效)
+        double vy_bias = (d2d > 0.5) ? 0.01 : 0.0;
 
         sc.ClassicWalk(true);
-        sc.Move(0.15, roll_corr, s1_hdg);
+        sc.Move(0.15, vy_bias + roll_corr, s1_hdg);
         double dpx = px - px_start, dpy = py - py_start;
         double d2d = sqrt(dpx*dpx + dpy*dpy);
 
